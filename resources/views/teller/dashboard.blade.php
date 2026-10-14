@@ -1128,6 +1128,8 @@
                     </button>
                 </div>
 
+
+                
                 <!-- Scanner Viewport -->
                 <div class="scanner-viewport-box">
                     <div id="reader"></div>
