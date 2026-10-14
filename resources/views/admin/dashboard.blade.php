@@ -265,11 +265,11 @@
 <body>
     <nav class="navbar">
         <div>
-            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Administrator System</h2>
-            <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah &bull; Role Gabungan Admin & Supervisor</p>
+            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Administrator</h2>
+            <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
-            <span>Halo, <strong>{{ $user->nama_petugas }}</strong> <span class="badge badge-aktif">ADMIN & SPV</span></span>
+            <span>Halo, <strong>{{ $user->nama_petugas }}</strong> <span class="badge badge-aktif">ADMIN</span></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
                 <button type="submit" class="btn-logout">Keluar</button>

@@ -312,4 +312,69 @@ class BankMiniRevisionTest extends TestCase
         $responseBlockAdmin->assertSessionHas('error');
         $this->assertEquals('aktif', $admin->fresh()->status);
     }
+
+    /**
+     * Test 9: Alur Akun Nasabah: Belum Aktif -> Diaktifkan Otomatis Mendapat No Rekening Unik & QR
+     */
+    public function test_member_activation_lifecycle_and_unique_account_number()
+    {
+        $admin = User::where('role', 'administrator')->first();
+        $teller = User::where('role', 'teller')->first();
+        $this->actingAs($admin);
+
+        // 1. Buat data siswa baru di Admin -> status awal 'rekening tidak aktif'
+        $nis = 'TEST_' . rand(100000, 999999);
+        $this->post(route('admin.members.store'), [
+            'student_name' => 'Siswa Baru Belum Aktif',
+            'nis' => $nis,
+            'class_grade' => 'X PPLG 1',
+            'graduation_year' => '2028',
+        ]);
+
+        $member = Member::where('nis', $nis)->first();
+        $this->assertNotNull($member);
+        $this->assertEquals('rekening tidak aktif', $member->status);
+        $this->assertNull($member->saver); // Belum ada penabung / rekening
+
+        // 2. Saat Teller mencari siswa ini untuk menabung -> ditolak dengan info belum aktif
+        $this->actingAs($teller);
+        $responseCari = $this->getJson(route('teller.cari-nasabah', ['q' => $nis]));
+        $responseCari->assertJson(['success' => false]);
+        $this->assertStringContainsString('belum diaktifkan', $responseCari->json('message'));
+
+        // 3. Saat siswa login ke dashboard sebelum aktif -> rekening Belum Aktif
+        $userSiswa = $member->user;
+        $this->actingAs($userSiswa);
+        $responseDashboard = $this->get(route('nasabah.dashboard'));
+        $responseDashboard->assertSee('Belum Aktif');
+        $responseDashboard->assertSee('Status: Rekening Belum Aktif');
+
+        // 4. Admin mengaktifkan status rekening siswa ini
+        $this->actingAs($admin);
+        $this->post(route('admin.members.update', $member->user_id), [
+            'student_name' => 'Siswa Baru Belum Aktif',
+            'nis' => $nis,
+            'class_grade' => 'X PPLG 1',
+            'graduation_year' => '2028',
+            'status' => 'rekening aktif',
+        ]);
+
+        $member->refresh();
+        $this->assertEquals('rekening aktif', $member->status);
+        $this->assertNotNull($member->saver);
+        $this->assertNotNull($member->saver->rekening);
+        $this->assertNotEmpty($member->saver->account_number);
+
+        // 5. Sekarang Teller mencari kembali -> data penabung ditemukan dan siap setor saldo
+        $this->actingAs($teller);
+        $responseCariAktif = $this->getJson(route('teller.cari-nasabah', ['q' => $nis]));
+        $responseCariAktif->assertJson(['success' => true]);
+        $this->assertEquals($member->saver->account_number, $responseCariAktif->json('data.no_rekening'));
+
+        // 6. Sekarang siswa login ke dashboard -> nomor rekening unik dan QR aktif tampil
+        $this->actingAs($userSiswa);
+        $responseDashboardAktif = $this->get(route('nasabah.dashboard'));
+        $responseDashboardAktif->assertSee($member->saver->account_number);
+        $responseDashboardAktif->assertSee('Status: Rekening Aktif');
+    }
 }

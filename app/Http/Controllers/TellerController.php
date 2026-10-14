@@ -30,9 +30,27 @@ class TellerController extends Controller
             ->first();
 
         if (!$saver) {
+            $unactivatedMember = Member::where('nis', $keyword)
+                ->orWhere('student_name', 'LIKE', "%{$keyword}%")
+                ->first();
+
+            if ($unactivatedMember && $unactivatedMember->status === 'rekening tidak aktif') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anggota ' . $unactivatedMember->student_name . ' (NIS: ' . $unactivatedMember->nis . ') belum diaktifkan! Silakan lakukan aktivasi terlebih dahulu pada tab "Aktivasi Anggota (Otomatis)" agar dapat menabung.',
+                ]);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Data penabung tidak ditemukan.',
+            ]);
+        }
+
+        if (($saver->member && $saver->member->status === 'rekening tidak aktif') || ($saver->rekening && $saver->rekening->status === 'nonaktif')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rekening ' . $saver->student_name . ' (No Rek: ' . $saver->account_number . ') berstatus tidak aktif. Tidak dapat melakukan transaksi menabung / penarikan.',
             ]);
         }
 

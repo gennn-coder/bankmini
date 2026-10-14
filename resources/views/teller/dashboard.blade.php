@@ -319,7 +319,7 @@
 <body>
     <nav class="navbar">
         <div>
-            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Teller Operational System</h2>
+            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Teller</h2>
             <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
@@ -1129,7 +1129,7 @@
                 </div>
 
 
-                
+
                 <!-- Scanner Viewport -->
                 <div class="scanner-viewport-box">
                     <div id="reader"></div>

@@ -146,7 +146,7 @@
 <body>
     <nav class="navbar">
         <div>
-            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Portal Nasabah Siswa</h2>
+            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Nasabah</h2>
             <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
@@ -159,33 +159,55 @@
     </nav>
 
     <div class="container">
+        @php
+            $isAktif = ($member->status ?? '') === 'rekening aktif' && !empty($nasabah) && !empty($nasabah->no_rekening);
+        @endphp
+
         <div class="grid">
             <div class="card">
                 <h4>Identitas Penabung</h4>
                 <div class="value" style="font-size: 1.4rem; color: #0f172a; margin-bottom: 0.35rem;">
-                    {{ $nasabah->nama_siswa ?? $user->nama_petugas }}
+                    {{ $nasabah->nama_siswa ?? $member->student_name ?? $user->nama_petugas }}
                 </div>
                 <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-                    {{ $nasabah->kelas ?? '-' }} &bull; NIS: {{ $nasabah->nis ?? '-' }}
+                    {{ $nasabah->kelas ?? $member->class_grade ?? '-' }} &bull; NIS: {{ $nasabah->nis ?? $member->nis ?? $user->username }}
                 </div>
             </div>
             <div class="card" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
                 <div>
                     <h4>Nomor Rekening Nasabah</h4>
-                    <div class="value" style="font-size: 1.4rem;"><code>{{ $nasabah->no_rekening ?? '-' }}</code></div>
-                    <button onclick="openQrModal()" style="margin-top: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;">Lihat Kode QR</button>
+                    <div class="value" style="font-size: 1.4rem;">
+                        @if($isAktif)
+                            <code>{{ $nasabah->no_rekening }}</code>
+                        @else
+                            <span style="color: #ef4444; font-size: 1.15rem; font-weight: 700;">Belum Aktif</span>
+                        @endif
+                    </div>
+                    @if($isAktif)
+                        <button onclick="openQrModal()" style="margin-top: 0.75rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer;">Lihat Kode QR</button>
+                    @else
+                        <span style="font-size: 0.78rem; color: #64748b; display: block; margin-top: 0.5rem;">Menunggu aktivasi rekening</span>
+                    @endif
                 </div>
-                @if(isset($nasabah->no_rekening))
+                @if($isAktif)
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=5&data={{ $nasabah->no_rekening }}" alt="QR Code" style="width: 70px; height: 70px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="openQrModal()" title="Klik untuk memperbesar QR">
+                @else
+                    <div style="width: 70px; height: 70px; border-radius: 8px; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.72rem; text-align: center; line-height: 1.2; padding: 4px;">
+                        QR Belum Ada
+                    </div>
                 @endif
             </div>
             <div class="card">
                 <h4>Saldo Tabungan Real-Time</h4>
-                <div class="value" style="color: #16a34a; font-size: 1.6rem;">
+                <div class="value" style="color: {{ $isAktif ? '#16a34a' : '#94a3b8' }}; font-size: 1.6rem;">
                     Rp {{ number_format($nasabah->rekening->saldo ?? 0, 0, ',', '.') }}
                 </div>
-                <div style="font-size: 0.82rem; color: #16a34a; font-weight: 700; margin-top: 0.35rem;">
-                    Status: Rekening Aktif
+                <div style="font-size: 0.82rem; font-weight: 700; margin-top: 0.35rem;">
+                    @if($isAktif)
+                        <span style="color: #16a34a;">Status: Rekening Aktif</span>
+                    @else
+                        <span style="color: #ef4444;">Status: Rekening Belum Aktif</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -194,10 +216,22 @@
             <h3 style="margin-top:0; margin-bottom: 0.5rem;">Riwayat Mutasi Rekening Siswa</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Daftar riwayat transaksi setoran dan penarikan yang pernah dilakukan pada rekening Anda.</p>
             
+            @if(!$isAktif)
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; color: #b91c1c; font-size: 0.9rem; margin-bottom: 1rem;">
+                    <strong>Pemberitahuan:</strong> Rekening tabungan Anda saat ini belum aktif. Silakan lakukan aktivasi pertama kali di loket Teller untuk mendapatkan nomor rekening, kartu QR digital, dan mulai menabung saldo.
+                </div>
+            @endif
+
             <!-- Tombol QR Code di Atas Keterangan / Tabel sesuai Permintaan User -->
-            <button onclick="openQrModal()" class="btn-qr-show">
-                Tampilkan Kode QR Kartu Digital Nasabah
-            </button>
+            @if($isAktif)
+                <button onclick="openQrModal()" class="btn-qr-show">
+                    Tampilkan Kode QR Kartu Digital Nasabah
+                </button>
+            @else
+                <button onclick="alert('Rekening Anda belum aktif. Silakan lakukan aktivasi terlebih dahulu di loket Teller agar Kode QR kartu digital diterbitkan.')" class="btn-qr-show" style="background: #94a3b8; cursor: not-allowed;">
+                    Kode QR Belum Tersedia (Rekening Belum Aktif)
+                </button>
+            @endif
             
             <div class="table-responsive">
                 <table>
@@ -239,6 +273,7 @@
     </div>
 
     <!-- MODAL POPUP KODE QR DIGITAL NASABAH -->
+    @if($isAktif)
     <div class="modal-qr-overlay" id="qrModal">
         <div class="modal-qr-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
@@ -249,23 +284,26 @@
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem; line-height: 1.4;">Tunjukkan Kode QR ini kepada Teller Loket Bank Mini Sekolah untuk pemindaian otomatis.</p>
 
             <div style="background: #ffffff; padding: 1.25rem; border-radius: 20px; border: 2px dashed #bfdbfe; display: inline-block; margin-bottom: 1.25rem; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.08);">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data={{ $nasabah->no_rekening ?? '10001001' }}" alt="QR Code Rekening" style="width: 220px; height: 220px; display: block; margin: 0 auto; border-radius: 12px;">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data={{ $nasabah->no_rekening }}" alt="QR Code Rekening" style="width: 220px; height: 220px; display: block; margin: 0 auto; border-radius: 12px;">
             </div>
 
-            <div style="font-size: 1.2rem; font-weight: 800; color: #2563eb; margin-bottom: 0.25rem;">No. Rek: {{ $nasabah->no_rekening ?? '-' }}</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: #2563eb; margin-bottom: 0.25rem;">No. Rek: {{ $nasabah->no_rekening }}</div>
             <div style="font-size: 1rem; font-weight: 800; color: #0f172a;">{{ $nasabah->nama_siswa ?? $user->nama_petugas }}</div>
             <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">{{ $nasabah->kelas ?? '-' }} (NIS: {{ $nasabah->nis ?? '-' }})</div>
 
             <button onclick="closeQrModal()" class="btn-logout" style="background: #2563eb; width: 100%; padding: 0.75rem; border-radius: 12px;">Tutup Kode QR</button>
         </div>
     </div>
+    @endif
 
     <script>
         function openQrModal() {
-            document.getElementById('qrModal').style.display = 'flex';
+            const m = document.getElementById('qrModal');
+            if (m) m.style.display = 'flex';
         }
         function closeQrModal() {
-            document.getElementById('qrModal').style.display = 'none';
+            const m = document.getElementById('qrModal');
+            if (m) m.style.display = 'none';
         }
     </script>
 </body>

@@ -140,19 +140,49 @@ class AdminController extends Controller
             ]);
         }
 
-        // Sinkronkan nama di saver jika sudah ada
-        if ($member->saver) {
-            $member->saver->update([
-                'student_name' => $request->student_name,
-                'nis' => $request->nis,
-                'class_grade' => $request->class_grade,
-            ]);
+        // Jika status diubah menjadi "rekening aktif", pastikan Saver dan Rekening otomatis dibuat
+        if ($request->status === 'rekening aktif') {
+            $saver = Saver::where('user_id', $member->user_id)->first();
+            if (!$saver) {
+                $accountNumber = Saver::generateNomorRekening();
+                $saver = Saver::create([
+                    'user_id' => $member->user_id,
+                    'account_number' => $accountNumber,
+                    'nis' => $member->nis,
+                    'student_name' => $member->student_name,
+                    'class_grade' => $member->class_grade,
+                    'security_pin' => Hash::make('123456'),
+                ]);
+
+                Rekening::create([
+                    'saver_id' => $saver->id,
+                    'id_nasabah' => $saver->id,
+                    'account_number' => $accountNumber,
+                    'no_rekening' => $accountNumber,
+                    'saldo' => 0,
+                    'status' => 'aktif',
+                ]);
+            } else {
+                $saver->update([
+                    'student_name' => $request->student_name,
+                    'nis' => $request->nis,
+                    'class_grade' => $request->class_grade,
+                ]);
+                if ($saver->rekening) {
+                    $saver->rekening->update(['status' => 'aktif']);
+                }
+            }
+        } else {
+            // Jika status rekening tidak aktif, ubah status rekening menjadi nonaktif
+            if ($member->saver && $member->saver->rekening) {
+                $member->saver->rekening->update(['status' => 'nonaktif']);
+            }
         }
 
         AuditLog::create([
             'user_id' => auth()->id(),
             'aktivitas' => 'Update Data Anggota',
-            'detail' => 'Memperbarui data anggota ' . $member->student_name . ' (NIS: ' . $member->nis . ')',
+            'detail' => 'Memperbarui data anggota ' . $member->student_name . ' (NIS: ' . $member->nis . ', Status: ' . $member->status . ')',
             'ip_address' => $request->ip(),
         ]);
 
@@ -166,6 +196,14 @@ class AdminController extends Controller
 
         // Soft delete member
         $member->delete();
+
+        // Soft delete saver & rekening jika ada
+        if ($member->saver) {
+            if ($member->saver->rekening) {
+                $member->saver->rekening->delete();
+            }
+            $member->saver->delete();
+        }
 
         // Soft delete user jika ada
         if ($member->user) {

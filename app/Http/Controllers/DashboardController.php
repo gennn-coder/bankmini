@@ -151,10 +151,11 @@ class DashboardController extends Controller
 
         $saver = Saver::where('user_id', $user->id)->with(['rekening', 'member'])->first();
         $nasabah = $saver;
+        $member = Member::where('user_id', $user->id)->first();
         $transaksi = $saver
             ? Transaksi::where('saver_id', $saver->id)->orderBy('tanggal', 'desc')->get()
             : collect();
 
-        return view('nasabah.dashboard', compact('user', 'saver', 'nasabah', 'transaksi'));
+        return view('nasabah.dashboard', compact('user', 'saver', 'nasabah', 'member', 'transaksi'));
     }
 }
