@@ -123,33 +123,60 @@ class TellerController extends Controller
                 return back()->with('error', 'Anggota ini sudah memiliki rekening aktif sebagai penabung.');
             }
 
-            // 1. Generate Nomor Rekening Baru Otomatis
-            $accountNumber = Saver::generateNomorRekening();
+            // 1. Periksa apakah data Saver sudah ada sebelumnya atau buat baru
+            $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
 
-            // 2. Kloning data anggota ke tabel penabung / saver
-            $saver = Saver::create([
-                'user_id' => $member->user_id,
-                'account_number' => $accountNumber,
-                'nis' => $member->nis,
-                'student_name' => $member->student_name,
-                'class_grade' => $member->class_grade,
-                'email' => $request->email,
-                'security_pin' => Hash::make($request->pin),
-            ]);
+            if ($saver) {
+                if ($saver->trashed()) {
+                    $saver->restore();
+                }
+                $accountNumber = $saver->account_number ?: Saver::generateNomorRekening();
+                $saver->update([
+                    'account_number' => $accountNumber,
+                    'nis' => $member->nis,
+                    'student_name' => $member->student_name,
+                    'class_grade' => $member->class_grade,
+                    'email' => $request->email ?? $saver->email,
+                    'security_pin' => Hash::make($request->pin),
+                ]);
+            } else {
+                $accountNumber = Saver::generateNomorRekening();
+                $saver = Saver::create([
+                    'user_id' => $member->user_id,
+                    'account_number' => $accountNumber,
+                    'nis' => $member->nis,
+                    'student_name' => $member->student_name,
+                    'class_grade' => $member->class_grade,
+                    'email' => $request->email,
+                    'security_pin' => Hash::make($request->pin),
+                ]);
+            }
 
-            // 3. Update status anggota menjadi "rekening aktif"
+            // 2. Update status anggota menjadi "rekening aktif"
             $member->status = 'rekening aktif';
             $member->save();
 
-            // 4. Buat Rekening dengan saldo awal dari setoran minimal 10rb
-            Rekening::create([
-                'saver_id' => $saver->id,
-                'id_nasabah' => $saver->id,
-                'account_number' => $accountNumber,
-                'no_rekening' => $accountNumber,
-                'saldo' => $request->nominal,
-                'status' => 'aktif',
-            ]);
+            // 3. Buat atau update Rekening dengan saldo awal dari setoran minimal 10rb
+            $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
+            if ($rekening) {
+                if ($rekening->trashed()) {
+                    $rekening->restore();
+                }
+                $rekening->account_number = $accountNumber;
+                $rekening->no_rekening = $accountNumber;
+                $rekening->saldo += $request->nominal;
+                $rekening->status = 'aktif';
+                $rekening->save();
+            } else {
+                $rekening = Rekening::create([
+                    'saver_id' => $saver->id,
+                    'id_nasabah' => $saver->id,
+                    'account_number' => $accountNumber,
+                    'no_rekening' => $accountNumber,
+                    'saldo' => $request->nominal,
+                    'status' => 'aktif',
+                ]);
+            }
 
             // 5. Buat Catatan Transaksi Setoran Awal
             $noTrans = 'STR-AKT-' . date('YmdHis') . '-' . rand(100, 999);

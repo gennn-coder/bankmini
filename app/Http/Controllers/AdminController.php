@@ -140,9 +140,9 @@ class AdminController extends Controller
             ]);
         }
 
-        // Jika status diubah menjadi "rekening aktif", pastikan Saver dan Rekening otomatis dibuat
+        // Jika status diubah menjadi "rekening aktif", pastikan Saver dan Rekening otomatis dibuat atau dipulihkan
         if ($request->status === 'rekening aktif') {
-            $saver = Saver::where('user_id', $member->user_id)->first();
+            $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
             if (!$saver) {
                 $accountNumber = Saver::generateNomorRekening();
                 $saver = Saver::create([
@@ -163,13 +163,30 @@ class AdminController extends Controller
                     'status' => 'aktif',
                 ]);
             } else {
+                if ($saver->trashed()) {
+                    $saver->restore();
+                }
                 $saver->update([
                     'student_name' => $request->student_name,
                     'nis' => $request->nis,
                     'class_grade' => $request->class_grade,
                 ]);
-                if ($saver->rekening) {
-                    $saver->rekening->update(['status' => 'aktif']);
+                $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
+                if ($rekening) {
+                    if ($rekening->trashed()) {
+                        $rekening->restore();
+                    }
+                    $rekening->update(['status' => 'aktif']);
+                } else {
+                    $accountNumber = $saver->account_number ?: Saver::generateNomorRekening();
+                    Rekening::create([
+                        'saver_id' => $saver->id,
+                        'id_nasabah' => $saver->id,
+                        'account_number' => $accountNumber,
+                        'no_rekening' => $accountNumber,
+                        'saldo' => 0,
+                        'status' => 'aktif',
+                    ]);
                 }
             }
         } else {

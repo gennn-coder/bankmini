@@ -376,5 +376,29 @@ class BankMiniRevisionTest extends TestCase
         $responseDashboardAktif = $this->get(route('nasabah.dashboard'));
         $responseDashboardAktif->assertSee($member->saver->account_number);
         $responseDashboardAktif->assertSee('Status: Rekening Aktif');
+
+        // 7. Nonaktifkan kembali di Admin
+        $this->actingAs($admin);
+        $this->post(route('admin.members.update', $member->user_id), [
+            'student_name' => 'Siswa Baru Belum Aktif',
+            'nis' => $nis,
+            'class_grade' => 'X PPLG 1',
+            'graduation_year' => '2028',
+            'status' => 'rekening tidak aktif',
+        ]);
+        $member->refresh();
+        $this->assertEquals('rekening tidak aktif', $member->status);
+
+        // 8. Reaktivasi lewat Teller -> harus berhasil tanpa SQL duplicate entry 1062
+        $this->actingAs($teller);
+        $responseAktivasiTeller = $this->post(route('teller.aktivasi-anggota'), [
+            'user_id' => $member->user_id,
+            'nominal' => 25000,
+            'pin' => '654321',
+        ]);
+        $responseAktivasiTeller->assertSessionHas('success');
+        $member->refresh();
+        $this->assertEquals('rekening aktif', $member->status);
+        $this->assertEquals(25000, $member->saver->rekening->saldo);
     }
 }
