@@ -15,6 +15,7 @@ class User extends Authenticatable
         'username',
         'password',
         'nama_petugas',
+        'email',
         'role',
         'status',
     ];

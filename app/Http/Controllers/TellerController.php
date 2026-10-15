@@ -112,7 +112,7 @@ class TellerController extends Controller
             'user_id' => 'required|exists:members,user_id',
             'nominal' => 'required|integer|min:10000',
             'pin' => 'required|numeric|digits:6',
-            'email' => 'nullable|email',
+            'email' => 'required|email',
         ]);
 
         DB::beginTransaction();
@@ -122,6 +122,8 @@ class TellerController extends Controller
             if ($member->status === 'rekening aktif') {
                 return back()->with('error', 'Anggota ini sudah memiliki rekening aktif sebagai penabung.');
             }
+
+            $emailToUse = $request->email ?: $member->email;
 
             // 1. Periksa apakah data Saver sudah ada sebelumnya atau buat baru
             $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
@@ -136,7 +138,7 @@ class TellerController extends Controller
                     'nis' => $member->nis,
                     'student_name' => $member->student_name,
                     'class_grade' => $member->class_grade,
-                    'email' => $request->email ?? $saver->email,
+                    'email' => $emailToUse,
                     'security_pin' => Hash::make($request->pin),
                 ]);
             } else {
@@ -147,14 +149,20 @@ class TellerController extends Controller
                     'nis' => $member->nis,
                     'student_name' => $member->student_name,
                     'class_grade' => $member->class_grade,
-                    'email' => $request->email,
+                    'email' => $emailToUse,
                     'security_pin' => Hash::make($request->pin),
                 ]);
             }
 
-            // 2. Update status anggota menjadi "rekening aktif"
+            // 2. Update status anggota menjadi "rekening aktif" dan simpan email
             $member->status = 'rekening aktif';
+            $member->email = $emailToUse;
             $member->save();
+
+            if ($member->user) {
+                $member->user->email = $emailToUse;
+                $member->user->save();
+            }
 
             // 3. Buat atau update Rekening dengan saldo awal dari setoran minimal 10rb
             $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
@@ -219,7 +227,18 @@ class TellerController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Aktivasi Berhasil! Data siswa ' . $member->student_name . ' otomatis berpindah ke Tabel Penabung dengan No Rekening: ' . $accountNumber . ' dan saldo awal Rp ' . number_format($request->nominal));
+            return back()->with('success', 'Aktivasi Berhasil! Data siswa ' . $member->student_name . ' otomatis berpindah ke Tabel Penabung dengan No Rekening: ' . $accountNumber . ' dan saldo awal Rp ' . number_format($request->nominal))
+                ->with('transaksi_sukses', [
+                    'no_transaksi' => $noTrans,
+                    'jenis_trans' => 'setoran',
+                    'judul' => 'Aktivasi Rekening & Setoran Awal Berhasil',
+                    'nama_siswa' => $member->student_name,
+                    'no_rekening' => $accountNumber,
+                    'nominal' => $request->nominal,
+                    'saldo_akhir' => $rekening->saldo,
+                    'waktu' => now()->format('d/m/Y H:i:s'),
+                    'keterangan' => 'Setoran Awal Aktivasi Rekening Anggota',
+                ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memproses aktivasi rekening: ' . $e->getMessage());
@@ -290,7 +309,18 @@ class TellerController extends Controller
             ]);
 
             DB::commit();
-            return back()->with('success', 'Setoran tunai Rp ' . number_format($request->nominal) . ' berhasil diproses. No Transaksi: ' . $noTrans);
+            return back()->with('success', 'Setoran tunai Rp ' . number_format($request->nominal) . ' berhasil diproses. No Transaksi: ' . $noTrans)
+                ->with('transaksi_sukses', [
+                    'no_transaksi' => $noTrans,
+                    'jenis_trans' => 'setoran',
+                    'judul' => 'Transaksi Setoran Tunai Berhasil',
+                    'nama_siswa' => $saver->student_name,
+                    'no_rekening' => $saver->account_number,
+                    'nominal' => $request->nominal,
+                    'saldo_akhir' => $rekening->saldo,
+                    'waktu' => now()->format('d/m/Y H:i:s'),
+                    'keterangan' => $transaksi->keterangan,
+                ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memproses setoran: ' . $e->getMessage());
@@ -298,16 +328,20 @@ class TellerController extends Controller
     }
 
     /**
-     * Transaksi Penarikan Tunai Penabung (Wajib Verifikasi PIN 6-Digit & Saldo Sisa Min 10.000)
+     * Transaksi Penarikan Tunai Penabung (Wajib Verifikasi PIN 6-Digit, Min Penarikan 10.000, & Saldo Sisa Min 10.000)
      */
     public function penarikan(Request $request)
     {
         $request->validate([
             'id_nasabah' => 'required|exists:savers,id',
-            'nominal' => 'required|integer|min:1000',
+            'nominal' => 'required|integer|min:10000',
             'pin' => 'required|numeric|digits:6',
             'keterangan' => 'nullable|string',
         ]);
+
+        if ($request->nominal < 10000) {
+            return back()->with('error', 'Transaksi Ditolak: Nominal penarikan tunai minimal adalah Rp 10.000.');
+        }
 
         DB::beginTransaction();
         try {
@@ -323,10 +357,10 @@ class TellerController extends Controller
                 return back()->with('error', 'PIN 6-Digit Keamanan Penabung Salah! Silakan gunakan fitur Reset PIN jika nasabah lupa PIN.');
             }
 
-            // Validasi Saldo Minimum Rp 10.000
+            // Validasi Saldo Minimum Mengendap Rp 10.000
             $saldoSetelahPenarikan = $rekening->saldo - $request->nominal;
             if ($saldoSetelahPenarikan < 10000) {
-                return back()->with('error', 'Transaksi Ditolak: Saldo setelah penarikan tidak boleh kurang dari Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
+                return back()->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
             }
 
             // Update Saldo
@@ -373,7 +407,18 @@ class TellerController extends Controller
             ]);
 
             DB::commit();
-            return back()->with('success', 'Penarikan tunai Rp ' . number_format($request->nominal) . ' berhasil diproses. No Transaksi: ' . $noTrans);
+            return back()->with('success', 'Penarikan tunai Rp ' . number_format($request->nominal) . ' berhasil diproses. No Transaksi: ' . $noTrans)
+                ->with('transaksi_sukses', [
+                    'no_transaksi' => $noTrans,
+                    'jenis_trans' => 'penarikan',
+                    'judul' => 'Transaksi Penarikan Tunai Berhasil',
+                    'nama_siswa' => $saver->student_name,
+                    'no_rekening' => $saver->account_number,
+                    'nominal' => $request->nominal,
+                    'saldo_akhir' => $rekening->saldo,
+                    'waktu' => now()->format('d/m/Y H:i:s'),
+                    'keterangan' => $transaksi->keterangan,
+                ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal memproses penarikan: ' . $e->getMessage());

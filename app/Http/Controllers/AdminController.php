@@ -29,6 +29,7 @@ class AdminController extends Controller
         $request->validate([
             'username' => 'required|string|unique:users,username',
             'nama_petugas' => 'required|string',
+            'email' => 'required|email|unique:users,email',
             'role' => 'required|in:teller',
             'password' => 'required|string|min:6',
         ]);
@@ -36,6 +37,7 @@ class AdminController extends Controller
         $user = User::create([
             'username' => $request->username,
             'nama_petugas' => $request->nama_petugas,
+            'email' => $request->email,
             'role' => 'teller',
             'password' => Hash::make($request->password),
             'status' => 'aktif',
@@ -44,11 +46,11 @@ class AdminController extends Controller
         AuditLog::create([
             'user_id' => auth()->id(),
             'aktivitas' => 'Tambah User Petugas',
-            'detail' => 'Membuat user teller ' . $user->username . ' (' . $user->nama_petugas . ')',
+            'detail' => 'Membuat user teller ' . $user->username . ' (' . $user->nama_petugas . ') dengan email ' . $user->email,
             'ip_address' => $request->ip(),
         ]);
 
-        return back()->with('success', 'Petugas Teller ' . $user->nama_petugas . ' berhasil ditambahkan.');
+        return back()->with('success', 'Petugas Teller ' . $user->nama_petugas . ' (' . $user->email . ') berhasil ditambahkan.');
     }
 
     public function toggleUserStatus($id)
@@ -80,6 +82,7 @@ class AdminController extends Controller
             'student_name' => 'required|string',
             'nis' => 'required|string|unique:members,nis|unique:users,username',
             'class_grade' => 'required|string',
+            'email' => 'required|email',
             'graduation_year' => 'required|string',
             'password' => 'nullable|string|min:6',
         ]);
@@ -88,6 +91,7 @@ class AdminController extends Controller
         $user = User::create([
             'username' => $request->nis,
             'nama_petugas' => $request->student_name,
+            'email' => $request->email,
             'role' => 'nasabah',
             'password' => Hash::make($request->password ?? '123456'),
             'status' => 'aktif',
@@ -99,6 +103,7 @@ class AdminController extends Controller
             'student_name' => $request->student_name,
             'nis' => $request->nis,
             'class_grade' => $request->class_grade,
+            'email' => $request->email,
             'graduation_year' => $request->graduation_year,
             'status' => 'rekening tidak aktif',
         ]);
@@ -106,11 +111,11 @@ class AdminController extends Controller
         AuditLog::create([
             'user_id' => auth()->id(),
             'aktivitas' => 'Tambah Anggota Baru',
-            'detail' => 'Menambahkan data siswa ' . $member->student_name . ' (NIS: ' . $member->nis . ', Angkatan: ' . $member->graduation_year . ')',
+            'detail' => 'Menambahkan data siswa ' . $member->student_name . ' (NIS: ' . $member->nis . ', Email: ' . $member->email . ')',
             'ip_address' => $request->ip(),
         ]);
 
-        return back()->with('success', 'Anggota ' . $member->student_name . ' berhasil ditambahkan dengan status: Rekening Tidak Aktif. Akun login NIS: ' . $member->nis);
+        return back()->with('success', 'Anggota ' . $member->student_name . ' (' . $member->email . ') berhasil ditambahkan dengan status: Rekening Tidak Aktif. Akun login NIS: ' . $member->nis);
     }
 
     public function updateMember(Request $request, $userId)
@@ -119,6 +124,7 @@ class AdminController extends Controller
             'student_name' => 'required|string',
             'nis' => 'required|string|unique:members,nis,' . $userId . ',user_id',
             'class_grade' => 'required|string',
+            'email' => 'nullable|email',
             'graduation_year' => 'required|string',
             'status' => 'required|in:rekening aktif,rekening tidak aktif',
         ]);
@@ -128,15 +134,17 @@ class AdminController extends Controller
             'student_name' => $request->student_name,
             'nis' => $request->nis,
             'class_grade' => $request->class_grade,
+            'email' => $request->email ?? $member->email,
             'graduation_year' => $request->graduation_year,
             'status' => $request->status,
         ]);
 
-        // Sinkronkan nama di akun user
+        // Sinkronkan nama dan email di akun user
         if ($member->user) {
             $member->user->update([
                 'nama_petugas' => $request->student_name,
                 'username' => $request->nis,
+                'email' => $request->email ?? $member->user->email,
             ]);
         }
 
@@ -151,6 +159,7 @@ class AdminController extends Controller
                     'nis' => $member->nis,
                     'student_name' => $member->student_name,
                     'class_grade' => $member->class_grade,
+                    'email' => $member->email,
                     'security_pin' => Hash::make('123456'),
                 ]);
 
@@ -170,6 +179,7 @@ class AdminController extends Controller
                     'student_name' => $request->student_name,
                     'nis' => $request->nis,
                     'class_grade' => $request->class_grade,
+                    'email' => $request->email ?? $saver->email,
                 ]);
                 $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
                 if ($rekening) {
@@ -315,19 +325,24 @@ class AdminController extends Controller
 
     public function rejectLaporan(Request $request, $id)
     {
+        $request->validate([
+            'catatan_penolakan' => 'required|string|max:500',
+        ]);
+
         $laporan = LaporanHarian::findOrFail($id);
         $laporan->status_approval = 'rejected';
+        $laporan->catatan_penolakan = $request->catatan_penolakan;
         $laporan->supervisor_id = auth()->id();
         $laporan->save();
 
         AuditLog::create([
             'user_id' => auth()->id(),
             'aktivitas' => 'Penolakan Laporan Tutup Kas',
-            'detail' => 'Administrator menolak laporan harian Teller ID ' . $laporan->user_id . ' tanggal ' . $laporan->tanggal,
+            'detail' => 'Administrator menolak laporan harian Teller ID ' . $laporan->user_id . ' tanggal ' . $laporan->tanggal . ' (Alasan: ' . $request->catatan_penolakan . ')',
             'ip_address' => $request->ip(),
         ]);
 
-        return back()->with('success', 'Laporan harian ditolak. Teller diminta melakukan rekonsiliasi ulang uang fisik kas laci.');
+        return back()->with('success', 'Laporan harian ditolak dengan catatan: "' . $request->catatan_penolakan . '". Catatan penolakan otomatis masuk ke dashboard Teller.');
     }
 
     // ==========================================

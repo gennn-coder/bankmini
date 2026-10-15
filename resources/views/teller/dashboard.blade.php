@@ -332,6 +332,70 @@
     </nav>
 
     <div class="container">
+        @if(session('transaksi_sukses'))
+        @php $ts = session('transaksi_sukses'); @endphp
+        <div id="modalTransaksiSukses" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+            <div style="background: #ffffff; border-radius: 24px; max-width: 500px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow: hidden;">
+                <!-- Header Modal -->
+                <div style="background: {{ $ts['jenis_trans'] === 'setoran' ? 'linear-gradient(135deg, #16a34a, #22c55e)' : 'linear-gradient(135deg, #dc2626, #ef4444)' }}; padding: 1.75rem 1.5rem; text-align: center; color: #ffffff;">
+                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto; font-size: 2rem; font-weight: bold;">
+                        ✓
+                    </div>
+                    <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: 0.5px;">{{ $ts['judul'] ?? 'Transaksi Berhasil!' }}</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95;">Bukti transaksi telah dicatat ke kas & jurnal akuntansi</p>
+                </div>
+
+                <!-- Body Modal Rincian Struk -->
+                <div style="padding: 1.5rem 1.75rem; background: #fafafa;">
+                    <div style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; font-size: 0.9rem; line-height: 1.8;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="color: #64748b;">No. Transaksi</span>
+                            <strong style="font-family: monospace; font-size: 0.95rem; color: #0f172a;">{{ $ts['no_transaksi'] }}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="color: #64748b;">Waktu</span>
+                            <strong>{{ $ts['waktu'] }}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="color: #64748b;">Nama Penabung</span>
+                            <strong>{{ $ts['nama_siswa'] }}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="color: #64748b;">No. Rekening</span>
+                            <strong style="font-family: monospace;">{{ $ts['no_rekening'] }}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="color: #64748b;">Jenis Transaksi</span>
+                            <strong style="text-transform: uppercase; color: {{ $ts['jenis_trans'] === 'setoran' ? '#16a34a' : '#dc2626' }};">
+                                {{ $ts['jenis_trans'] }}
+                            </strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-top: 1px dashed #e2e8f0; padding-top: 0.5rem;">
+                            <span style="color: #0f172a; font-weight: 700;">Nominal Transaksi</span>
+                            <strong style="font-size: 1.2rem; color: {{ $ts['jenis_trans'] === 'setoran' ? '#16a34a' : '#dc2626' }};">
+                                Rp {{ number_format($ts['nominal'], 0, ',', '.') }}
+                            </strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; background: #f1f5f9; padding: 0.5rem 0.75rem; border-radius: 8px; margin-top: 0.5rem;">
+                            <span style="color: #475569; font-weight: 600;">Saldo Akhir Saat Ini</span>
+                            <strong style="color: #0f172a; font-size: 1.05rem;">Rp {{ number_format($ts['saldo_akhir'], 0, ',', '.') }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" onclick="cetakStruk('{{ $ts['no_transaksi'] }}', '{{ addslashes($ts['nama_siswa']) }}', '{{ $ts['no_rekening'] }}', '{{ $ts['jenis_trans'] }}', '{{ number_format($ts['nominal']) }}', '{{ $ts['waktu'] }}')" style="flex: 2; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                            🖨️ Cetak Struk Transaksi
+                        </button>
+                        <button type="button" onclick="document.getElementById('modalTransaksiSukses').style.display='none'" style="flex: 1; background: #e2e8f0; color: #334155; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -419,7 +483,7 @@
                         <select name="user_id" id="aktivasiMemberSelect" class="form-control" required onchange="onMemberSelectChange()">
                             <option value="">-- Pilih Siswa Anggota --</option>
                             @foreach($membersUnactivated as $mu)
-                                <option value="{{ $mu->user_id }}" data-name="{{ $mu->student_name }}" data-nis="{{ $mu->nis }}" data-class="{{ $mu->class_grade }}" data-year="{{ $mu->graduation_year }}">
+                                <option value="{{ $mu->user_id }}" data-name="{{ $mu->student_name }}" data-nis="{{ $mu->nis }}" data-email="{{ $mu->email ?? '' }}" data-class="{{ $mu->class_grade }}" data-year="{{ $mu->graduation_year }}">
                                     {{ $mu->student_name }} (NIS: {{ $mu->nis }} &bull; {{ $mu->class_grade }} &bull; Angkatan: {{ $mu->graduation_year }})
                                 </option>
                             @endforeach
@@ -445,8 +509,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Email Siswa (Opsional untuk Pemulihan Sandi)</label>
-                        <input type="email" name="email" class="form-control" placeholder="Contoh: siswa@gmail.com">
+                        <label>Alamat Gmail Siswa / Nasabah <span style="color: #dc2626;">*</span></label>
+                        <input type="email" name="email" id="daftarEmailInput" class="form-control" required placeholder="Contoh: siswa@gmail.com">
+                        <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">Wajib diisi untuk keperluan pengiriman pemulihan kata sandi & PIN transaksi.</small>
                     </div>
 
                     <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #3b82f6); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
@@ -493,7 +558,7 @@
             <div class="card" style="max-width: 600px; margin: 0 auto;">
                 <h3 style="margin-top:0; color: #dc2626; margin-bottom: 0.5rem;">Form Transaksi Penarikan Tunai Penabung</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4;">
-                    Aturan Wajib: Saldo setelah penarikan tidak boleh kurang dari <strong>Rp 10.000</strong> dan wajib verifikasi <strong>PIN 6-Digit Keamanan</strong> siswa.
+                    Aturan Wajib: Nominal penarikan minimal <strong>Rp 10.000</strong>, saldo sisa setelah penarikan tidak boleh kurang dari <strong>Rp 10.000</strong>, dan wajib verifikasi <strong>PIN 6-Digit Keamanan</strong> siswa.
                 </p>
                 
                 <form action="{{ route('teller.penarikan') }}" method="POST">
@@ -511,7 +576,7 @@
                     </div>
                     <div class="form-group">
                         <label>Nominal Penarikan (Rp)</label>
-                        <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="1000" step="1000" placeholder="Contoh: 10000">
+                        <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000">
                     </div>
                     <div class="form-group">
                         <label>Verifikasi PIN 6-Digit Keamanan Penabung</label>
@@ -574,11 +639,28 @@
                     <div>Total Penarikan Hari Ini: <strong style="color: #dc2626;">- Rp {{ number_format($totalPenarikan) }}</strong></div>
                     <div>Saldo Akhir Sistem Kas: <strong>Rp {{ number_format($totalSetoran - $totalPenarikan) }}</strong></div>
                     <div>Status Approval Administrator: 
-                        <strong style="text-transform: uppercase; color: {{ ($laporanHariIni->status_approval ?? 'pending') === 'approved' ? '#16a34a' : '#d97706' }};">
+                        <strong style="text-transform: uppercase; color: {{ ($laporanHariIni->status_approval ?? 'pending') === 'approved' ? '#16a34a' : (($laporanHariIni->status_approval ?? '') === 'rejected' ? '#dc2626' : '#d97706') }};">
                             {{ $laporanHariIni->status_approval ?? 'BELUM DISUBMIT' }}
                         </strong>
                     </div>
                 </div>
+
+                @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
+                    <div style="background: #fef2f2; border: 2px solid #ef4444; border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0 0 0.5rem; color: #dc2626; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ⚠️ Laporan Kas Anda Ditolak oleh Administrator
+                        </h4>
+                        <div style="background: #ffffff; border-left: 4px solid #dc2626; padding: 0.75rem 1rem; border-radius: 6px; margin: 0.75rem 0;">
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Catatan / Alasan Penolakan dari Admin:</div>
+                            <div style="font-size: 0.95rem; color: #0f172a; font-weight: 600; margin-top: 4px;">
+                                "{{ $laporanHariIni->catatan_penolakan ?? 'Terdapat ketidaksesuaian uang fisik kas laci. Silakan hitung ulang.' }}"
+                            </div>
+                        </div>
+                        <p style="margin: 0; font-size: 0.85rem; color: #991b1b;">
+                            Silakan periksa dan hitung kembali uang fisik kas di laci kas Anda, lalu masukkan nominal yang sesuai pada formulir di bawah ini dan klik tombol <strong>Perbarui & Kirim Ulang</strong>.
+                        </p>
+                    </div>
+                @endif
 
                 @if($laporanHariIni && $laporanHariIni->status_approval === 'approved')
                     <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: center;">
@@ -751,6 +833,10 @@
                 document.getElementById('detNama').innerText = selectedOption.getAttribute('data-name');
                 document.getElementById('detNisKelas').innerText = selectedOption.getAttribute('data-nis') + ' (' + selectedOption.getAttribute('data-class') + ')';
                 document.getElementById('detAngkatan').innerText = selectedOption.getAttribute('data-year');
+                const emailInput = document.getElementById('daftarEmailInput');
+                if (emailInput) {
+                    emailInput.value = selectedOption.getAttribute('data-email') || '';
+                }
                 detailBox.style.display = 'block';
             } else {
                 detailBox.style.display = 'none';

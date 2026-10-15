@@ -253,8 +253,14 @@
                 </div>
             @endif
 
+            @if(session('error_lupa'))
+                <div class="alert-error">
+                    {{ session('error_lupa') }}
+                </div>
+            @endif
+
             @if(session('success_lupa'))
-                <div class="alert-success">
+                <div class="alert-success" style="line-height: 1.5;">
                     {{ session('success_lupa') }}
                 </div>
             @endif
@@ -275,7 +281,7 @@
             </form>
 
             <div class="lupa-sandi-container">
-                <button class="btn-lupa-link" onclick="openResetModal()">Lupa Sandi??</button>
+                <button type="button" class="btn-lupa-link" onclick="openResetModal()">Lupa Sandi??</button>
             </div>
         </div>
 
@@ -289,10 +295,12 @@
         <div class="modal-reset-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                 <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin:0;">Pemulihan Lupa Sandi</h3>
-                <button onclick="closeResetModal()" style="background: none; border: none; font-size: 1rem; color: #64748b; cursor: pointer; font-weight: 700;">Tutup</button>
+                <button type="button" onclick="closeResetModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
             </div>
 
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">Masukkan alamat Gmail Nasabah Anda yang terdaftar pada sistem E-Teller Bank Mini. Instruksi kata sandi baru akan dikirimkan ke Gmail Anda.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem; line-height: 1.5;">
+                Masukkan alamat Gmail Nasabah Anda. Kata sandi baru akan otomatis dibuat dan dikirimkan langsung ke alamat Gmail yang Anda tulis di bawah ini.
+            </p>
 
             <form action="{{ route('lupa-sandi') }}" method="POST">
                 @csrf

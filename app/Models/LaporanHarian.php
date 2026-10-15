@@ -21,6 +21,7 @@ class LaporanHarian extends Model
         'uang_fisik',
         'selisih',
         'status_approval',
+        'catatan_penolakan',
         'supervisor_id',
     ];
 

@@ -11,6 +11,7 @@ Route::get('/', [AuthController::class, 'index'])->name('home');
 Route::get('/login', [AuthController::class, 'index']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/lupa-sandi', [AuthController::class, 'lupaSandi'])->name('lupa-sandi');
+Route::post('/lupa-pin', [AuthController::class, 'lupaPin'])->name('lupa-pin');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Role-Based Authenticated Routes

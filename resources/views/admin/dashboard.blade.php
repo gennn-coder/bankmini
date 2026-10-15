@@ -335,6 +335,10 @@
                             <input type="text" name="username" class="form-control" required placeholder="Contoh: teller2">
                         </div>
                         <div class="form-group">
+                            <label>Alamat Gmail Petugas</label>
+                            <input type="email" name="email" class="form-control" required placeholder="Contoh: teller@gmail.com">
+                        </div>
+                        <div class="form-group">
                             <label>Role Petugas</label>
                             <select name="role" class="form-control" required>
                                 <option value="teller">Teller</option>
@@ -357,6 +361,7 @@
                                     <th>No</th>
                                     <th>Nama Petugas</th>
                                     <th>Username</th>
+                                    <th>Email / Gmail</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
@@ -368,6 +373,7 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $u->nama_petugas }}</td>
                                     <td><code>{{ $u->username }}</code></td>
+                                    <td><small>{{ $u->email ?: '-' }}</small></td>
                                     <td>
                                         @if($u->role === 'administrator')
                                             <span class="badge badge-role-admin">ADMINISTRATOR</span>
@@ -404,7 +410,7 @@
             <div class="grid-split">
                 <div class="card">
                     <h3 style="margin-top:0; margin-bottom: 0.5rem; color: #2563eb;">Tambah Anggota Siswa Baru</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Tabel Anggota digunakan untuk data siswa yang belum menabung atau belum mengaktifkan rekening sama sekali.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Tabel Anggota digunakan untuk menambah anggota</p>
                     
                     <form action="{{ route('admin.members.store') }}" method="POST">
                         @csrf
@@ -415,6 +421,10 @@
                         <div class="form-group">
                             <label>NIS (Nomor Induk Siswa)</label>
                             <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
+                        </div>
+                        <div class="form-group">
+                            <label>Alamat Gmail Siswa</label>
+                            <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
                         </div>
                         <div class="form-group">
                             <label>Kelas</label>
@@ -445,6 +455,7 @@
                                     <th>No</th>
                                     <th>Nama Siswa</th>
                                     <th>NIS</th>
+                                    <th>Email / Gmail</th>
                                     <th>Kelas</th>
                                     <th>Angkatan Keluar</th>
                                     <th>Status Rekening</th>
@@ -457,16 +468,17 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $m->student_name }}</strong></td>
                                     <td><code>{{ $m->nis }}</code></td>
+                                    <td><small>{{ $m->email ?: '-' }}</small></td>
                                     <td>{{ $m->class_grade }}</td>
                                     <td>{{ $m->graduation_year }}</td>
                                     <td>
                                         <span class="badge {{ $m->status === 'rekening aktif' ? 'badge-aktif' : 'badge-tidak-aktif' }}">
-                                            {{ strtoupper($m->status) }}
+                                             {{ strtoupper($m->status) }}
                                         </span>
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 0.35rem;">
-                                            <button type="button" class="btn-warning" onclick="openEditMemberModal('{{ $m->user_id }}', '{{ addslashes($m->student_name) }}', '{{ $m->nis }}', '{{ $m->class_grade }}', '{{ $m->graduation_year }}', '{{ $m->status }}')">
+                                            <button type="button" class="btn-warning" onclick="openEditMemberModal('{{ $m->user_id }}', '{{ addslashes($m->student_name) }}', '{{ $m->nis }}', '{{ addslashes($m->email ?? '') }}', '{{ $m->class_grade }}', '{{ $m->graduation_year }}', '{{ $m->status }}')">
                                                 Edit
                                             </button>
                                             <form action="{{ route('admin.members.destroy', $m->user_id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data anggota {{ addslashes($m->student_name) }}?')" style="margin:0;">
@@ -478,7 +490,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada data anggota siswa yang terdaftar.</td>
+                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada data anggota siswa yang terdaftar.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -588,15 +600,17 @@
                                     </strong>
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 0.5rem;">
+                                    <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                                        <button type="button" onclick="openRiwayatModal({{ $lp->id }})" style="background: #2563eb; color: #fff; border:none; padding: 0.45rem 0.75rem; border-radius: 6px; font-weight:700; font-size: 0.85rem; cursor:pointer;">
+                                            Riwayat Transaksi
+                                        </button>
                                         <form action="{{ route('admin.laporan.approve', $lp->id) }}" method="POST" style="margin:0;">
                                             @csrf
-                                            <button type="submit" class="btn-success">Approve & Vault</button>
+                                            <button type="submit" class="btn-success" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">Approve & Vault</button>
                                         </form>
-                                        <form action="{{ route('admin.laporan.reject', $lp->id) }}" method="POST" style="margin:0;">
-                                            @csrf
-                                            <button type="submit" class="btn-danger">Tolak</button>
-                                        </form>
+                                        <button type="button" class="btn-danger" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onclick="openRejectModal({{ $lp->id }}, '{{ addslashes($lp->teller->nama_petugas ?? 'Teller') }}', '{{ date('d/m/Y', strtotime($lp->tanggal)) }}', '{{ number_format($lp->selisih) }}')">
+                                            Tolak
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -759,32 +773,80 @@
         <!-- TAB 6: JURNAL AKUNTANSI -->
         <div id="tab-jurnal" class="tab-content">
             <div class="card">
-                <h3 style="margin-top:0; margin-bottom: 0.5rem;">Audit Jurnal Akuntansi Double-Entry</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Pencatatan otomatis Debit & Kredit setiap transaksi setoran (Debit 101 Kas / Kredit 201 Tabungan) & penarikan (Debit 201 Tabungan / Kredit 101 Kas).</p>
-                <div class="table-responsive">
-                    <table>
+                @php
+                    $totalDebit = $jurnals->where('posisi', 'debit')->sum('jumlah');
+                    $totalKredit = $jurnals->where('posisi', 'kredit')->sum('jumlah');
+                    $isBalanced = ($totalDebit == $totalKredit);
+                @endphp
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem;">Jurnal Umum Akuntansi (Double-Entry Bookkeeping)</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">
+                            Pencatatan berpasangan: Tiap 1 transaksi loket otomatis memicu 2 baris jurnal seimbang (Debit & Kredit).
+                        </p>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.85rem; border-radius: 999px; background: {{ $isBalanced ? '#dcfce7' : '#fee2e2' }}; color: {{ $isBalanced ? '#15803d' : '#b91c1c' }}; border: 1px solid {{ $isBalanced ? '#bbf7d0' : '#fca5a5' }};">
+                            Status Jurnal: {{ $isBalanced ? '✓ SEIMBANG (BALANCED)' : '⚠️ TIDAK SEIMBANG' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 1rem;">
+                    <table style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr>
-                                <th>Waktu</th>
-                                <th>No Transaksi</th>
-                                <th>Kode Akun</th>
-                                <th>Nama Akun</th>
-                                <th>Posisi</th>
-                                <th>Jumlah</th>
+                            <tr style="background: #f8fafc;">
+                                <th style="width: 16%;">Tanggal & Waktu</th>
+                                <th style="width: 20%;">No. Transaksi</th>
+                                <th style="width: 32%;">Keterangan Akun</th>
+                                <th style="width: 8%; text-align: center;">Ref</th>
+                                <th style="width: 12%; text-align: right;">Debit (Rp)</th>
+                                <th style="width: 12%; text-align: right;">Kredit (Rp)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($jurnals as $j)
-                            <tr>
-                                <td>{{ $j->tanggal }}</td>
-                                <td><code>{{ $j->transaksi->no_transaksi ?? '-' }}</code></td>
-                                <td><code>{{ $j->kode_akun }}</code></td>
-                                <td>{{ $j->akun->nama_akun ?? '-' }}</td>
-                                <td><strong style="text-transform: uppercase; color: {{ $j->posisi === 'debit' ? '#2563eb' : '#dc2626' }};">{{ $j->posisi }}</strong></td>
-                                <td>Rp {{ number_format($j->jumlah, 0, ',', '.') }}</td>
+                            @forelse($jurnals as $j)
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="font-size: 0.85rem; color: #64748b;">{{ $j->tanggal }}</td>
+                                <td>
+                                    <code style="font-size: 0.85rem; font-weight: 600; color: #2563eb;">{{ $j->transaksi->no_transaksi ?? '-' }}</code>
+                                </td>
+                                <td>
+                                    @if($j->posisi === 'debit')
+                                        <strong style="color: #0f172a;">{{ $j->akun->nama_akun ?? 'Kas Teller' }}</strong>
+                                    @else
+                                        <span style="display: inline-block; padding-left: 20px; color: #475569; font-weight: 600;">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;{{ $j->akun->nama_akun ?? 'Simpanan Siswa' }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td style="text-align: center;">
+                                    <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{{ $j->kode_akun }}</code>
+                                </td>
+                                <td style="text-align: right; font-weight: {{ $j->posisi === 'debit' ? '700' : '400' }}; color: {{ $j->posisi === 'debit' ? '#2563eb' : '#94a3b8' }};">
+                                    {{ $j->posisi === 'debit' ? number_format($j->jumlah, 0, ',', '.') : '-' }}
+                                </td>
+                                <td style="text-align: right; font-weight: {{ $j->posisi === 'kredit' ? '700' : '400' }}; color: {{ $j->posisi === 'kredit' ? '#16a34a' : '#94a3b8' }};">
+                                    {{ $j->posisi === 'kredit' ? number_format($j->jumlah, 0, ',', '.') : '-' }}
+                                </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada catatan jurnal akuntansi.</td>
+                            </tr>
+                            @endforelse
                         </tbody>
+                        <tfoot>
+                            <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #cbd5e1;">
+                                <td colspan="4" style="text-align: right; padding: 0.75rem 1rem; color: #0f172a;">TOTAL KESEIMBANGAN JURNAL:</td>
+                                <td style="text-align: right; padding: 0.75rem 1rem; color: #2563eb; font-size: 1rem;">
+                                    Rp {{ number_format($totalDebit, 0, ',', '.') }}
+                                </td>
+                                <td style="text-align: right; padding: 0.75rem 1rem; color: #16a34a; font-size: 1rem;">
+                                    Rp {{ number_format($totalKredit, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -839,6 +901,10 @@
                 <div class="form-group">
                     <label>NIS</label>
                     <input type="text" name="nis" id="edit_nis" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Alamat Gmail Siswa</label>
+                    <input type="email" name="email" id="edit_email" class="form-control" required placeholder="Contoh: siswa@gmail.com">
                 </div>
                 <div class="form-group">
                     <label>Kelas</label>
@@ -910,10 +976,11 @@
             }
         });
 
-        function openEditMemberModal(userId, name, nis, grade, gradYear, status) {
+        function openEditMemberModal(userId, name, nis, email, grade, gradYear, status) {
             document.getElementById('editMemberForm').action = '/admin/members/' + userId + '/update';
             document.getElementById('edit_student_name').value = name;
             document.getElementById('edit_nis').value = nis;
+            document.getElementById('edit_email').value = email || '';
             document.getElementById('edit_class_grade').value = grade;
             document.getElementById('edit_graduation_year').value = gradYear;
             document.getElementById('edit_status').value = status;
@@ -934,6 +1001,144 @@
         function closeResetPinModal() {
             document.getElementById('resetPinModal').style.display = 'none';
         }
+
+        function openRiwayatModal(id) {
+            const m = document.getElementById('modalRiwayat-' + id);
+            if (m) m.style.display = 'flex';
+        }
+
+        function closeRiwayatModal(id) {
+            const m = document.getElementById('modalRiwayat-' + id);
+            if (m) m.style.display = 'none';
+        }
+
+        function openRejectModal(id, tellerNama, tanggal, selisih) {
+            document.getElementById('rejectLaporanForm').action = '/admin/laporan/' + id + '/reject';
+            document.getElementById('rejectTellerNama').innerText = tellerNama;
+            document.getElementById('rejectTanggal').innerText = tanggal;
+            document.getElementById('rejectSelisih').innerText = 'Rp ' + selisih;
+            document.getElementById('rejectCatatanInput').value = '';
+            document.getElementById('rejectLaporanModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('rejectCatatanInput').focus();
+            }, 100);
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectLaporanModal').style.display = 'none';
+        }
     </script>
+
+    <!-- MODAL POPUP RIWAYAT TRANSAKSI TELLER SEBELUM APPROVE -->
+    @foreach($laporanPending as $lp)
+    <div class="modal-overlay" id="modalRiwayat-{{ $lp->id }}">
+        <div class="modal-card" style="max-width: 880px; width: 95%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+                <div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin:0;">Riwayat Mutasi Transaksi Kas Teller</h3>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem; color: #64748b;">
+                        Teller: <strong>{{ $lp->teller->nama_petugas ?? 'Teller' }}</strong> | Tanggal: <strong>{{ date('d F Y', strtotime($lp->tanggal)) }}</strong>
+                    </p>
+                </div>
+                <button type="button" onclick="closeRiwayatModal({{ $lp->id }})" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
+            </div>
+
+            <!-- Summary Cards inside Modal -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.75rem 1rem; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; color: #166534; font-weight: 700; text-transform: uppercase;">Total Setoran</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #16a34a; margin-top: 2px;">+ Rp {{ number_format($lp->total_setoran) }}</div>
+                </div>
+                <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 0.75rem 1rem; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 700; text-transform: uppercase;">Total Penarikan</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin-top: 2px;">- Rp {{ number_format($lp->total_penarikan) }}</div>
+                </div>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.75rem 1rem; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 700; text-transform: uppercase;">Uang Fisik Kas Laci</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #2563eb; margin-top: 2px;">Rp {{ number_format($lp->uang_fisik) }}</div>
+                </div>
+                <div style="background: {{ $lp->selisih == 0 ? '#f0fdf4' : '#fff1f2' }}; border: 1px solid {{ $lp->selisih == 0 ? '#bbf7d0' : '#fecdd3' }}; padding: 0.75rem 1rem; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; color: {{ $lp->selisih == 0 ? '#166534' : '#9f1239' }}; font-weight: 700; text-transform: uppercase;">Selisih Kas</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: {{ $lp->selisih == 0 ? '#16a34a' : '#e11d48' }}; margin-top: 2px;">Rp {{ number_format($lp->selisih) }}</div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f1f5f9;">
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 5%;">No</th>
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 12%;">Waktu</th>
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 22%;">No. Transaksi</th>
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 25%;">Nama Penabung</th>
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 12%;">Jenis</th>
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 14%; text-align: right;">Nominal</th>
+                            <th style="padding: 8px 10px; font-size: 0.85rem; width: 10%;">Ket</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($lp->transaksis as $idx => $trx)
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 8px 10px; font-size: 0.85rem; text-align: center;">{{ $idx + 1 }}</td>
+                            <td style="padding: 8px 10px; font-size: 0.85rem;">{{ date('H:i:s', strtotime($trx->tanggal)) }}</td>
+                            <td style="padding: 8px 10px;"><code style="font-size: 0.85rem;">{{ $trx->no_transaksi }}</code></td>
+                            <td style="padding: 8px 10px; font-size: 0.85rem;">
+                                <strong>{{ $trx->student_name_display }}</strong>
+                                <br><small style="color: #64748b;">Rek: {{ $trx->account_number_display }}</small>
+                            </td>
+                            <td style="padding: 8px 10px;">
+                                <strong style="text-transform: uppercase; font-size: 0.85rem; color: {{ $trx->jenis_trans === 'setoran' ? '#16a34a' : '#dc2626' }};">
+                                    {{ $trx->jenis_trans }}
+                                </strong>
+                            </td>
+                            <td style="padding: 8px 10px; text-align: right; font-weight: 700; color: {{ $trx->jenis_trans === 'setoran' ? '#16a34a' : '#dc2626' }}; font-size: 0.9rem;">
+                                Rp {{ number_format($trx->nominal, 0, ',', '.') }}
+                            </td>
+                            <td style="padding: 8px 10px; font-size: 0.8rem; color: #64748b;">{{ $trx->keterangan ?? '-' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 1.5rem; color: #64748b;">Tidak ada data transaksi teller pada tanggal ini.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; border-top: 1px solid #e2e8f0; padding-top: 0.75rem;">
+                <button type="button" onclick="closeRiwayatModal({{ $lp->id }})" class="btn-logout" style="background: #94a3b8;">Tutup</button>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
+    <!-- MODAL PENOLAKAN LAPORAN KAS DENGAN INPUT TEKS ALASAN -->
+    <div class="modal-overlay" id="rejectLaporanModal">
+        <div class="modal-card" style="max-width: 480px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #dc2626; margin:0;">Tolak Laporan Kas Teller</h3>
+                <button type="button" onclick="closeRejectModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
+            </div>
+
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Laporan Teller: <strong id="rejectTellerNama">-</strong> (Tanggal: <span id="rejectTanggal">-</span>)<br>
+                Selisih Kas Terdeteksi: <strong id="rejectSelisih" style="color: #dc2626;">-</strong>
+            </p>
+
+            <form id="rejectLaporanForm" method="POST">
+                @csrf
+                <div class="form-group">
+                    <label>Alasan / Catatan Penolakan untuk Teller <span style="color: #dc2626;">*</span></label>
+                    <input type="text" name="catatan_penolakan" id="rejectCatatanInput" class="form-control" required placeholder="Contoh: Uang fisik kurang Rp 300.000, silakan hitung ulang laci kas">
+                    <small style="color: #64748b; font-size: 0.8rem; margin-top: 4px; display: block;">Catatan ini otomatis diteruskan dan ditampilkan di dashboard Teller.</small>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
+                    <button type="button" onclick="closeRejectModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
+                    <button type="submit" class="btn-danger" style="flex: 2;">Kirim Penolakan</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

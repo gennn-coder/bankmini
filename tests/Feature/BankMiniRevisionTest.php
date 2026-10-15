@@ -44,6 +44,7 @@ class BankMiniRevisionTest extends TestCase
         $response = $this->post(route('admin.members.store'), [
             'student_name' => 'Siswa Uji Coba',
             'nis' => $nis,
+            'email' => 'siswa.uji@gmail.com',
             'class_grade' => 'X PPLG 1',
             'graduation_year' => '2028',
         ]);
@@ -51,18 +52,21 @@ class BankMiniRevisionTest extends TestCase
 
         $member = Member::where('nis', $nis)->first();
         $this->assertNotNull($member);
+        $this->assertEquals('siswa.uji@gmail.com', $member->email);
         $this->assertEquals('rekening tidak aktif', $member->status);
 
         // UPDATE
         $responseUpdate = $this->post(route('admin.members.update', $member->user_id), [
             'student_name' => 'Siswa Uji Coba Update',
             'nis' => $nis,
+            'email' => 'siswa.uji.update@gmail.com',
             'class_grade' => 'X PPLG 2',
             'graduation_year' => '2028',
             'status' => 'rekening tidak aktif',
         ]);
         $responseUpdate->assertSessionHas('success');
         $this->assertEquals('Siswa Uji Coba Update', $member->fresh()->student_name);
+        $this->assertEquals('siswa.uji.update@gmail.com', $member->fresh()->email);
 
         // DELETE
         $responseDelete = $this->post(route('admin.members.destroy', $member->user_id));
@@ -299,6 +303,7 @@ class BankMiniRevisionTest extends TestCase
         $responseTeller = $this->post(route('admin.users.store'), [
             'nama_petugas' => 'Teller Uji Coba',
             'username' => $tellerUsername,
+            'email' => $tellerUsername . '@gmail.com',
             'role' => 'teller',
             'password' => '123456',
         ]);
@@ -327,6 +332,7 @@ class BankMiniRevisionTest extends TestCase
         $this->post(route('admin.members.store'), [
             'student_name' => 'Siswa Baru Belum Aktif',
             'nis' => $nis,
+            'email' => 'siswa.' . $nis . '@gmail.com',
             'class_grade' => 'X PPLG 1',
             'graduation_year' => '2028',
         ]);
@@ -395,10 +401,166 @@ class BankMiniRevisionTest extends TestCase
             'user_id' => $member->user_id,
             'nominal' => 25000,
             'pin' => '654321',
+            'email' => 'siswa.reaktif@gmail.com',
         ]);
         $responseAktivasiTeller->assertSessionHas('success');
         $member->refresh();
         $this->assertEquals('rekening aktif', $member->status);
         $this->assertEquals(25000, $member->saver->rekening->saldo);
+    }
+
+    /**
+     * Test 12: Validasi Minimal Penarikan Rp 10.000 & Batas Saldo Mengendap
+     */
+    public function test_minimum_penarikan_enforced_at_10000()
+    {
+        $teller = User::where('role', 'teller')->first();
+        $saver = Saver::with('rekening')->first();
+        $this->actingAs($teller);
+
+        // Set saldo penabung cukup
+        $saver->rekening->update(['saldo' => 50000]);
+        $saver->update(['security_pin' => Hash::make('123456')]);
+
+        // Coba tarik di bawah 10.000 (misal 5.000) -> harus ditolak
+        $response = $this->post(route('teller.penarikan'), [
+            'id_nasabah' => $saver->id,
+            'nominal' => 5000,
+            'pin' => '123456',
+        ]);
+        $response->assertSessionHasErrors('nominal');
+
+        // Tarik 10.000 dengan benar -> harus sukses dan menghasilkan session transaksi_sukses
+        $responseSukses = $this->post(route('teller.penarikan'), [
+            'id_nasabah' => $saver->id,
+            'nominal' => 10000,
+            'pin' => '123456',
+        ]);
+        $responseSukses->assertSessionHas('transaksi_sukses');
+        $saver->rekening->refresh();
+        $this->assertEquals(40000, $saver->rekening->saldo);
+    }
+
+    /**
+     * Test 13: Penolakan Laporan Kas oleh Admin Wajib Ada Catatan Penolakan
+     */
+    public function test_admin_rejection_requires_catatan_penolakan()
+    {
+        $admin = User::where('role', 'administrator')->first();
+        $teller = User::where('role', 'teller')->first();
+        $this->actingAs($admin);
+
+        $laporan = \App\Models\LaporanHarian::create([
+            'tanggal' => date('Y-m-d'),
+            'user_id' => $teller->id,
+            'saldo_awal' => 0,
+            'total_setoran' => 300000,
+            'total_penarikan' => 0,
+            'saldo_akhir_sistem' => 300000,
+            'uang_fisik' => 50000,
+            'selisih' => -250000,
+            'status_approval' => 'pending',
+        ]);
+
+        // Tolak tanpa catatan -> validasi error
+        $responseErr = $this->post(route('admin.laporan.reject', $laporan->id), []);
+        $responseErr->assertSessionHasErrors('catatan_penolakan');
+
+        // Tolak dengan catatan -> sukses dan tersimpan ke database
+        $responseOk = $this->post(route('admin.laporan.reject', $laporan->id), [
+            'catatan_penolakan' => 'Uang fisik di laci kurang Rp 250.000, harap cek kembali.',
+        ]);
+        $responseOk->assertSessionHas('success');
+        $laporan->refresh();
+        $this->assertEquals('rejected', $laporan->status_approval);
+        $this->assertEquals('Uang fisik di laci kurang Rp 250.000, harap cek kembali.', $laporan->catatan_penolakan);
+    }
+
+    /**
+     * Test 14: Lupa Sandi & Lupa PIN di Halaman Login Berhasil Memperbarui Kredensial
+     */
+    public function test_lupa_sandi_and_pin_updates_credentials()
+    {
+        $saver = Saver::first();
+        $saver->update(['email' => 'siswa.test@gmail.com']);
+        $user = User::find($saver->user_id);
+        $oldPassword = $user->password;
+        $oldPin = $saver->security_pin;
+
+        // 1. Lupa Sandi
+        $responseSandi = $this->post(route('lupa-sandi'), [
+            'email' => 'siswa.test@gmail.com',
+        ]);
+        $responseSandi->assertSessionHas('success_lupa');
+        $responseSandi->assertSessionMissing('kredensial_info');
+        $user->refresh();
+        $this->assertNotEquals($oldPassword, $user->password);
+
+        // 2. Lupa PIN
+        $responsePin = $this->post(route('lupa-pin'), [
+            'email' => 'siswa.test@gmail.com',
+        ]);
+        $responsePin->assertSessionHas('success_lupa');
+        $responsePin->assertSessionMissing('kredensial_info');
+        $saver->refresh();
+        $this->assertNotEquals($oldPin, $saver->security_pin);
+    }
+
+    /**
+     * Test 15: Pendaftaran Petugas Teller & Anggota Nasabah Mewajibkan Alamat Gmail
+     */
+    public function test_registration_requires_email_for_both_teller_and_nasabah()
+    {
+        $admin = User::where('role', 'administrator')->first();
+        $this->actingAs($admin);
+
+        // 1. Tambah Teller tanpa email -> Gagal validasi
+        $resTellerErr = $this->post(route('admin.users.store'), [
+            'username' => 'teller_no_email_' . rand(100, 999),
+            'nama_petugas' => 'Teller No Email',
+            'role' => 'teller',
+            'password' => 'secret123',
+        ]);
+        $resTellerErr->assertSessionHasErrors('email');
+
+        // 2. Tambah Teller dengan email -> Sukses
+        $tellerUsername = 'teller_email_' . rand(100, 999);
+        $tellerEmail = $tellerUsername . '@gmail.com';
+        $resTellerOk = $this->post(route('admin.users.store'), [
+            'username' => $tellerUsername,
+            'nama_petugas' => 'Teller Sukses Email',
+            'email' => $tellerEmail,
+            'role' => 'teller',
+            'password' => 'secret123',
+        ]);
+        $resTellerOk->assertSessionHas('success');
+        $tellerUser = User::where('username', $tellerUsername)->first();
+        $this->assertNotNull($tellerUser);
+        $this->assertEquals($tellerEmail, $tellerUser->email);
+
+        // 3. Tambah Anggota tanpa email -> Gagal validasi
+        $resMemberErr = $this->post(route('admin.members.store'), [
+            'student_name' => 'Siswa No Email',
+            'nis' => 'NO_EMAIL_' . rand(1000, 9999),
+            'class_grade' => 'X RPL 1',
+            'graduation_year' => '2028',
+        ]);
+        $resMemberErr->assertSessionHasErrors('email');
+
+        // 4. Tambah Anggota dengan email -> Sukses
+        $nis = 'EMAIL_OK_' . rand(1000, 9999);
+        $memberEmail = 'siswa.' . $nis . '@gmail.com';
+        $resMemberOk = $this->post(route('admin.members.store'), [
+            'student_name' => 'Siswa Sukses Email',
+            'nis' => $nis,
+            'email' => $memberEmail,
+            'class_grade' => 'X RPL 1',
+            'graduation_year' => '2028',
+        ]);
+        $resMemberOk->assertSessionHas('success');
+        $member = Member::where('nis', $nis)->first();
+        $this->assertNotNull($member);
+        $this->assertEquals($memberEmail, $member->email);
+        $this->assertEquals($memberEmail, $member->user->email);
     }
 }

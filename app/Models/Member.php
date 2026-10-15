@@ -19,6 +19,7 @@ class Member extends Model
         'student_name',
         'nis',
         'class_grade',
+        'email',
         'graduation_year',
         'status',
     ];
