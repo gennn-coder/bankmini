@@ -563,4 +563,94 @@ class BankMiniRevisionTest extends TestCase
         $this->assertEquals($memberEmail, $member->email);
         $this->assertEquals($memberEmail, $member->user->email);
     }
+
+    /**
+     * Test 16: Pemulihan Sandi via OTP dengan NISN / Username dan Alamat Gmail
+     */
+    public function test_lupa_sandi_otp_flow_with_nisn_and_username()
+    {
+        $saver = Saver::first();
+        $saver->update(['email' => 'siswa.otp@gmail.com']);
+        $user = User::find($saver->user_id);
+        $user->update(['email' => 'siswa.otp@gmail.com']);
+
+        // 1. Kirim OTP dengan NISN
+        $resOtp = $this->postJson(route('lupa-sandi.kirim-otp'), [
+            'identifier' => $saver->nis,
+            'email' => 'siswa.otp@gmail.com',
+        ]);
+        $resOtp->assertStatus(200);
+        $resOtp->assertJson(['success' => true]);
+
+        // Ambil OTP dari cache
+        $cachedData = \Illuminate\Support\Facades\Cache::get('otp_reset_' . $user->id);
+        $this->assertNotNull($cachedData);
+        $otp = $cachedData['otp'];
+        $this->assertEquals(6, strlen($otp));
+
+        // 2. Verifikasi OTP yang salah -> Gagal
+        $resVerifFail = $this->postJson(route('lupa-sandi.verifikasi-otp'), [
+            'identifier' => $saver->nis,
+            'email' => 'siswa.otp@gmail.com',
+            'otp' => '000000',
+        ]);
+        $resVerifFail->assertStatus(422);
+
+        // 3. Verifikasi OTP yang benar -> Sukses & menampilkan nama akun
+        $resVerifOk = $this->postJson(route('lupa-sandi.verifikasi-otp'), [
+            'identifier' => $saver->nis,
+            'email' => 'siswa.otp@gmail.com',
+            'otp' => $otp,
+        ]);
+        $resVerifOk->assertStatus(200);
+        $resVerifOk->assertJson([
+            'success' => true,
+            'nama' => $saver->student_name,
+        ]);
+        $resetToken = $resVerifOk->json('reset_token');
+        $this->assertNotEmpty($resetToken);
+
+        // 4. Simpan Sandi Baru
+        $newPass = 'sandiBaru999';
+        $resSimpan = $this->postJson(route('lupa-sandi.simpan-sandi'), [
+            'reset_token' => $resetToken,
+            'password' => $newPass,
+            'password_confirmation' => $newPass,
+        ]);
+        $resSimpan->assertStatus(200);
+        $resSimpan->assertJson(['success' => true]);
+
+        // 5. Cek bahwa user bisa login dengan sandi baru
+        $resLogin = $this->post(route('login'), [
+            'username' => $saver->nis,
+            'password' => $newPass,
+        ]);
+        $resLogin->assertRedirect(route('nasabah.dashboard'));
+        $this->assertAuthenticatedAs($user);
+
+        // 6. Test juga dengan Username Petugas Teller
+        $teller = User::where('role', 'teller')->first();
+        $this->assertNotNull($teller);
+        $teller->update(['email' => 'teller.otp@gmail.com']);
+
+        $resOtpTeller = $this->postJson(route('lupa-sandi.kirim-otp'), [
+            'identifier' => $teller->username,
+            'email' => 'teller.otp@gmail.com',
+        ]);
+        $resOtpTeller->assertStatus(200);
+
+        $cachedTeller = \Illuminate\Support\Facades\Cache::get('otp_reset_' . $teller->id);
+        $this->assertNotNull($cachedTeller);
+
+        $resVerifTeller = $this->postJson(route('lupa-sandi.verifikasi-otp'), [
+            'identifier' => $teller->username,
+            'email' => 'teller.otp@gmail.com',
+            'otp' => $cachedTeller['otp'],
+        ]);
+        $resVerifTeller->assertStatus(200);
+        $resVerifTeller->assertJson([
+            'success' => true,
+            'nama' => $teller->nama_petugas,
+        ]);
+    }
 }
