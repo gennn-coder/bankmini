@@ -272,7 +272,7 @@
             <span>Halo, <strong>{{ $user->nama_petugas }}</strong> <span class="badge badge-aktif">ADMIN</span></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
-                <button type="submit" class="btn-logout">Keluar</button>
+                <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">Keluar</button>
             </form>
         </div>
     </nav>
@@ -957,23 +957,73 @@
 
     <script>
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if (!tabId) return;
+            const targetContent = document.getElementById(tabId);
+            if (!targetContent) return;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                const oc = btn.getAttribute('onclick');
+                if (oc && oc.includes("'" + tabId + "'")) {
+                    btn.classList.add('active');
+                }
+            });
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
-            if (activeBtn) activeBtn.classList.add('active');
-            
-            const targetContent = document.getElementById(tabId);
-            if (targetContent) targetContent.classList.add('active');
+            targetContent.classList.add('active');
+
+            try {
+                sessionStorage.setItem('admin_active_tab', tabId);
+                localStorage.setItem('admin_active_tab', tabId);
+            } catch (e) {}
+
+            try {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, null, '#' + tabId);
+                }
+            } catch (e) {}
         }
 
-        // Auto activate tab from URL query if present
+        function restoreAdminActiveTab() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const queryTab = urlParams.get('tab');
+                const hashTab = window.location.hash ? window.location.hash.substring(1) : null;
+                const sessionTab = sessionStorage.getItem('admin_active_tab');
+                const localTab = localStorage.getItem('admin_active_tab');
+
+                const tabToActivate = (queryTab && document.getElementById(queryTab)) ? queryTab
+                                    : (hashTab && document.getElementById(hashTab)) ? hashTab
+                                    : (sessionTab && document.getElementById(sessionTab)) ? sessionTab
+                                    : (localTab && document.getElementById(localTab)) ? localTab
+                                    : null;
+
+                if (tabToActivate && document.getElementById(tabToActivate)) {
+                    switchTab(tabToActivate);
+                }
+            } catch (e) {}
+        }
+
+        // Restore tab segera saat skrip dieksekusi agar bebas flicker
+        restoreAdminActiveTab();
+
+        // Restore tab kembali saat DOM selesai dimuat dan pasang listener submit form
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const tab = urlParams.get('tab');
-            if (tab && document.getElementById(tab)) {
-                switchTab(tab);
-            }
+            restoreAdminActiveTab();
+
+            // Pastikan setiap form (tambah, edit, hapus, approve, reject, reset PIN)
+            // selalu menyimpan tab aktif sebelum submit ke server
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', () => {
+                    const activeContent = document.querySelector('.tab-content.active');
+                    if (activeContent && activeContent.id) {
+                        try {
+                            sessionStorage.setItem('admin_active_tab', activeContent.id);
+                            localStorage.setItem('admin_active_tab', activeContent.id);
+                        } catch(e) {}
+                    }
+                });
+            });
         });
 
         function openEditMemberModal(userId, name, nis, email, grade, gradYear, status) {

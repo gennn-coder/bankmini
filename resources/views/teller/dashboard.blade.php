@@ -326,7 +326,7 @@
             <span>Halo, <strong>{{ $user->nama_petugas }}</strong></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
-                <button type="submit" class="btn-logout">Keluar</button>
+                <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('teller_active_tab');localStorage.removeItem('teller_active_tab');}catch(e){}">Keluar</button>
             </form>
         </div>
     </nav>
@@ -384,11 +384,73 @@
 
                     <!-- Action Buttons -->
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                        <button type="button" onclick="cetakStruk('{{ $ts['no_transaksi'] }}', '{{ addslashes($ts['nama_siswa']) }}', '{{ $ts['no_rekening'] }}', '{{ $ts['jenis_trans'] }}', '{{ number_format($ts['nominal']) }}', '{{ $ts['waktu'] }}')" style="flex: 2; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                        <button type="button" onclick="cetakStruk('{{ $ts['no_transaksi'] }}', '{{ addslashes($ts['nama_siswa']) }}', '{{ $ts['no_rekening'] }}', '{{ $ts['jenis_trans'] }}', '{{ number_format($ts['nominal']) }}', '{{ $ts['waktu'] }}', '{{ number_format($ts['saldo_akhir'] ?? 0) }}')" style="flex: 2; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
                             🖨️ Cetak Struk Transaksi
                         </button>
                         <button type="button" onclick="document.getElementById('modalTransaksiSukses').style.display='none'" style="flex: 1; background: #e2e8f0; color: #334155; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
                             Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- MODAL POPUP NOTIFIKASI KESALAHAN TRANSAKSI / VALIDASI GAGAL -->
+        @if(session('error') || $errors->any())
+        <div id="modalTransaksiGagal" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+            <div style="background: #ffffff; border-radius: 24px; max-width: 480px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow: hidden;">
+                <!-- Header Modal Gagal -->
+                <div style="background: linear-gradient(135deg, #dc2626, #ef4444); padding: 1.75rem 1.5rem; text-align: center; color: #ffffff;">
+                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto; font-size: 2rem; font-weight: bold;">
+                        ✕
+                    </div>
+                    <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: 0.5px;">Transaksi Gagal / Ditolak</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95;">Sistem mendeteksi kesalahan pada data transaksi</p>
+                </div>
+
+                <!-- Body Modal -->
+                <div style="padding: 1.5rem 1.75rem; background: #fafafa;">
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 16px; padding: 1.25rem; color: #991b1b; font-size: 0.92rem; line-height: 1.6;">
+                        @if(session('error'))
+                            <div style="display: flex; gap: 0.6rem; align-items: flex-start;">
+                                <span style="font-size: 1.35rem; line-height: 1;">⚠️</span>
+                                <div>
+                                    <strong style="color: #b91c1c; font-size: 0.95rem;">Pemberitahuan:</strong><br>
+                                    {{ session('error') }}
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($errors->any())
+                            <div style="margin-top: {{ session('error') ? '0.75rem' : '0' }};">
+                                <strong style="color: #b91c1c;">Periksa kembali isian form berikut:</strong>
+                                <ul style="margin: 0.35rem 0 0; padding-left: 1.25rem;">
+                                    @foreach($errors->all() as $err)
+                                        <li>{{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if(session('error') && str_contains(session('error'), 'PIN'))
+                        <div style="margin-top: 1rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #92400e; display: flex; gap: 0.5rem; align-items: center;">
+                            <span>💡</span>
+                            <div>
+                                Jika siswa lupa PIN keamanan 6-digit, silakan buka menu <strong>Lupa / Reset PIN Penabung</strong> untuk mengatur PIN baru.
+                            </div>
+                        </div>
+                    @endif
+
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        @if(session('error') && str_contains(session('error'), 'PIN'))
+                            <button type="button" onclick="document.getElementById('modalTransaksiGagal').style.display='none'; switchTab('tab-reset-pin');" style="flex: 1; background: #d97706; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+                                Reset PIN Nasabah
+                            </button>
+                        @endif
+                        <button type="button" onclick="document.getElementById('modalTransaksiGagal').style.display='none'" style="flex: 1; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+                            Tutup &amp; Perbaiki Form
                         </button>
                     </div>
                 </div>
@@ -401,6 +463,16 @@
         @endif
         @if(session('error'))
             <div class="alert alert-error">{{ session('error') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-error">
+                <strong>Terjadi kesalahan input form:</strong>
+                <ul style="margin: 4px 0 0; padding-left: 1.25rem;">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
 
         <div class="grid">
@@ -560,27 +632,57 @@
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4;">
                     Aturan Wajib: Nominal penarikan minimal <strong>Rp 10.000</strong>, saldo sisa setelah penarikan tidak boleh kurang dari <strong>Rp 10.000</strong>, dan wajib verifikasi <strong>PIN 6-Digit Keamanan</strong> siswa.
                 </p>
+
+                @if(session('error'))
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; color: #991b1b; font-size: 0.9rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+                        <span style="font-size: 1.2rem; line-height: 1;">⚠️</span>
+                        <div><strong>Gagal:</strong> {{ session('error') }}</div>
+                    </div>
+                @endif
+                @if($errors->any())
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; color: #991b1b; font-size: 0.88rem;">
+                        <strong>Periksa kesalahan input:</strong>
+                        <ul style="margin: 4px 0 0; padding-left: 1.25rem;">
+                            @foreach($errors->all() as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 
                 <form action="{{ route('teller.penarikan') }}" method="POST">
                     @csrf
                     <div class="form-group">
                         <label>Pilih Penabung</label>
-                        <select name="id_nasabah" id="penarikanNasabahSelect" class="form-control" required>
+                        <select name="id_nasabah" id="penarikanNasabahSelect" class="form-control" required onchange="onPenarikanSelectChange()">
                             <option value="">-- Pilih Penabung --</option>
                             @foreach($savers as $s)
-                                <option value="{{ $s->id }}">
+                                <option value="{{ $s->id }}" data-saldo="{{ $s->rekening->saldo ?? 0 }}" data-name="{{ $s->student_name }}" data-norek="{{ $s->account_number }}">
                                     {{ $s->account_number }} - {{ $s->student_name }} (Saldo: Rp {{ number_format($s->rekening->saldo ?? 0) }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
+                    <div id="penarikanInfoBox" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span style="color: #64748b;">Saldo Tabungan Saat Ini:</span>
+                            <strong id="penarikanInfoSaldo" style="color: #16a34a;">Rp 0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #64748b;">Batas Penarikan Maksimal (Sisa Rp 10.000):</span>
+                            <strong id="penarikanInfoMaksimal" style="color: #dc2626;">Rp 0</strong>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Nominal Penarikan (Rp)</label>
                         <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000">
                     </div>
                     <div class="form-group">
                         <label>Verifikasi PIN 6-Digit Keamanan Penabung</label>
-                        <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN penabung">
+                        <input type="password" name="pin" id="penarikanPin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN penabung">
+                        <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 3px;">Wajib 6 angka PIN keamanan penabung.</small>
                     </div>
                     <div class="form-group">
                         <label>Keterangan Slip</label>
@@ -814,14 +916,33 @@
         let selectedSaverData = null;
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
-            if (activeBtn) activeBtn.classList.add('active');
-            
+            if (!tabId) return;
             const targetContent = document.getElementById(tabId);
-            if (targetContent) targetContent.classList.add('active');
+            if (!targetContent) return;
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                const oc = btn.getAttribute('onclick');
+                if (oc && oc.includes("'" + tabId + "'")) {
+                    btn.classList.add('active');
+                }
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            targetContent.classList.add('active');
+
+            try {
+                sessionStorage.setItem('teller_active_tab', tabId);
+                localStorage.setItem('teller_active_tab', tabId);
+            } catch (e) {}
+
+            try {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, null, '#' + tabId);
+                }
+            } catch (e) {}
         }
 
         function onMemberSelectChange() {
@@ -876,11 +997,28 @@
             document.getElementById('setoranNominal').focus();
         }
 
+        function onPenarikanSelectChange() {
+            const sel = document.getElementById('penarikanNasabahSelect');
+            const box = document.getElementById('penarikanInfoBox');
+            if (!box || !sel) return;
+            const opt = sel.options[sel.selectedIndex];
+            if (sel.value && opt) {
+                const saldo = parseInt(opt.getAttribute('data-saldo') || '0', 10);
+                const maxTarik = Math.max(0, saldo - 10000);
+                document.getElementById('penarikanInfoSaldo').innerText = 'Rp ' + saldo.toLocaleString('id-ID');
+                document.getElementById('penarikanInfoMaksimal').innerText = 'Rp ' + maxTarik.toLocaleString('id-ID');
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
         function selectForPenarikan() {
             if (!selectedSaverData) return;
             switchTab('tab-penarikan');
             const sel = document.getElementById('penarikanNasabahSelect');
             sel.value = selectedSaverData.id;
+            onPenarikanSelectChange();
             document.getElementById('penarikanNominal').focus();
         }
 
@@ -891,39 +1029,88 @@
             sel.value = selectedSaverData.id;
         }
 
-        function cetakStruk(noTrans, nama, noRek, jenis, nominal, waktu) {
-            const printWindow = window.open('', '', 'width=450,height=600');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Struk Transaksi - \${noTrans}</title>
-                    <style>
-                        body { font-family: monospace; font-size: 11pt; padding: 20px; line-height: 1.5; }
-                        .text-center { text-align: center; }
-                        .hr { border-bottom: 1px dashed #000; margin: 10px 0; }
-                    </style>
-                </head>
-                <body>
-                    <div class="text-center">
-                        <strong style="font-size: 13pt;">BANK MINI SEKOLAH</strong><br>
-                        STRUK BUKTI TRANSAKSI TELLER<br>
-                        ================================
-                    </div>
+        function cetakStruk(noTrans, nama, noRek, jenis, nominal, waktu, saldoAkhir) {
+            const printWindow = window.open('', '', 'width=450,height=680');
+            const jenisText = String(jenis || '').toUpperCase();
+            const isPenarikan = jenisText.includes('PENARIKAN') || jenisText.includes('TARIK');
+
+            const subJudul = isPenarikan ? 'STRUK BUKTI PENARIKAN TUNAI' : 'STRUK BUKTI SETORAN TUNAI';
+            const labelNominal = isPenarikan ? 'Nominal Tarik' : 'Nominal Setor';
+
+            let saldoRow = '';
+            if (saldoAkhir && String(saldoAkhir).trim() !== '' && String(saldoAkhir).trim() !== '0') {
+                saldoRow = '<div class="row"><span>Saldo Akhir</span><span class="bold">Rp ' + saldoAkhir + '</span></div>';
+            }
+
+            let ttdSection = '';
+            if (isPenarikan) {
+                ttdSection = `
                     <div class="hr"></div>
-                    <div>Waktu      : \${waktu}</div>
-                    <div>No Trx     : \${noTrans}</div>
-                    <div>No Rek     : \${noRek}</div>
-                    <div>Penabung   : \${nama}</div>
-                    <div>Jenis Trx  : \${jenis.toUpperCase()}</div>
-                    <div>Nominal    : Rp \${nominal}</div>
-                    <div class="hr"></div>
-                    <div class="text-center">
-                        Simpan struk ini sebagai bukti transaksi yang sah.<br>
-                        Terima kasih telah menabung di Bank Mini!
+                    <div style="display: flex; justify-content: space-between; text-align: center; font-size: 8.5pt; margin-top: 15px;">
+                        <div style="width: 45%;">
+                            Petugas Teller<br><br><br><br>
+                            ( .................... )
+                        </div>
+                        <div style="width: 45%;">
+                            Penerima / Siswa<br><br><br><br>
+                            ( .................... )
+                        </div>
                     </div>
-                </body>
-                </html>
-            `);
+                `;
+            }
+
+            const pesanFooter = isPenarikan
+                ? 'Harap periksa dan hitung kembali uang tunai yang diterima sebelum meninggalkan loket.<br>Dokumen ini merupakan bukti transaksi penarikan yang sah.'
+                : 'Simpan struk ini sebagai bukti setoran yang sah.<br>Terima kasih telah menabung di Bank Mini Sekolah!';
+
+            const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>` + subJudul + ` - ` + noTrans + `</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10.5pt;
+            padding: 20px;
+            line-height: 1.5;
+            color: #000000;
+            background: #ffffff;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+        .text-center { text-align: center; }
+        .hr { border-bottom: 1px dashed #000; margin: 8px 0; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .bold { font-weight: bold; }
+        @media print {
+            body { max-width: 100%; padding: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="text-center">
+        <strong style="font-size: 13pt;">BANK MINI SEKOLAH</strong><br>
+        ` + subJudul + `<br>
+        ================================
+    </div>
+    <div class="hr"></div>
+    <div class="row"><span>Waktu</span><span>` + waktu + `</span></div>
+    <div class="row"><span>No Trx</span><span class="bold">` + noTrans + `</span></div>
+    <div class="row"><span>No Rek</span><span>` + noRek + `</span></div>
+    <div class="row"><span>Penabung</span><span class="bold">` + nama + `</span></div>
+    <div class="row"><span>Jenis Trx</span><span class="bold">` + jenisText + `</span></div>
+    <div class="row"><span>` + labelNominal + `</span><span class="bold">Rp ` + nominal + `</span></div>
+    ` + saldoRow + `
+    ` + ttdSection + `
+    <div class="hr"></div>
+    <div class="text-center" style="font-size: 8.5pt; margin-top: 8px;">
+        ` + pesanFooter + `
+    </div>
+</body>
+</html>`;
+            printWindow.document.open();
+            printWindow.document.write(html);
             printWindow.document.close();
             printWindow.focus();
             setTimeout(() => { printWindow.print(); }, 250);
@@ -1175,17 +1362,49 @@
             doSearchNasabah();
         }
 
-        // Restore tab saat refresh / navigasi
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('month')) {
-                switchTab('tab-bulanan');
-            } else if (window.location.hash) {
-                const hashTab = window.location.hash.substring(1);
-                if (document.getElementById(hashTab)) {
-                    switchTab(hashTab);
+        function restoreTellerActiveTab() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const hasMonth = urlParams.get('month');
+                const queryTab = urlParams.get('tab');
+                const hashTab = window.location.hash ? window.location.hash.substring(1) : null;
+                const sessionTab = sessionStorage.getItem('teller_active_tab');
+                const localTab = localStorage.getItem('teller_active_tab');
+
+                // Urutan prioritas: filter bulan -> query tab -> hash -> sessionStorage -> localStorage
+                const tabToActivate = hasMonth ? 'tab-bulanan'
+                                    : (queryTab && document.getElementById(queryTab)) ? queryTab
+                                    : (hashTab && document.getElementById(hashTab)) ? hashTab
+                                    : (sessionTab && document.getElementById(sessionTab)) ? sessionTab
+                                    : (localTab && document.getElementById(localTab)) ? localTab
+                                    : null;
+
+                if (tabToActivate && document.getElementById(tabToActivate)) {
+                    switchTab(tabToActivate);
                 }
-            }
+            } catch (e) {}
+        }
+
+        // Jalankan segera saat skrip dieksekusi agar bebas flicker
+        restoreTellerActiveTab();
+
+        // Restore tab saat refresh / navigasi & daftarkan listener form submit
+        window.addEventListener('DOMContentLoaded', () => {
+            restoreTellerActiveTab();
+
+            // Pastikan setiap form teller (setoran, penarikan, aktivasi, reset pin, laporan)
+            // selalu mencatat tab aktif sebelum form dikirimkan
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', () => {
+                    const activeContent = document.querySelector('.tab-content.active');
+                    if (activeContent && activeContent.id) {
+                        try {
+                            sessionStorage.setItem('teller_active_tab', activeContent.id);
+                            localStorage.setItem('teller_active_tab', activeContent.id);
+                        } catch(e) {}
+                    }
+                });
+            });
         });
     </script>
 
