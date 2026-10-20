@@ -164,7 +164,7 @@ class TellerController extends Controller
                 $member->user->save();
             }
 
-            // 3. Buat atau update Rekening dengan saldo awal dari setoran minimal 10rb
+            // 3. Buat atau update Rekening (Saldo awal akan ditambahkan otomatis oleh Trigger Transaksi)
             $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
             if ($rekening) {
                 if ($rekening->trashed()) {
@@ -172,7 +172,6 @@ class TellerController extends Controller
                 }
                 $rekening->account_number = $accountNumber;
                 $rekening->no_rekening = $accountNumber;
-                $rekening->saldo += $request->nominal;
                 $rekening->status = 'aktif';
                 $rekening->save();
             } else {
@@ -181,12 +180,14 @@ class TellerController extends Controller
                     'id_nasabah' => $saver->id,
                     'account_number' => $accountNumber,
                     'no_rekening' => $accountNumber,
-                    'saldo' => $request->nominal,
+                    'saldo' => 0, // Saldo awal dimulai 0, akan ditambah oleh Trigger MySQL saat transaksi dibuat
                     'status' => 'aktif',
                 ]);
             }
 
-            // 5. Buat Catatan Transaksi Setoran Awal
+            $saldoSebelumAktivasi = $rekening->saldo;
+
+            // 5. Buat Catatan Transaksi Setoran Awal (Trigger Database MySQL otomatis meng-update saldo rekening)
             $noTrans = 'STR-AKT-' . date('YmdHis') . '-' . rand(100, 999);
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTrans,
@@ -200,6 +201,15 @@ class TellerController extends Controller
                 'nominal' => $request->nominal,
                 'keterangan' => 'Setoran Awal Aktivasi Rekening Anggota',
             ]);
+
+            // Ambil nilai saldo terbaru hasil eksekusi trigger database
+            $rekening->refresh();
+
+            // Fallback pengaman jika trigger database belum dipasang/dimigrasi di server MySQL
+            if ($rekening->saldo === $saldoSebelumAktivasi) {
+                $rekening->saldo += $request->nominal;
+                $rekening->save();
+            }
 
             // 6. Jurnal Akuntansi Double-Entry: Debit Kas 101, Kredit Simpanan 201
             JurnalAkuntansi::create([
@@ -265,11 +275,9 @@ class TellerController extends Controller
                 return back()->with('error', 'Rekening penabung sedang nonaktif.');
             }
 
-            // Update Saldo
-            $rekening->saldo += $request->nominal;
-            $rekening->save();
+            $saldoSebelum = $rekening->saldo;
 
-            // Create Transaksi
+            // Create Transaksi (Trigger Database MySQL otomatis meng-update penambahan saldo)
             $noTrans = 'STR-' . date('YmdHis') . '-' . rand(100, 999);
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTrans,
@@ -283,6 +291,15 @@ class TellerController extends Controller
                 'nominal' => $request->nominal,
                 'keterangan' => $request->keterangan ?? 'Setoran Tunai Teller',
             ]);
+
+            // Ambil saldo terbaru hasil eksekusi trigger database
+            $rekening->refresh();
+
+            // Fallback pengaman jika trigger database belum terpasang
+            if ($rekening->saldo === $saldoSebelum) {
+                $rekening->saldo += $request->nominal;
+                $rekening->save();
+            }
 
             // Jurnal Double-Entry: Debit Kas 101, Kredit Tabungan 201
             JurnalAkuntansi::create([
@@ -363,11 +380,9 @@ class TellerController extends Controller
                 return back()->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
             }
 
-            // Update Saldo
-            $rekening->saldo = $saldoSetelahPenarikan;
-            $rekening->save();
+            $saldoSebelum = $rekening->saldo;
 
-            // Create Transaksi
+            // Create Transaksi (Trigger Database MySQL otomatis meng-update pengurangan saldo)
             $noTrans = 'TRK-' . date('YmdHis') . '-' . rand(100, 999);
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTrans,
@@ -381,6 +396,15 @@ class TellerController extends Controller
                 'nominal' => $request->nominal,
                 'keterangan' => $request->keterangan ?? 'Penarikan Tunai Teller',
             ]);
+
+            // Ambil saldo terbaru hasil eksekusi trigger database
+            $rekening->refresh();
+
+            // Fallback pengaman jika trigger database belum terpasang
+            if ($rekening->saldo === $saldoSebelum) {
+                $rekening->saldo = $saldoSetelahPenarikan;
+                $rekening->save();
+            }
 
             // Jurnal Double-Entry: Debit Tabungan 201, Kredit Kas 101
             JurnalAkuntansi::create([

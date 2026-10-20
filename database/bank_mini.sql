@@ -167,3 +167,76 @@ INSERT INTO `rekening` (`id`, `id_nasabah`, `no_rekening`, `saldo`, `status`) VA
 -- 5. Laporan Harian Contoh (Approved)
 INSERT INTO `laporan_harian` (`id`, `tanggal`, `user_id`, `saldo_awal`, `total_setoran`, `total_penarikan`, `saldo_akhir_sistem`, `uang_fisik`, `selisih`, `status_approval`, `supervisor_id`, `created_at`) VALUES
 (1, '2026-07-29', 2, 0, 60000, 10000, 50000, 50000, 0, 'approved', 3, '2026-07-29 08:18:49');
+
+-- ====================================================================
+-- DATABASE TRIGGERS (STANDAR UJI KOMPETENSI KEAHLIAN RPL)
+-- ====================================================================
+
+DELIMITER $$
+
+-- --------------------------------------------------------
+-- 1. TRIGGER BEFORE INSERT: Validasi Saldo Penarikan (Cegah Saldo Minus)
+-- --------------------------------------------------------
+DROP TRIGGER IF EXISTS `trg_cek_saldo_penarikan`$$
+CREATE TRIGGER `trg_cek_saldo_penarikan`
+BEFORE INSERT ON `transaksi`
+FOR EACH ROW
+BEGIN
+    DECLARE current_saldo BIGINT DEFAULT 0;
+
+    IF NEW.jenis_trans = 'penarikan' THEN
+        SELECT `saldo` INTO current_saldo 
+        FROM `rekening` 
+        WHERE `id_nasabah` = NEW.id_nasabah
+        LIMIT 1;
+
+        IF (current_saldo - NEW.nominal) < 0 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Transaksi Ditolak (Trigger Database): Saldo tidak mencukupi untuk melakukan penarikan!';
+        END IF;
+    END IF;
+END$$
+
+-- --------------------------------------------------------
+-- 2. TRIGGER AFTER INSERT: Update Saldo Otomatis (Setoran / Penarikan)
+-- --------------------------------------------------------
+DROP TRIGGER IF EXISTS `trg_transaksi_update_saldo`$$
+CREATE TRIGGER `trg_transaksi_update_saldo`
+AFTER INSERT ON `transaksi`
+FOR EACH ROW
+BEGIN
+    IF NEW.jenis_trans = 'setoran' THEN
+        UPDATE `rekening`
+        SET `saldo` = `saldo` + NEW.nominal,
+            `updated_at` = NOW()
+        WHERE `id_nasabah` = NEW.id_nasabah;
+    ELSEIF NEW.jenis_trans = 'penarikan' THEN
+        UPDATE `rekening`
+        SET `saldo` = `saldo` - NEW.nominal,
+            `updated_at` = NOW()
+        WHERE `id_nasabah` = NEW.id_nasabah;
+    END IF;
+END$$
+
+-- --------------------------------------------------------
+-- 3. TRIGGER AFTER DELETE: Rollback Saldo Otomatis jika Transaksi Dihapus
+-- --------------------------------------------------------
+DROP TRIGGER IF EXISTS `trg_transaksi_after_delete`$$
+CREATE TRIGGER `trg_transaksi_after_delete`
+AFTER DELETE ON `transaksi`
+FOR EACH ROW
+BEGIN
+    IF OLD.jenis_trans = 'setoran' THEN
+        UPDATE `rekening`
+        SET `saldo` = `saldo` - OLD.nominal,
+            `updated_at` = NOW()
+        WHERE `id_nasabah` = OLD.id_nasabah;
+    ELSEIF OLD.jenis_trans = 'penarikan' THEN
+        UPDATE `rekening`
+        SET `saldo` = `saldo` + OLD.nominal,
+            `updated_at` = NOW()
+        WHERE `id_nasabah` = OLD.id_nasabah;
+    END IF;
+END$$
+
+DELIMITER ;
