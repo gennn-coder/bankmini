@@ -20,6 +20,7 @@ class Member extends Model
         'nis',
         'class_grade',
         'email',
+        'pin',
         'graduation_year',
         'status',
     ];

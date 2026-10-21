@@ -458,6 +458,100 @@
         </div>
         @endif
 
+        <!-- MODAL POPUP LUPA PIN DENGAN VERIFIKASI KODE OTP -->
+        <div id="modalLupaPinOtp" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+            <div style="background: #ffffff; border-radius: 24px; max-width: 520px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow: hidden;">
+                <!-- Header Modal -->
+                <div style="background: linear-gradient(135deg, #d97706, #f59e0b); padding: 1.5rem 1.75rem; color: #ffffff; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                            <span style="background: rgba(255,255,255,0.25); padding: 0.2rem 0.55rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800;">VERIFIKASI OTP</span>
+                            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800;">Pemulihan PIN Transaksi</h3>
+                        </div>
+                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.95;">Kirim kode OTP ke Gmail nasabah untuk membuat PIN baru dengan aman.</p>
+                    </div>
+                    <button type="button" onclick="closeLupaPinOtpModal()" style="background: rgba(255,255,255,0.2); border: none; color: #ffffff; width: 34px; height: 34px; border-radius: 50%; font-size: 1.25rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                </div>
+
+                <div style="padding: 1.5rem 1.75rem;">
+                    <!-- TAHAP 1: INPUT IDENTITAS, EMAIL & VERIFIKASI OTP -->
+                    <div id="lupaPinStep1">
+                        <div id="lupaPinAlert1" style="display: none; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.88rem; font-weight: 600;"></div>
+
+                        <div class="form-group">
+                            <label>Identitas Penabung (NIS / No. Rekening)</label>
+                            <input type="text" id="lupaPinIdentifier" class="form-control" placeholder="Contoh: 100.2026.0019 atau NIS Siswa" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Alamat Gmail Siswa / Penabung</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="email" id="lupaPinEmail" class="form-control" placeholder="Contoh: siswa@gmail.com" style="flex: 1;" required>
+                                <button type="button" id="btnLupaPinKirimOtp" onclick="handleLupaPinKirimOtp()" class="btn-primary" style="background: #d97706; padding: 0.65rem 1rem; font-size: 0.85rem; white-space: nowrap;">
+                                    Kirim OTP
+                                </button>
+                            </div>
+                            <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 3px;">Kode OTP 6-digit akan dikirimkan ke kotak masuk (Inbox/Spam) Gmail ini.</small>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label>Masukkan 6-Digit Kode OTP dari Gmail</label>
+                            <input type="text" id="lupaPinOtpCode" class="form-control" maxlength="6" placeholder="Contoh: 123456" style="letter-spacing: 4px; font-weight: 800; text-align: center; font-size: 1.2rem;">
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                            <button type="button" onclick="closeLupaPinOtpModal()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1;">
+                                Batal
+                            </button>
+                            <button type="button" id="btnLupaPinVerifOtp" onclick="handleLupaPinVerifOtp()" class="btn-primary" style="background: linear-gradient(135deg, #d97706, #f59e0b); flex: 2; padding: 0.75rem;">
+                                Verifikasi OTP &amp; Lanjut
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TAHAP 2: INPUT PIN 6-DIGIT BARU -->
+                    <div id="lupaPinStep2" style="display: none;">
+                        <div id="lupaPinAlert2" style="display: none; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.88rem; font-weight: 600;"></div>
+
+                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
+                            <div style="color: #1e40af; font-weight: 700;">Nasabah Terverifikasi:</div>
+                            <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a;" id="lupaPinNamaSiswa">-</div>
+                            <div style="color: #64748b; font-size: 0.82rem;" id="lupaPinRekeningSiswa">-</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Buat PIN 6-Digit Baru</label>
+                            <div style="position: relative;">
+                                <input type="password" id="lupaPinBaru" class="form-control" maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru" required style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('lupaPinBaru', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Konfirmasi PIN 6-Digit Baru</label>
+                            <div style="position: relative;">
+                                <input type="password" id="lupaPinBaruConfirm" class="form-control" maxlength="6" minlength="6" placeholder="Ulangi 6 angka PIN baru" required style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('lupaPinBaruConfirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                            <button type="button" onclick="goToLupaPinStep1()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1;">
+                                Kembali
+                            </button>
+                            <button type="button" id="btnLupaPinSimpan" onclick="handleLupaPinSimpan()" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #22c55e); flex: 2; padding: 0.75rem;">
+                                Simpan PIN Baru &amp; Pasang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -657,7 +751,7 @@
                         <select name="id_nasabah" id="penarikanNasabahSelect" class="form-control" required onchange="onPenarikanSelectChange()">
                             <option value="">-- Pilih Penabung --</option>
                             @foreach($savers as $s)
-                                <option value="{{ $s->id }}" data-saldo="{{ $s->rekening->saldo ?? 0 }}" data-name="{{ $s->student_name }}" data-norek="{{ $s->account_number }}">
+                                <option value="{{ $s->id }}" data-saldo="{{ $s->rekening->saldo ?? 0 }}" data-name="{{ $s->student_name }}" data-norek="{{ $s->account_number }}" data-nis="{{ $s->nis }}" data-email="{{ $s->email ?? '' }}">
                                     {{ $s->account_number }} - {{ $s->student_name }} (Saldo: Rp {{ number_format($s->rekening->saldo ?? 0) }})
                                 </option>
                             @endforeach
@@ -681,8 +775,18 @@
                     </div>
                     <div class="form-group">
                         <label>Verifikasi PIN 6-Digit Keamanan Penabung</label>
-                        <input type="password" name="pin" id="penarikanPin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN penabung">
-                        <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 3px;">Wajib 6 angka PIN keamanan penabung.</small>
+                        <div style="position: relative;">
+                            <input type="password" name="pin" id="penarikanPin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN penabung" style="padding-right: 2.75rem;">
+                            <button type="button" onclick="togglePasswordVisibility('penarikanPin', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; flex-wrap: wrap; gap: 0.25rem;">
+                            <small style="color: #64748b; font-size: 0.78rem;">Wajib 6 angka PIN keamanan penabung.</small>
+                            <a href="javascript:void(0)" onclick="openLupaPinOtpModal()" style="font-size: 0.82rem; color: #2563eb; font-weight: 700; text-decoration: underline;">
+                                Lupa PIN Nasabah?
+                            </a>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Keterangan Slip</label>
@@ -1027,6 +1131,270 @@
             switchTab('tab-reset-pin');
             const sel = document.getElementById('resetPinSelect');
             sel.value = selectedSaverData.id;
+        }
+
+        // ==========================================
+        // FITUR PEMULIHAN / LUPA PIN DENGAN KODE OTP
+        // ==========================================
+        let lupaPinResetToken = null;
+        let lupaPinOtpTimer = null;
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            const eyeOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
+            btn.innerHTML = isPassword ? eyeOffSvg : eyeSvg;
+            btn.title = isPassword ? 'Sembunyikan' : 'Lihat';
+            btn.style.color = isPassword ? '#2563eb' : '#64748b';
+        }
+
+        function openLupaPinOtpModal() {
+            const sel = document.getElementById('penarikanNasabahSelect');
+            const opt = sel && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex] : null;
+
+            const idInput = document.getElementById('lupaPinIdentifier');
+            const emailInput = document.getElementById('lupaPinEmail');
+            const otpInput = document.getElementById('lupaPinOtpCode');
+
+            if (opt) {
+                const norek = opt.getAttribute('data-norek') || '';
+                const nis = opt.getAttribute('data-nis') || '';
+                const email = opt.getAttribute('data-email') || '';
+                idInput.value = norek || nis;
+                emailInput.value = email;
+            } else if (typeof selectedSaverData !== 'undefined' && selectedSaverData) {
+                idInput.value = selectedSaverData.no_rekening || selectedSaverData.nis;
+                emailInput.value = selectedSaverData.email || '';
+            }
+
+            if (otpInput) otpInput.value = '';
+            goToLupaPinStep1();
+            document.getElementById('modalLupaPinOtp').style.display = 'flex';
+        }
+
+        function closeLupaPinOtpModal() {
+            document.getElementById('modalLupaPinOtp').style.display = 'none';
+            if (lupaPinOtpTimer) {
+                clearInterval(lupaPinOtpTimer);
+                lupaPinOtpTimer = null;
+            }
+        }
+
+        function goToLupaPinStep1() {
+            document.getElementById('lupaPinStep2').style.display = 'none';
+            document.getElementById('lupaPinStep1').style.display = 'block';
+            hideLupaPinAlert(1);
+            hideLupaPinAlert(2);
+        }
+
+        function showLupaPinAlert(step, msg, type) {
+            const el = document.getElementById('lupaPinAlert' + step);
+            if (!el) return;
+            el.style.display = 'block';
+            el.innerText = msg;
+            if (type === 'success') {
+                el.style.background = '#dcfce7';
+                el.style.color = '#15803d';
+                el.style.border = '1px solid #bbf7d0';
+            } else {
+                el.style.background = '#fef2f2';
+                el.style.color = '#b91c1c';
+                el.style.border = '1px solid #fecaca';
+            }
+        }
+
+        function hideLupaPinAlert(step) {
+            const el = document.getElementById('lupaPinAlert' + step);
+            if (el) el.style.display = 'none';
+        }
+
+        async function handleLupaPinKirimOtp() {
+            const identifier = document.getElementById('lupaPinIdentifier').value.trim();
+            const email = document.getElementById('lupaPinEmail').value.trim();
+            const btn = document.getElementById('btnLupaPinKirimOtp');
+
+            hideLupaPinAlert(1);
+
+            if (!identifier) {
+                showLupaPinAlert(1, 'Masukkan NIS / Nomor Rekening siswa terlebih dahulu.', 'error');
+                return;
+            }
+            if (!email) {
+                showLupaPinAlert(1, 'Masukkan alamat Gmail siswa untuk menerima kode OTP.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            const orig = btn.innerText;
+            btn.innerText = 'Mengirim...';
+
+            try {
+                const res = await fetch('{{ route("lupa-sandi.kirim-otp") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ identifier, email })
+                });
+                let data = null;
+                try { data = await res.json(); } catch (_) { data = null; }
+
+                if (res.ok && data && data.success) {
+                    showLupaPinAlert(1, data.message, 'success');
+                    document.getElementById('lupaPinOtpCode').focus();
+
+                    let t = 60;
+                    btn.innerText = 'Ulang (' + t + 's)';
+                    if (lupaPinOtpTimer) clearInterval(lupaPinOtpTimer);
+                    lupaPinOtpTimer = setInterval(() => {
+                        t--;
+                        if (t <= 0) {
+                            clearInterval(lupaPinOtpTimer);
+                            lupaPinOtpTimer = null;
+                            btn.disabled = false;
+                            btn.innerText = 'Kirim Ulang OTP';
+                        } else {
+                            btn.innerText = 'Ulang (' + t + 's)';
+                        }
+                    }, 1000);
+                } else {
+                    const msg = (data && data.message) ? data.message : ('Gagal mengirim kode OTP (Status ' + res.status + '). Silakan coba lagi.');
+                    showLupaPinAlert(1, msg, 'error');
+                    btn.disabled = false;
+                    btn.innerText = orig;
+                }
+            } catch (e) {
+                showLupaPinAlert(1, 'Terjadi kesalahan sistem saat kirim OTP: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.innerText = orig;
+            }
+        }
+
+        async function handleLupaPinVerifOtp() {
+            const identifier = document.getElementById('lupaPinIdentifier').value.trim();
+            const email = document.getElementById('lupaPinEmail').value.trim();
+            const otp = document.getElementById('lupaPinOtpCode').value.trim();
+            const btn = document.getElementById('btnLupaPinVerifOtp');
+
+            hideLupaPinAlert(1);
+
+            if (!identifier || !email) {
+                showLupaPinAlert(1, 'Mohon lengkapi identitas dan email.', 'error');
+                return;
+            }
+            if (!otp || otp.length < 6) {
+                showLupaPinAlert(1, 'Masukkan 6 digit kode OTP yang diterima di Gmail.', 'error');
+                document.getElementById('lupaPinOtpCode').focus();
+                return;
+            }
+
+            btn.disabled = true;
+            const orig = btn.innerText;
+            btn.innerText = 'Memverifikasi...';
+
+            try {
+                const res = await fetch('{{ route("lupa-sandi.verifikasi-otp") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ identifier, email, otp })
+                });
+                let data = null;
+                try { data = await res.json(); } catch (_) { data = null; }
+
+                if (res.ok && data && data.success) {
+                    lupaPinResetToken = data.reset_token;
+                    document.getElementById('lupaPinNamaSiswa').innerText = data.nama || identifier;
+                    document.getElementById('lupaPinRekeningSiswa').innerText = 'NIS / Akun: ' + (data.username || identifier);
+
+                    document.getElementById('lupaPinStep1').style.display = 'none';
+                    document.getElementById('lupaPinStep2').style.display = 'block';
+                    document.getElementById('lupaPinBaru').focus();
+                } else {
+                    const msg = (data && data.message) ? data.message : ('Kode OTP tidak valid atau terjadi kendala sistem (Status ' + res.status + ').');
+                    showLupaPinAlert(1, msg, 'error');
+                }
+            } catch (e) {
+                showLupaPinAlert(1, 'Gagal verifikasi OTP: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = orig;
+            }
+        }
+
+        async function handleLupaPinSimpan() {
+            const pin = document.getElementById('lupaPinBaru').value.trim();
+            const pinConfirm = document.getElementById('lupaPinBaruConfirm').value.trim();
+            const btn = document.getElementById('btnLupaPinSimpan');
+
+            hideLupaPinAlert(2);
+
+            if (!pin || pin.length !== 6 || !/^\d+$/.test(pin)) {
+                showLupaPinAlert(2, 'PIN baru wajib berupa 6 angka digit.', 'error');
+                document.getElementById('lupaPinBaru').focus();
+                return;
+            }
+
+            if (pin !== pinConfirm) {
+                showLupaPinAlert(2, 'Konfirmasi PIN baru tidak cocok.', 'error');
+                document.getElementById('lupaPinBaruConfirm').focus();
+                return;
+            }
+
+            if (!lupaPinResetToken) {
+                showLupaPinAlert(2, 'Sesi verifikasi kadaluarsa. Silakan ulangi.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            const orig = btn.innerText;
+            btn.innerText = 'Menyimpan PIN...';
+
+            try {
+                const res = await fetch('{{ route("lupa-pin.simpan-pin") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        reset_token: lupaPinResetToken,
+                        pin: pin,
+                        pin_confirmation: pinConfirm
+                    })
+                });
+                let data = null;
+                try { data = await res.json(); } catch (_) { data = null; }
+
+                if (res.ok && data && data.success) {
+                    const penarikanPinInput = document.getElementById('penarikanPin');
+                    if (penarikanPinInput) {
+                        penarikanPinInput.value = pin;
+                    }
+                    closeLupaPinOtpModal();
+                    alert('✓ Berhasil! PIN 6-digit baru nasabah berhasil disimpan dan telah otomatis terpasang pada form penarikan.');
+                    if (penarikanPinInput) penarikanPinInput.focus();
+                } else {
+                    const msg = (data && data.message) ? data.message : ('Gagal menyimpan PIN baru (Status ' + res.status + '). Silakan coba lagi.');
+                    showLupaPinAlert(2, msg, 'error');
+                }
+            } catch (e) {
+                showLupaPinAlert(2, 'Gagal menyimpan PIN: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = orig;
+            }
         }
 
         function cetakStruk(noTrans, nama, noRek, jenis, nominal, waktu, saldoAkhir) {

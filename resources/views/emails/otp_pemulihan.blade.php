@@ -18,7 +18,7 @@
         <div style="padding: 28px 24px;">
             <h2 style="margin: 0 0 12px; font-size: 18px; color: #0f172a;">Halo, {{ $namaPenerima }}</h2>
             <p style="margin: 0 0 18px; font-size: 14px; line-height: 1.6; color: #475569;">
-                Kami menerima permintaan untuk mengatur ulang kata sandi akun E-Teller Bank Mini Anda (Username/NISN: <strong>{{ $username }}</strong>). Gunakan kode OTP di bawah ini untuk melanjutkan verifikasi pemulihan sandi:
+                Kami menerima permintaan verifikasi untuk mengatur ulang Kata Sandi atau PIN Transaksi akun E-Teller Bank Mini Anda (Username/NIS: <strong>{{ $username }}</strong>). Gunakan kode OTP di bawah ini untuk melanjutkan proses verifikasi:
             </p>
 
             <!-- Box OTP -->
@@ -35,7 +35,7 @@
             </div>
 
             <p style="margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: #475569;">
-                Masukkan kode 6 digit tersebut pada formulir pemulihan kata sandi di halaman login. Jangan berikan kode OTP ini kepada siapapun untuk menjaga keamanan akun Anda.
+                Masukkan 6 digit kode tersebut pada formulir verifikasi di aplikasi E-Teller Bank Mini. Demi keamanan akun Anda, jangan berikan kode ini kepada pihak manapun.
             </p>
 
             <p style="margin: 16px 0 0; font-size: 12px; line-height: 1.5; color: #94a3b8;">

@@ -84,7 +84,14 @@ class AdminController extends Controller
             'class_grade' => 'required|string',
             'email' => 'required|email',
             'graduation_year' => 'required|string',
-            'password' => 'nullable|string|min:6',
+            'password' => 'required|string|min:6',
+            'pin' => 'required|numeric|digits:6',
+        ], [
+            'password.required' => 'Password akun login siswa wajib diisi (minimal 6 karakter).',
+            'password.min' => 'Password akun login siswa minimal 6 karakter.',
+            'pin.required' => 'PIN keamanan transaksi penarikan wajib diisi.',
+            'pin.digits' => 'PIN keamanan transaksi penarikan harus tepat 6 digit angka (tidak boleh kurang atau lebih).',
+            'pin.numeric' => 'PIN transaksi penarikan harus berupa 6 angka digit.',
         ]);
 
         // Buat Akun Login untuk Siswa / Anggota
@@ -93,7 +100,7 @@ class AdminController extends Controller
             'nama_petugas' => $request->student_name,
             'email' => $request->email,
             'role' => 'nasabah',
-            'password' => Hash::make($request->password ?? '123456'),
+            'password' => Hash::make($request->password),
             'status' => 'aktif',
         ]);
 
@@ -104,6 +111,7 @@ class AdminController extends Controller
             'nis' => $request->nis,
             'class_grade' => $request->class_grade,
             'email' => $request->email,
+            'pin' => Hash::make($request->pin ?? '123456'),
             'graduation_year' => $request->graduation_year,
             'status' => 'rekening tidak aktif',
         ]);

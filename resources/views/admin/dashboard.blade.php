@@ -435,8 +435,14 @@
                             <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
                         </div>
                         <div class="form-group">
-                            <label>Password Awal Akun (Opsional)</label>
-                            <input type="password" name="password" class="form-control" placeholder="Default: 123456">
+                            <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
+                            <input type="password" name="password" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)">
+                            <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">Kata sandi digunakan siswa untuk login ke sistem (minimal 6 karakter).</small>
+                        </div>
+                        <div class="form-group">
+                            <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
+                            <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)">
+                            <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">PIN 6 digit angka digunakan untuk otorisasi penarikan uang tabungan di loket.</small>
                         </div>
                         <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Data Anggota</button>
                     </form>

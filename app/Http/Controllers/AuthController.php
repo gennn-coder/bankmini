@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Saver;
 use App\Models\Member;
+use App\Models\AuditLog;
 
 class AuthController extends Controller
 {
@@ -299,7 +300,7 @@ class AuthController extends Controller
                 'email' => $inputEmail,
             ], function ($message) use ($inputEmail, $namaPenerima, $otp) {
                 $message->to($inputEmail, $namaPenerima)
-                        ->subject('[E-Teller Bank Mini] Kode OTP Pemulihan Sandi: ' . $otp);
+                        ->subject('[E-Teller Bank Mini] Kode OTP Keamanan: ' . $otp);
             });
             $emailSent = true;
         } catch (\Exception $e) {
@@ -455,6 +456,81 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Kata sandi berhasil diperbarui! Silakan masuk menggunakan kata sandi baru Anda.',
             'username' => $user->username,
+        ]);
+    }
+
+    /**
+     * Simpan PIN 6-Digit Baru setelah verifikasi OTP berhasil
+     */
+    public function simpanPinBaruOtp(Request $request)
+    {
+        $request->validate([
+            'reset_token' => ['required', 'string'],
+            'pin' => ['required', 'numeric', 'digits:6', 'confirmed'],
+        ]);
+
+        $resetToken = $request->reset_token;
+        $userId = Cache::get('verified_reset_' . $resetToken);
+        if (!$userId) {
+            if ($request->session()->get('verified_reset_token') === $resetToken) {
+                $userId = $request->session()->get('verified_reset_user_id');
+            }
+        }
+
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesi verifikasi OTP telah kadaluarsa. Silakan ulangi langkah kirim kode OTP.',
+            ], 403);
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun pengguna tidak ditemukan.',
+            ], 404);
+        }
+
+        $saver = Saver::where('user_id', $user->id)->first() ?? Saver::where('nis', $user->username)->first();
+        if (!$saver) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data penabung tidak ditemukan.',
+            ], 404);
+        }
+
+        $saver->security_pin = Hash::make($request->pin);
+        $saver->save();
+
+        Cache::forget('otp_reset_' . $user->id);
+        Cache::forget('verified_reset_' . $resetToken);
+        $request->session()->forget([
+            'otp_reset_user_id',
+            'otp_reset_code',
+            'otp_reset_email',
+            'otp_reset_expires',
+            'verified_reset_token',
+            'verified_reset_user_id',
+        ]);
+
+        try {
+            AuditLog::create([
+                'user_id' => auth()->id() ?? $user->id,
+                'aktivitas' => 'Reset PIN via OTP',
+                'detail' => 'PIN transaksi nasabah ' . $saver->student_name . ' (No Rek: ' . $saver->account_number . ') berhasil direset via verifikasi OTP.',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('AuditLog reset PIN warning: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'PIN 6-digit keamanan transaksi berhasil diperbarui!',
+            'pin' => $request->pin,
+            'student_name' => $saver->student_name,
+            'account_number' => $saver->account_number,
         ]);
     }
 

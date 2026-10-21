@@ -15,6 +15,7 @@ Route::post('/lupa-sandi/kirim-otp', [AuthController::class, 'kirimOtp'])->name(
 Route::post('/lupa-sandi/verifikasi-otp', [AuthController::class, 'verifikasiOtp'])->name('lupa-sandi.verifikasi-otp');
 Route::post('/lupa-sandi/simpan-sandi', [AuthController::class, 'simpanSandiBaru'])->name('lupa-sandi.simpan-sandi');
 Route::post('/lupa-pin', [AuthController::class, 'lupaPin'])->name('lupa-pin');
+Route::post('/lupa-pin/simpan-pin', [AuthController::class, 'simpanPinBaruOtp'])->name('lupa-pin.simpan-pin');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Role-Based Authenticated Routes

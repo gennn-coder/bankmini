@@ -47,6 +47,8 @@ class BankMiniRevisionTest extends TestCase
             'email' => 'siswa.uji@gmail.com',
             'class_grade' => 'X PPLG 1',
             'graduation_year' => '2028',
+            'password' => '123456',
+            'pin' => '123456',
         ]);
         $response->assertSessionHas('success');
 
@@ -335,6 +337,8 @@ class BankMiniRevisionTest extends TestCase
             'email' => 'siswa.' . $nis . '@gmail.com',
             'class_grade' => 'X PPLG 1',
             'graduation_year' => '2028',
+            'password' => '123456',
+            'pin' => '123456',
         ]);
 
         $member = Member::where('nis', $nis)->first();
@@ -556,12 +560,26 @@ class BankMiniRevisionTest extends TestCase
             'email' => $memberEmail,
             'class_grade' => 'X RPL 1',
             'graduation_year' => '2028',
+            'password' => '123456',
+            'pin' => '123456',
         ]);
         $resMemberOk->assertSessionHas('success');
         $member = Member::where('nis', $nis)->first();
         $this->assertNotNull($member);
         $this->assertEquals($memberEmail, $member->email);
         $this->assertEquals($memberEmail, $member->user->email);
+
+        // 5. Validasi PIN harus tepat 6 digit dan Password minimal 6 karakter
+        $resPinShort = $this->post(route('admin.members.store'), [
+            'student_name' => 'Siswa PIN Pendek',
+            'nis' => 'PIN_ERR_' . rand(1000, 9999),
+            'email' => 'siswa.pin.err@gmail.com',
+            'class_grade' => 'X RPL 1',
+            'graduation_year' => '2028',
+            'password' => '12345', // kurang dari 6
+            'pin' => '12345', // kurang dari 6 digit
+        ]);
+        $resPinShort->assertSessionHasErrors(['password', 'pin']);
     }
 
     /**
@@ -653,4 +671,69 @@ class BankMiniRevisionTest extends TestCase
             'nama' => $teller->nama_petugas,
         ]);
     }
+
+    /**
+     * Test 17: Alur Lupa PIN Transaksi Nasabah via OTP
+     */
+    public function test_lupa_pin_transaction_reset_flow()
+    {
+        $teller = User::where('role', 'teller')->first();
+        $this->actingAs($teller);
+
+        // 1. Setup Nasabah Saver
+        $nis = 'PIN' . rand(10000, 99999);
+        $user = User::create([
+            'username' => $nis,
+            'nama_petugas' => 'Siswa Test PIN',
+            'role' => 'nasabah',
+            'email' => 'nasabah.pin@example.com',
+            'password' => Hash::make('password123'),
+            'status' => 'aktif',
+        ]);
+
+        $saver = Saver::create([
+            'user_id' => $user->id,
+            'student_name' => 'Siswa Test PIN',
+            'nis' => $nis,
+            'account_number' => 'ACC' . rand(10000, 99999),
+            'class_grade' => 'XI AKL 1',
+            'email' => 'nasabah.pin@example.com',
+            'security_pin' => Hash::make('111111'),
+        ]);
+
+        // 2. Kirim OTP
+        $resOtp = $this->postJson(route('lupa-sandi.kirim-otp'), [
+            'identifier' => $saver->nis,
+            'email' => 'nasabah.pin@example.com',
+        ]);
+        $resOtp->assertStatus(200)->assertJson(['success' => true]);
+
+        $cachedOtp = \Illuminate\Support\Facades\Cache::get('otp_reset_' . $user->id);
+        $this->assertNotNull($cachedOtp);
+
+        // 3. Verifikasi OTP
+        $resVerif = $this->postJson(route('lupa-sandi.verifikasi-otp'), [
+            'identifier' => $saver->nis,
+            'email' => 'nasabah.pin@example.com',
+            'otp' => $cachedOtp['otp'],
+        ]);
+        $resVerif->assertStatus(200)->assertJson(['success' => true]);
+        $resetToken = $resVerif->json('reset_token');
+        $this->assertNotEmpty($resetToken);
+
+        // 4. Simpan PIN Baru
+        $resSimpan = $this->postJson(route('lupa-pin.simpan-pin'), [
+            'reset_token' => $resetToken,
+            'pin' => '987654',
+            'pin_confirmation' => '987654',
+        ]);
+        $resSimpan->assertStatus(200)->assertJson([
+            'success' => true,
+            'pin' => '987654',
+        ]);
+
+        // 5. Cek PIN baru terupdate di database
+        $this->assertTrue(Hash::check('987654', $saver->fresh()->security_pin));
+    }
 }
+
