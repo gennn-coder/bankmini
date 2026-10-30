@@ -11,6 +11,7 @@ use App\Models\Transaksi;
 use App\Models\LaporanHarian;
 use App\Models\AuditLog;
 use App\Models\JurnalAkuntansi;
+use App\Models\PengajuanKas;
 use Illuminate\Support\Facades\Hash;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -87,14 +88,14 @@ class AdminController extends Controller
             'password' => 'required|string|min:6',
             'pin' => 'required|numeric|digits:6',
         ], [
-            'password.required' => 'Password akun login siswa wajib diisi (minimal 6 karakter).',
-            'password.min' => 'Password akun login siswa minimal 6 karakter.',
-            'pin.required' => 'PIN keamanan transaksi penarikan wajib diisi.',
-            'pin.digits' => 'PIN keamanan transaksi penarikan harus tepat 6 digit angka (tidak boleh kurang atau lebih).',
+            'password.required' => '(minimal 6 karakter).',
+            'password.min' => 'minimal 6 karakter.',
+            'pin.required' => ' wajib diisi.',
+            'pin.digits' => 'harus tepat 6 digit .',
             'pin.numeric' => 'PIN transaksi penarikan harus berupa 6 angka digit.',
         ]);
 
-        // Buat Akun Login untuk Siswa / Anggota
+        // Buat Akun Login untuk Siswa / Anggota (status awal: 'tidak aktif' sampai transaksi pertama)
         $user = User::create([
             'username' => $request->nis,
             'nama_petugas' => $request->student_name,
@@ -123,7 +124,7 @@ class AdminController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return back()->with('success', 'Anggota ' . $member->student_name . ' (' . $member->email . ') berhasil ditambahkan dengan status: Rekening Tidak Aktif. Akun login NIS: ' . $member->nis);
+        return back()->with('success', 'Anggota ' . $member->student_name . ' (' . $member->email . ') berhasil didaftarkan dengan status Rekening Tidak Aktif. Akun dapat login dan akan otomatis aktif masuk ke Manajemen User setelah menabung pertama kali.');
     }
 
     public function updateMember(Request $request, $userId)
@@ -134,26 +135,33 @@ class AdminController extends Controller
             'class_grade' => 'required|string',
             'email' => 'nullable|email',
             'graduation_year' => 'required|string',
-            'status' => 'required|in:rekening aktif,rekening tidak aktif',
+            'status' => 'nullable|in:rekening aktif,rekening tidak aktif',
         ]);
 
         $member = Member::where('user_id', $userId)->firstOrFail();
-        $member->update([
+        $memberData = [
             'student_name' => $request->student_name,
             'nis' => $request->nis,
             'class_grade' => $request->class_grade,
             'email' => $request->email ?? $member->email,
             'graduation_year' => $request->graduation_year,
-            'status' => $request->status,
-        ]);
+        ];
+        if ($request->filled('status')) {
+            $memberData['status'] = $request->status;
+        }
+        $member->update($memberData);
 
-        // Sinkronkan nama dan email di akun user
+        // Sinkronkan nama, email, dan status di akun user
         if ($member->user) {
-            $member->user->update([
+            $userData = [
                 'nama_petugas' => $request->student_name,
                 'username' => $request->nis,
                 'email' => $request->email ?? $member->user->email,
-            ]);
+            ];
+            if ($request->filled('status')) {
+                $userData['status'] = 'aktif';
+            }
+            $member->user->update($userData);
         }
 
         // Jika status diubah menjadi "rekening aktif", pastikan Saver dan Rekening otomatis dibuat atau dipulihkan
@@ -405,5 +413,57 @@ class AdminController extends Controller
         ));
 
         return $pdf->download('Laporan_Bulanan_' . $namaBulan . '_' . $year . '.pdf');
+    }
+
+    public function approvePengajuanKas(Request $request, $id)
+    {
+        $pengajuan = PengajuanKas::findOrFail($id);
+        if ($pengajuan->status !== 'pending') {
+            return back()->with('error', 'Pengajuan sudah diproses.');
+        }
+
+        $pengajuan->update([
+            'status' => 'approved',
+            'admin_id' => auth()->id(),
+            'catatan_admin' => $request->catatan_admin,
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'ACC Tambahan Kas Teller',
+            'detail' => 'ACC tambahan kas Rp ' . number_format($pengajuan->nominal) . ' (Teller: ' . ($pengajuan->teller->nama_petugas ?? '-') . ')',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Tambahan kas Rp ' . number_format($pengajuan->nominal) . ' disetujui.');
+    }
+
+    public function rejectPengajuanKas(Request $request, $id)
+    {
+        $pengajuan = PengajuanKas::findOrFail($id);
+        if ($pengajuan->status !== 'pending') {
+            return back()->with('error', 'Pengajuan sudah diproses.');
+        }
+
+        $request->validate([
+            'catatan_admin' => 'required|string|max:500',
+        ], [
+            'catatan_admin.required' => 'Alasan penolakan pengajuan tambahan kas wajib diisi.',
+        ]);
+
+        $pengajuan->update([
+            'status' => 'rejected',
+            'admin_id' => auth()->id(),
+            'catatan_admin' => $request->catatan_admin,
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Tolak Tambahan Kas Teller',
+            'detail' => 'Tolak tambahan kas Rp ' . number_format($pengajuan->nominal) . ' (Teller: ' . ($pengajuan->teller->nama_petugas ?? '-') . ') - Alasan: ' . $request->catatan_admin,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Pengajuan tambahan kas berhasil ditolak dengan alasan: "' . $request->catatan_admin . '".');
     }
 }

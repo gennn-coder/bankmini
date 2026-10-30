@@ -34,27 +34,38 @@ class AuthController extends Controller
         $input = trim($credentials['username']);
         $password = $credentials['password'];
 
-        // Find user by username, nama_petugas, or via Saver / Member (nis, account_number, student_name)
+        // Find user by username, email, nama_petugas, or via Saver / Member (nis, account_number, student_name, email)
         $user = User::where('username', $input)
+            ->orWhere('email', $input)
             ->orWhere('nama_petugas', $input)
             ->first();
 
         if (!$user) {
-            $saver = Saver::where('student_name', $input)
+            $saver = Saver::where('email', $input)
                 ->orWhere('nis', $input)
                 ->orWhere('account_number', $input)
+                ->orWhere('student_name', $input)
                 ->first();
-            if ($saver && $saver->user_id) {
-                $user = User::find($saver->user_id);
+            if ($saver) {
+                if ($saver->user_id) {
+                    $user = User::find($saver->user_id);
+                } elseif (!empty($saver->email)) {
+                    $user = User::where('email', $saver->email)->first();
+                }
             }
         }
 
         if (!$user) {
-            $member = Member::where('student_name', $input)
+            $member = Member::where('email', $input)
                 ->orWhere('nis', $input)
+                ->orWhere('student_name', $input)
                 ->first();
-            if ($member && $member->user_id) {
-                $user = User::find($member->user_id);
+            if ($member) {
+                if ($member->user_id) {
+                    $user = User::find($member->user_id);
+                } elseif (!empty($member->email)) {
+                    $user = User::where('email', $member->email)->first();
+                }
             }
         }
 
@@ -63,7 +74,8 @@ class AuthController extends Controller
                 return back()->withErrors(['username' => 'Akun Anda sedang terblokir. Silakan hubungi Administrator.']);
             }
 
-            Auth::login($user);
+            $remember = $request->boolean('remember');
+            Auth::login($user, $remember);
             $request->session()->regenerate();
 
             return $this->redirectUserByRole($user);

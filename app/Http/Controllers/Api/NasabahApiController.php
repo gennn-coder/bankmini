@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Saver;
+use App\Models\Member;
 use App\Models\Transaksi;
 use App\Models\Rekening;
 
@@ -26,7 +27,7 @@ class NasabahApiController extends Controller
         $input = trim($request->username);
         $password = $request->password;
 
-        // Cari user berdasarkan username, nama_petugas, atau tabel savers (student_name, nis, account_number)
+        // Cari user berdasarkan username, nama_petugas, atau tabel savers/members
         $user = User::where('username', $input)
             ->orWhere('nama_petugas', $input)
             ->first();
@@ -38,6 +39,15 @@ class NasabahApiController extends Controller
                 ->first();
             if ($saver && $saver->user_id) {
                 $user = User::find($saver->user_id);
+            }
+        }
+
+        if (!$user) {
+            $member = Member::where('student_name', $input)
+                ->orWhere('nis', $input)
+                ->first();
+            if ($member && $member->user_id) {
+                $user = User::find($member->user_id);
             }
         }
 
@@ -56,32 +66,42 @@ class NasabahApiController extends Controller
         }
 
         $saverData = Saver::where('user_id', $user->id)->with('rekening')->first();
+        $memberData = Member::where('user_id', $user->id)->first();
 
-        if (!$saverData) {
+        if (!$saverData && !$memberData) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data penabung belum diaktifkan oleh teller untuk akun ini.',
+                'message' => 'Data akun siswa belum terdaftar.',
             ], 404);
         }
+
+        $namaSiswa = $saverData ? $saverData->student_name : ($memberData->student_name ?? $user->nama_petugas);
+        $noRekening = $saverData ? $saverData->account_number : '-';
+        $nis = $saverData ? $saverData->nis : ($memberData->nis ?? $user->username);
+        $kelas = $saverData ? $saverData->class_grade : ($memberData->class_grade ?? '-');
+        $email = $saverData ? $saverData->email : ($memberData->email ?? $user->email);
+        $saldo = $saverData ? (int) ($saverData->rekening->saldo ?? 0) : 0;
+        $statusRekening = $saverData && $saverData->rekening ? $saverData->rekening->status : 'rekening tidak aktif';
 
         return response()->json([
             'success' => true,
             'message' => 'Login berhasil.',
             'data' => [
                 'user_id' => $user->id,
-                'nasabah_id' => $saverData->id,
-                'saver_id' => $saverData->id,
-                'nama_siswa' => $saverData->student_name,
-                'student_name' => $saverData->student_name,
-                'no_rekening' => $saverData->account_number,
-                'account_number' => $saverData->account_number,
-                'nis' => $saverData->nis,
-                'kelas' => $saverData->class_grade,
-                'class_grade' => $saverData->class_grade,
-                'email' => $saverData->email,
-                'saldo' => (int) ($saverData->rekening->saldo ?? 0),
-                'status_rekening' => $saverData->rekening->status ?? 'aktif',
-                'qr_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data=' . $saverData->account_number,
+                'nasabah_id' => $saverData ? $saverData->id : $user->id,
+                'saver_id' => $saverData ? $saverData->id : null,
+                'nama_siswa' => $namaSiswa,
+                'student_name' => $namaSiswa,
+                'no_rekening' => $noRekening,
+                'account_number' => $noRekening,
+                'nis' => $nis,
+                'kelas' => $kelas,
+                'class_grade' => $kelas,
+                'email' => $email,
+                'saldo' => $saldo,
+                'status_rekening' => $statusRekening,
+                'is_aktif' => ($saverData && $statusRekening === 'aktif'),
+                'qr_url' => $saverData ? ('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data=' . $saverData->account_number) : '',
             ]
         ]);
     }
@@ -92,29 +112,42 @@ class NasabahApiController extends Controller
     public function dashboard($id)
     {
         $saver = Saver::with('rekening')->find($id);
-
+        $member = null;
         if (!$saver) {
+            $member = Member::where('user_id', $id)->orWhere('nis', $id)->first();
+        }
+
+        if (!$saver && !$member) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data penabung tidak ditemukan.',
+                'message' => 'Data siswa belum ditemukan.',
             ], 404);
         }
+
+        $namaSiswa = $saver ? $saver->student_name : $member->student_name;
+        $noRekening = $saver ? $saver->account_number : '-';
+        $nis = $saver ? $saver->nis : $member->nis;
+        $kelas = $saver ? $saver->class_grade : $member->class_grade;
+        $email = $saver ? $saver->email : $member->email;
+        $saldo = $saver ? (int) ($saver->rekening->saldo ?? 0) : 0;
+        $statusRekening = $saver && $saver->rekening ? $saver->rekening->status : 'rekening tidak aktif';
 
         return response()->json([
             'success' => true,
             'data' => [
-                'id' => $saver->id,
-                'nama_siswa' => $saver->student_name,
-                'student_name' => $saver->student_name,
-                'no_rekening' => $saver->account_number,
-                'account_number' => $saver->account_number,
-                'nis' => $saver->nis,
-                'kelas' => $saver->class_grade,
-                'class_grade' => $saver->class_grade,
-                'email' => $saver->email,
-                'saldo' => (int) ($saver->rekening->saldo ?? 0),
-                'status_rekening' => $saver->rekening->status ?? 'aktif',
-                'qr_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data=' . $saver->account_number,
+                'id' => $saver ? $saver->id : $member->user_id,
+                'nama_siswa' => $namaSiswa,
+                'student_name' => $namaSiswa,
+                'no_rekening' => $noRekening,
+                'account_number' => $noRekening,
+                'nis' => $nis,
+                'kelas' => $kelas,
+                'class_grade' => $kelas,
+                'email' => $email,
+                'saldo' => $saldo,
+                'status_rekening' => $statusRekening,
+                'is_aktif' => ($saver && $statusRekening === 'aktif'),
+                'qr_url' => $saver ? ('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data=' . $saver->account_number) : '',
             ]
         ]);
     }
@@ -127,10 +160,11 @@ class NasabahApiController extends Controller
         $saver = Saver::find($id);
 
         if (!$saver) {
+            // Siswa belum aktif menabung, riwayat mutasi kosong
             return response()->json([
-                'success' => false,
-                'message' => 'Data penabung tidak ditemukan.',
-            ], 404);
+                'success' => true,
+                'data' => []
+            ]);
         }
 
         $transaksi = Transaksi::where(function ($q) use ($saver) {

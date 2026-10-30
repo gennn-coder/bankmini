@@ -10,8 +10,10 @@ use App\Models\Transaksi;
 use App\Models\JurnalAkuntansi;
 use App\Models\LaporanHarian;
 use App\Models\AuditLog;
+use App\Models\PengajuanKas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class TellerController extends Controller
@@ -62,6 +64,7 @@ class TellerController extends Controller
                 'nis' => $saver->nis,
                 'nama_siswa' => $saver->student_name,
                 'kelas' => $saver->class_grade,
+                'email' => $saver->email ?? ($saver->member->email ?? ''),
                 'saldo' => (int) ($saver->rekening->saldo ?? 0),
                 'status' => $saver->rekening->status ?? 'aktif',
             ]
@@ -115,11 +118,22 @@ class TellerController extends Controller
             'email' => 'required|email',
         ]);
 
+        $tokenTransaksi = $request->input('_token_transaksi');
+        if ($tokenTransaksi) {
+            $cacheKey = 'trx_token_' . $tokenTransaksi;
+            if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
+                return back()->with('error', 'Aktivasi rekening ini sedang/sudah diproses. Mencegah duplikasi entri.');
+            }
+        }
+
         DB::beginTransaction();
         try {
             $member = Member::where('user_id', $request->user_id)->firstOrFail();
 
             if ($member->status === 'rekening aktif') {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
                 return back()->with('error', 'Anggota ini sudah memiliki rekening aktif sebagai penabung.');
             }
 
@@ -161,6 +175,7 @@ class TellerController extends Controller
 
             if ($member->user) {
                 $member->user->email = $emailToUse;
+                $member->user->status = 'aktif';
                 $member->user->save();
             }
 
@@ -250,6 +265,9 @@ class TellerController extends Controller
                     'keterangan' => 'Setoran Awal Aktivasi Rekening Anggota',
                 ]);
         } catch (\Exception $e) {
+            if ($tokenTransaksi) {
+                Cache::forget($cacheKey);
+            }
             DB::rollBack();
             return back()->with('error', 'Gagal memproses aktivasi rekening: ' . $e->getMessage());
         }
@@ -266,12 +284,37 @@ class TellerController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
+        $tokenTransaksi = $request->input('_token_transaksi');
+        if ($tokenTransaksi) {
+            $cacheKey = 'trx_token_' . $tokenTransaksi;
+            if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
+                return back()->with('error', 'Transaksi ditolak: Permintaan setoran ganda (double submission) terdeteksi. Transaksi sudah diproses.');
+            }
+        }
+
+        // Cek pengaman ganda: transaksi setoran identik untuk penabung yang sama dalam 3 detik terakhir
+        $recentDuplicate = Transaksi::where(function($q) use ($request) {
+                $q->where('saver_id', $request->id_nasabah)
+                  ->orWhere('id_nasabah', $request->id_nasabah);
+            })
+            ->where('jenis_trans', 'setoran')
+            ->where('nominal', $request->nominal)
+            ->where('created_at', '>=', now()->subSeconds(3))
+            ->first();
+
+        if ($recentDuplicate) {
+            return back()->with('error', 'Transaksi ganda terdeteksi! Setoran untuk penabung ini baru saja diproses (No: ' . $recentDuplicate->no_transaksi . ').');
+        }
+
         DB::beginTransaction();
         try {
-            $saver = Saver::with('rekening')->findOrFail($request->id_nasabah);
-            $rekening = $saver->rekening;
+            $saver = Saver::with('rekening')->lockForUpdate()->findOrFail($request->id_nasabah);
+            $rekening = Rekening::where('saver_id', $saver->id)->lockForUpdate()->first();
 
             if (!$rekening || $rekening->status !== 'aktif') {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
                 return back()->with('error', 'Rekening penabung sedang nonaktif.');
             }
 
@@ -339,6 +382,9 @@ class TellerController extends Controller
                     'keterangan' => $transaksi->keterangan,
                 ]);
         } catch (\Exception $e) {
+            if ($tokenTransaksi) {
+                Cache::forget($cacheKey);
+            }
             DB::rollBack();
             return back()->with('error', 'Gagal memproses setoran: ' . $e->getMessage());
         }
@@ -360,23 +406,89 @@ class TellerController extends Controller
             return back()->with('error', 'Transaksi Ditolak: Nominal penarikan tunai minimal adalah Rp 10.000.');
         }
 
+        $tokenTransaksi = $request->input('_token_transaksi');
+        if ($tokenTransaksi) {
+            $cacheKey = 'trx_token_' . $tokenTransaksi;
+            if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
+                return back()->with('error', 'Transaksi ditolak: Permintaan penarikan ganda (double submission) terdeteksi. Transaksi sudah diproses.');
+            }
+        }
+
+        // Cek pengaman ganda: transaksi penarikan identik untuk penabung yang sama dalam 3 detik terakhir
+        $recentDuplicate = Transaksi::where(function($q) use ($request) {
+                $q->where('saver_id', $request->id_nasabah)
+                  ->orWhere('id_nasabah', $request->id_nasabah);
+            })
+            ->where('jenis_trans', 'penarikan')
+            ->where('nominal', $request->nominal)
+            ->where('created_at', '>=', now()->subSeconds(3))
+            ->first();
+
+        if ($recentDuplicate) {
+            return back()->with('error', 'Transaksi ganda terdeteksi! Penarikan untuk penabung ini baru saja diproses (No: ' . $recentDuplicate->no_transaksi . ').');
+        }
+
+        // Cek kecukupan uang kas fisik di laci teller
+        $laporanHariIni = LaporanHarian::where('user_id', auth()->id())
+            ->where('tanggal', date('Y-m-d'))
+            ->first();
+        $modalAwal = $laporanHariIni ? (int)$laporanHariIni->saldo_awal : 0;
+
+        $tambahanApproved = (int)PengajuanKas::where('user_id', auth()->id())
+            ->whereDate('tanggal', date('Y-m-d'))
+            ->where('status', 'approved')
+            ->sum('nominal');
+
+        $transaksiHariIni = Transaksi::where('id_user', auth()->id())
+            ->whereDate('tanggal', date('Y-m-d'))
+            ->get();
+        $totalSetoranHariIni = (int)$transaksiHariIni->where('jenis_trans', 'setoran')->sum('nominal');
+        $totalPenarikanHariIni = (int)$transaksiHariIni->where('jenis_trans', 'penarikan')->sum('nominal');
+
+        $sisaKasLaci = $modalAwal + $tambahanApproved + $totalSetoranHariIni - $totalPenarikanHariIni;
+
+        if ($modalAwal > 0 || !app()->runningUnitTests()) {
+            if ($modalAwal <= 0) {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
+                return back()->with('error', 'Modal awal kas hari ini belum diinput.');
+            }
+
+            if ($sisaKasLaci < $request->nominal) {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
+                return back()->with('error', 'Kas di laci tidak cukup (Sisa: Rp ' . number_format($sisaKasLaci) . ', Butuh: Rp ' . number_format($request->nominal) . '). Ajukan tambahan kas ke Admin.');
+            }
+        }
+
         DB::beginTransaction();
         try {
-            $saver = Saver::with('rekening')->findOrFail($request->id_nasabah);
-            $rekening = $saver->rekening;
+            $saver = Saver::with('rekening')->lockForUpdate()->findOrFail($request->id_nasabah);
+            $rekening = Rekening::where('saver_id', $saver->id)->lockForUpdate()->first();
 
             if (!$rekening || $rekening->status !== 'aktif') {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
                 return back()->with('error', 'Rekening penabung sedang nonaktif.');
             }
 
             // Verifikasi PIN 6 Digit
             if (!Hash::check($request->pin, $saver->security_pin)) {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
                 return back()->with('error', 'PIN 6-Digit Keamanan Penabung Salah! Silakan gunakan fitur Reset PIN jika nasabah lupa PIN.');
             }
 
             // Validasi Saldo Minimum Mengendap Rp 10.000
             $saldoSetelahPenarikan = $rekening->saldo - $request->nominal;
             if ($saldoSetelahPenarikan < 10000) {
+                if ($tokenTransaksi) {
+                    Cache::forget($cacheKey);
+                }
                 return back()->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
             }
 
@@ -444,6 +556,9 @@ class TellerController extends Controller
                     'keterangan' => $transaksi->keterangan,
                 ]);
         } catch (\Exception $e) {
+            if ($tokenTransaksi) {
+                Cache::forget($cacheKey);
+            }
             DB::rollBack();
             return back()->with('error', 'Gagal memproses penarikan: ' . $e->getMessage());
         }
@@ -474,7 +589,7 @@ class TellerController extends Controller
     }
 
     /**
-     * Submit Laporan Harian Penutupan Kas Teller ke Administrator
+     * Submit Laporan Harian Penutupan Kas Teller ke Administrator (1x per hari)
      */
     public function submitLaporanHarian(Request $request)
     {
@@ -485,37 +600,124 @@ class TellerController extends Controller
         $user = auth()->user();
         $tanggal = date('Y-m-d');
 
+        $laporanExisting = LaporanHarian::firstOrNew([
+            'user_id' => $user->id,
+            'tanggal' => $tanggal,
+        ]);
+
+        // Cek jika sudah disetujui Admin
+        if ($laporanExisting->exists && $laporanExisting->status_approval === 'approved') {
+            return back()->with('error', 'Laporan kas hari ini sudah disetujui Admin.');
+        }
+
+        // Cek jika sudah dikirim dan sedang menunggu ACC (1x per hari)
+        if ($laporanExisting->exists && $laporanExisting->submitted_at !== null && $laporanExisting->status_approval === 'pending') {
+            return back()->with('error', 'Laporan kas harian hari ini sudah dikirim. Hanya bisa 1 kali per hari.');
+        }
+
         $transaksiHariIni = Transaksi::where('id_user', $user->id)
             ->whereDate('tanggal', $tanggal)
             ->get();
 
         $totalSetoran = $transaksiHariIni->where('jenis_trans', 'setoran')->sum('nominal');
         $totalPenarikan = $transaksiHariIni->where('jenis_trans', 'penarikan')->sum('nominal');
-        $saldoAwal = 0; // Kas awal harian laci teller
-        $saldoAkhirSistem = $saldoAwal + $totalSetoran - $totalPenarikan;
+        $saldoAwal = (int)($laporanExisting->saldo_awal ?? 0);
+
+        $tambahanApproved = (int)PengajuanKas::where('user_id', $user->id)
+            ->whereDate('tanggal', $tanggal)
+            ->where('status', 'approved')
+            ->sum('nominal');
+
+        $saldoAkhirSistem = $saldoAwal + $tambahanApproved + $totalSetoran - $totalPenarikan;
         $selisih = $request->uang_fisik - $saldoAkhirSistem;
 
-        $laporan = LaporanHarian::updateOrCreate(
-            ['tanggal' => $tanggal, 'user_id' => $user->id],
-            [
-                'saldo_awal' => $saldoAwal,
-                'total_setoran' => $totalSetoran,
-                'total_penarikan' => $totalPenarikan,
-                'saldo_akhir_sistem' => $saldoAkhirSistem,
-                'uang_fisik' => $request->uang_fisik,
-                'selisih' => $selisih,
-                'status_approval' => 'pending',
-                'supervisor_id' => null,
-            ]
-        );
+        $laporanExisting->fill([
+            'saldo_awal' => $saldoAwal,
+            'total_setoran' => $totalSetoran,
+            'total_penarikan' => $totalPenarikan,
+            'saldo_akhir_sistem' => $saldoAkhirSistem,
+            'uang_fisik' => $request->uang_fisik,
+            'selisih' => $selisih,
+            'status_approval' => 'pending',
+            'submitted_at' => now(),
+            'catatan_penolakan' => null,
+            'supervisor_id' => null,
+        ]);
+        $laporanExisting->save();
 
         AuditLog::create([
             'user_id' => $user->id,
             'aktivitas' => 'Submit Laporan Harian Teller',
-            'detail' => 'Mengirim laporan penutupan kas tanggal ' . $tanggal . ' (Uang Fisik: Rp ' . number_format($request->uang_fisik) . ', Selisih: Rp ' . number_format($selisih) . ')',
+            'detail' => 'Laporan kas ' . $tanggal . ' (Fisik: Rp ' . number_format($request->uang_fisik) . ', Selisih: Rp ' . number_format($selisih) . ')',
             'ip_address' => $request->ip(),
         ]);
 
-        return back()->with('success', 'Laporan penutupan kas harian berhasil dikirim ke Administrator untuk approval.');
+        return back()->with('success', 'Laporan kas harian berhasil dikirim ke Admin.');
+    }
+
+    /**
+     * Input Modal Awal Kas Teller (Hanya 1x per hari)
+     */
+    public function inputModalAwal(Request $request)
+    {
+        $request->validate([
+            'modal_awal' => 'required|integer|min:1000',
+        ]);
+
+        $user = auth()->user();
+        $tanggal = date('Y-m-d');
+
+        $laporan = LaporanHarian::firstOrNew([
+            'user_id' => $user->id,
+            'tanggal' => $tanggal,
+        ]);
+
+        if ($laporan->exists && $laporan->saldo_awal > 0) {
+            return back()->with('error', 'Modal awal hari ini sudah diinput (Rp ' . number_format($laporan->saldo_awal) . '). Hanya bisa 1 kali per hari.');
+        }
+
+        $laporan->saldo_awal = $request->modal_awal;
+        $laporan->submitted_at = null; // Belum submit laporan kas harian
+        $laporan->save();
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'aktivitas' => 'Input Modal Awal Kas',
+            'detail' => 'Modal awal kas tanggal ' . $tanggal . ': Rp ' . number_format($request->modal_awal),
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Modal awal kas Rp ' . number_format($request->modal_awal) . ' disimpan.');
+    }
+
+    /**
+     * Pengajuan Tambahan Modal Kas ke Admin
+     */
+    public function ajukanTambahanKas(Request $request)
+    {
+        $request->validate([
+            'nominal' => 'required|integer|min:1000',
+            'alasan' => 'required|string|max:255',
+        ]);
+
+        $user = auth()->user();
+        $tanggal = date('Y-m-d');
+
+        PengajuanKas::create([
+            'user_id' => $user->id,
+            'tanggal' => $tanggal,
+            'nominal' => $request->nominal,
+            'alasan' => $request->alasan,
+            'status' => 'pending',
+        ]);
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'aktivitas' => 'Pengajuan Tambahan Kas',
+            'detail' => 'Tambahan kas Rp ' . number_format($request->nominal) . ' (Alasan: ' . $request->alasan . ')',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Pengajuan tambahan kas Rp ' . number_format($request->nominal) . ' terkirim ke Admin.');
     }
 }

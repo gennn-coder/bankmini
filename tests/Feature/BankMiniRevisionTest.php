@@ -9,6 +9,7 @@ use App\Models\Saver;
 use App\Models\Rekening;
 use App\Models\Transaksi;
 use App\Models\LaporanHarian;
+use App\Models\PengajuanKas;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
@@ -735,5 +736,250 @@ class BankMiniRevisionTest extends TestCase
         // 5. Cek PIN baru terupdate di database
         $this->assertTrue(Hash::check('987654', $saver->fresh()->security_pin));
     }
+
+    /**
+     * Test 21: Mencegah Dobel Entri Transaksi pada Penarikan dan Setoran
+     */
+    public function test_anti_double_entry_prevents_duplicate_transactions_on_penarikan_and_setoran()
+    {
+        $teller = User::where('role', 'teller')->first();
+        $saver = Saver::with('rekening')->first();
+        $this->actingAs($teller);
+
+        $saver->rekening->update(['saldo' => 100000]);
+        $saver->update(['security_pin' => Hash::make('123456')]);
+
+        $tokenPenarikan = (string) \Illuminate\Support\Str::uuid();
+
+        // 1. Klik pertama penarikan Rp 10.000 -> Sukses
+        $res1 = $this->post(route('teller.penarikan'), [
+            '_token_transaksi' => $tokenPenarikan,
+            'id_nasabah' => $saver->id,
+            'nominal' => 10000,
+            'pin' => '123456',
+        ]);
+        $res1->assertSessionHas('transaksi_sukses');
+
+        // 2. Klik kedua (dobel entri dengan token sama atau dalam rentang waktu cepat) -> Wajib Ditolak
+        $res2 = $this->post(route('teller.penarikan'), [
+            '_token_transaksi' => $tokenPenarikan,
+            'id_nasabah' => $saver->id,
+            'nominal' => 10000,
+            'pin' => '123456',
+        ]);
+        $res2->assertSessionHas('error');
+
+        $saver->rekening->refresh();
+        // Saldo awal 100.000 hanya berkurang 1x (10.000) menjadi 90.000, BUKAN 80.000!
+        $this->assertEquals(90000, $saver->rekening->saldo);
+
+        // Uji hal yang sama untuk SETORAN
+        $tokenSetoran = (string) \Illuminate\Support\Str::uuid();
+
+        // 3. Klik pertama setoran Rp 20.000 -> Sukses
+        $resSetor1 = $this->post(route('teller.setoran'), [
+            '_token_transaksi' => $tokenSetoran,
+            'id_nasabah' => $saver->id,
+            'nominal' => 20000,
+        ]);
+        $resSetor1->assertSessionHas('transaksi_sukses');
+
+        // 4. Klik kedua setoran (dobel entri) -> Wajib Ditolak
+        $resSetor2 = $this->post(route('teller.setoran'), [
+            '_token_transaksi' => $tokenSetoran,
+            'id_nasabah' => $saver->id,
+            'nominal' => 20000,
+        ]);
+        $resSetor2->assertSessionHas('error');
+
+        $saver->rekening->refresh();
+        // Saldo 90.000 + 20.000 = 110.000 (hanya bertambah 1x, BUKAN 130.000!)
+        $this->assertEquals(110000, $saver->rekening->saldo);
+
+        // 5. Uji pencegahan dobel entri berbasis jendela waktu (rapid click tanpa token)
+        $resRapid1 = $this->post(route('teller.setoran'), [
+            'id_nasabah' => $saver->id,
+            'nominal' => 15000,
+        ]);
+        $resRapid1->assertSessionHas('transaksi_sukses');
+
+        $resRapid2 = $this->post(route('teller.setoran'), [
+            'id_nasabah' => $saver->id,
+            'nominal' => 15000,
+        ]);
+        $resRapid2->assertSessionHas('error');
+
+        $saver->rekening->refresh();
+        $this->assertEquals(125000, $saver->rekening->saldo);
+    }
+
+    /**
+     * Test 20: Input Modal Awal Kas 1x Per Hari & Alur Pengajuan Tambahan Kas ke Admin
+     */
+    public function test_modal_awal_harian_dan_pengajuan_tambahan_kas_flow()
+    {
+        $teller = User::where('role', 'teller')->first();
+        $admin = User::where('role', 'administrator')->first();
+        $this->assertNotNull($teller);
+        $this->assertNotNull($admin);
+
+        // Bersihkan laporan harian, transaksi, & pengajuan kas hari ini untuk teller uji agar mulai dari state bersih
+        LaporanHarian::where('tanggal', date('Y-m-d'))
+            ->where('user_id', $teller->id)
+            ->delete();
+        Transaksi::where('id_user', $teller->id)
+            ->whereDate('tanggal', date('Y-m-d'))
+            ->delete();
+        PengajuanKas::where('user_id', $teller->id)
+            ->delete();
+
+        // 1. Teller input modal awal Rp 100.000 pertama kali hari ini -> Sukses
+        $this->actingAs($teller);
+        $resModal1 = $this->post(route('teller.modal-awal'), [
+            'modal_awal' => 100000,
+        ]);
+        $resModal1->assertSessionHas('success');
+
+        $lap = LaporanHarian::where('tanggal', date('Y-m-d'))
+            ->where('user_id', $teller->id)
+            ->first();
+        $this->assertNotNull($lap);
+        $this->assertEquals(100000, $lap->saldo_awal);
+
+        // 2. Teller input modal awal LAGI di hari yang sama -> DITOLAK (Hanya 1x per hari)
+        $resModal2 = $this->post(route('teller.modal-awal'), [
+            'modal_awal' => 50000,
+        ]);
+        $resModal2->assertSessionHas('error');
+        $lap->refresh();
+        $this->assertEquals(100000, $lap->saldo_awal); // Saldo awal tetap 100.000
+
+        // Siapkan akun saver dengan saldo cukup (Rp 200.000)
+        $saver = Saver::first();
+        $saver->rekening->update(['saldo' => 200000]);
+
+        // 3. Teller mencoba mencairkan penarikan Rp 110.000
+        // Karena modal awal di kas laci hanya Rp 100.000, kas laci tidak cukup -> Wajib Ditolak
+        $resTarikKurang = $this->post(route('teller.penarikan'), [
+            'id_nasabah' => $saver->id,
+            'nominal' => 110000,
+            'pin' => '123456',
+        ]);
+        $resTarikKurang->assertSessionHas('error');
+        $saver->rekening->refresh();
+        $this->assertEquals(200000, $saver->rekening->saldo); // Saldo nasabah belum berkurang
+
+        // 4. Teller mengajukan tambahan kas ke admin (Nominal: 50.000, Alasan: Dana kurang untuk penarikan)
+        $resAjukan = $this->post(route('teller.ajukan-kas'), [
+            'nominal' => 50000,
+            'alasan' => 'Kas laci kurang untuk penarikan nasabah',
+        ]);
+        $resAjukan->assertSessionHas('success');
+
+        $pengajuan = PengajuanKas::where('user_id', $teller->id)
+            ->where('status', 'pending')
+            ->first();
+        $this->assertNotNull($pengajuan);
+        $this->assertEquals(50000, $pengajuan->nominal);
+        $this->assertEquals('Kas laci kurang untuk penarikan nasabah', $pengajuan->alasan);
+
+        // 5. Admin login dan melakukan ACC (Approve) pengajuan kas
+        $this->actingAs($admin);
+        $resApprove = $this->post(route('admin.pengajuan-kas.approve', $pengajuan->id));
+        $resApprove->assertSessionHas('success');
+
+        $pengajuan->refresh();
+        $this->assertEquals('approved', $pengajuan->status);
+        $this->assertEquals($admin->id, $pengajuan->admin_id);
+
+        // 6. Sekarang teller login lagi. Kas laci = 100.000 + 50.000 = 150.000
+        // Penarikan Rp 110.000 sekarang SUKSES!
+        $this->actingAs($teller);
+        $resTarikSukses = $this->post(route('teller.penarikan'), [
+            'id_nasabah' => $saver->id,
+            'nominal' => 110000,
+            'pin' => '123456',
+        ]);
+        $resTarikSukses->assertSessionHas('transaksi_sukses');
+
+        $saver->rekening->refresh();
+        $this->assertEquals(90000, $saver->rekening->saldo); // 200.000 - 110.000 = 90.000
+
+        // 7. Uji jika admin menolak (reject) pengajuan kas lain
+        $resAjukan2 = $this->post(route('teller.ajukan-kas'), [
+            'nominal' => 20000,
+            'alasan' => 'Permintaan tambahan kas kedua',
+        ]);
+        $resAjukan2->assertSessionHas('success');
+
+        $pengajuan2 = PengajuanKas::where('user_id', $teller->id)
+            ->where('status', 'pending')
+            ->first();
+        $this->assertNotNull($pengajuan2);
+
+        $this->actingAs($admin);
+        // Tolak tanpa alasan harus gagal validasi
+        $resRejectFail = $this->post(route('admin.pengajuan-kas.reject', $pengajuan2->id), []);
+        $resRejectFail->assertSessionHasErrors('catatan_admin');
+
+        // Tolak dengan alasan harus berhasil
+        $resReject = $this->post(route('admin.pengajuan-kas.reject', $pengajuan2->id), [
+            'catatan_admin' => 'Kas utama sedang limit, tunda penarikan.',
+        ]);
+        $resReject->assertSessionHas('success');
+
+        $pengajuan2->refresh();
+        $this->assertEquals('rejected', $pengajuan2->status);
+        $this->assertEquals('Kas utama sedang limit, tunda penarikan.', $pengajuan2->catatan_admin);
+
+        // 8. Verifikasi: Modal awal TIDAK langsung masuk antrean approval admin sebelum teller tutup kas
+        $resAdminDash = $this->get(route('admin.dashboard'));
+        $resAdminDash->assertStatus(200);
+        $pendingLaporan = $resAdminDash->viewData('laporanPending');
+        $this->assertFalse($pendingLaporan->contains('id', $lap->id), 'Laporan teller tidak boleh muncul di pending admin sebelum tutup kas');
+
+        // 9. Teller melakukan Penutupan Kas Harian (1x per hari)
+        // Kas laci saat ini: 100.000 (modal) + 50.000 (tambahan ACC) - 110.000 (tarik) = 40.000
+        $this->actingAs($teller);
+        $resSubmitLaporan = $this->post(route('teller.laporan-harian'), [
+            'uang_fisik' => 40000,
+        ]);
+        $resSubmitLaporan->assertSessionHas('success');
+
+        $lap->refresh();
+        $this->assertNotNull($lap->submitted_at);
+        $this->assertEquals(40000, $lap->saldo_akhir_sistem);
+        $this->assertEquals(40000, $lap->uang_fisik);
+        $this->assertEquals(0, $lap->selisih);
+
+        // 10. Teller mencoba submit laporan harian LAGI di hari yang sama -> DITOLAK (Hanya 1x per hari)
+        $resSubmitLaporan2 = $this->post(route('teller.laporan-harian'), [
+            'uang_fisik' => 40000,
+        ]);
+        $resSubmitLaporan2->assertSessionHas('error');
+
+        // 11. Setelah disubmit oleh teller, laporan SEKARANG muncul di admin menunggu approval
+        $this->actingAs($admin);
+        $resAdminDash2 = $this->get(route('admin.dashboard'));
+        $pendingLaporan2 = $resAdminDash2->viewData('laporanPending');
+        $this->assertTrue($pendingLaporan2->contains('id', $lap->id), 'Laporan teller harus muncul di pending admin setelah disubmit');
+
+        // 12. Admin melakukan Approve (ACC) penutupan kas -> Uang kas dipindahkan ke admin
+        $resApproveLap = $this->post(route('admin.laporan.approve', $lap->id));
+        $resApproveLap->assertSessionHas('success');
+
+        $lap->refresh();
+        $this->assertEquals('approved', $lap->status_approval);
+
+        // 13. Setelah di-ACC admin, laporan berpindah ke arsip disetujui admin dan kas laci teller menjadi 0 (pindah ke admin)
+        $resAdminDash3 = $this->get(route('admin.dashboard'));
+        $approvedLaporan = $resAdminDash3->viewData('laporanApproved');
+        $this->assertTrue($approvedLaporan->contains('id', $lap->id), 'Laporan harus berpindah ke laporan disetujui');
+
+        $this->actingAs($teller);
+        $resTellerDash = $this->get(route('teller.dashboard'));
+        $this->assertEquals(0, $resTellerDash->viewData('sisaKasLaci'), 'Sisa kas teller harus 0 karena kas fisik sudah diserahkan ke admin');
+    }
 }
+
 

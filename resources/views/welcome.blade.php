@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login System | E-Teller Bank Mini Sekolah</title>
+    <title>Login | E-Teller Bank Mini Sekolah</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,10 +18,12 @@
 
     <style>
         :root {
-            --font-family: 'Plus Jakarta Sans', sans-serif;
-            --primary-blue: #3b82f6;
-            --primary-hover: #2563eb;
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --primary-blue: #4361ee;
+            --primary-hover: #3a56d4;
+            --primary-dark: #2b45bd;
+            --accent-cyan: #38bdf8;
+            --bg-page: #edf2f9;
         }
 
         *, *::before, *::after {
@@ -36,135 +38,423 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #93c5fd 0%, #3b82f6 50%, #60a5fa 100%);
+            background: #eef2fa;
+            position: relative;
             padding: 1.5rem 1rem;
+            margin: 0;
             overflow-x: hidden;
         }
 
-        .login-outer-frame {
-            width: 100%;
-            max-width: 860px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 28px;
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+        /* Abstract Soft Circles in Background */
+        .bg-deco-circle-1 {
+            position: fixed;
+            width: 520px;
+            height: 520px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(67, 97, 238, 0.09) 0%, rgba(238, 242, 250, 0) 70%);
+            top: -120px;
+            right: -100px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-deco-circle-2 {
+            position: fixed;
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(238, 242, 250, 0) 70%);
+            bottom: -100px;
+            left: -80px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Main Split Card Layout */
+        .login-split-card {
             position: relative;
-        }
-
-        .header-brand {
-            text-align: center;
-            margin-bottom: 1.25rem;
-            color: #ffffff;
-        }
-
-        .header-brand h1 {
-            font-size: 1.35rem;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .header-brand p {
-            font-size: 0.85rem;
-            opacity: 0.9;
-            font-weight: 600;
-        }
-
-        .login-card {
-            background: #ffffff;
-            border-radius: 20px;
+            z-index: 1;
             width: 100%;
-            max-width: 420px;
-            padding: 2rem 1.75rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            max-width: 960px;
+            min-height: 580px;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 25px 60px -12px rgba(43, 69, 189, 0.18), 0 10px 24px -6px rgba(15, 23, 42, 0.06);
+            display: flex;
+            overflow: hidden;
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        .card-header {
-            text-align: center;
-            margin-bottom: 1.75rem;
+        /* Left Side: Modern Blue Banner */
+        .split-left-panel {
+            flex: 1.05;
+            background: linear-gradient(145deg, #4866f7 0%, #3e5bf2 40%, #2f4fe6 100%);
+            padding: 3.5rem 3rem;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
         }
 
-        .card-header h2 {
-            font-size: 1.6rem;
+        /* Pure CSS Geometric Ornaments (NO ICONS) */
+        .geo-glow-top {
+            position: absolute;
+            top: -60px;
+            left: -40px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            filter: blur(20px);
+            pointer-events: none;
+        }
+
+        .geo-pill-1 {
+            position: absolute;
+            top: 28px;
+            left: 120px;
+            width: 32px;
+            height: 110px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.02) 100%);
+            border-radius: 20px;
+            transform: rotate(-10deg);
+            pointer-events: none;
+        }
+
+        .geo-pill-2 {
+            position: absolute;
+            top: 40px;
+            left: 165px;
+            width: 22px;
+            height: 85px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.02) 100%);
+            border-radius: 16px;
+            transform: rotate(-10deg);
+            pointer-events: none;
+        }
+
+        .geo-dots-grid {
+            position: absolute;
+            top: 40px;
+            left: 36px;
+            width: 60px;
+            height: 60px;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.5) 2px, transparent 2px);
+            background-size: 12px 12px;
+            pointer-events: none;
+        }
+
+        .geo-dots-bottom {
+            position: absolute;
+            bottom: 40px;
+            left: 36px;
+            width: 70px;
+            height: 70px;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.45) 2px, transparent 2px);
+            background-size: 14px 14px;
+            pointer-events: none;
+        }
+
+        .geo-orbit-ring {
+            position: absolute;
+            bottom: -80px;
+            right: 40px;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.4);
+            border-bottom-color: transparent;
+            pointer-events: none;
+        }
+
+        .geo-sphere-main {
+            position: absolute;
+            bottom: -90px;
+            right: 55px;
+            width: 230px;
+            height: 230px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 80%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        .geo-sphere-small {
+            position: absolute;
+            bottom: 85px;
+            right: 30px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            pointer-events: none;
+        }
+
+        .geo-sphere-tiny {
+            position: absolute;
+            bottom: 120px;
+            left: 42px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #bae6fd 0%, #38bdf8 100%);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            pointer-events: none;
+        }
+
+        /* Banner Text Typography */
+        .left-content {
+            position: relative;
+            z-index: 2;
+            margin: auto 0;
+            padding-right: 1.5rem;
+        }
+
+        .left-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 999px;
+            padding: 0.35rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .left-headline {
+            font-size: 2.35rem;
             font-weight: 800;
-            color: #0f172a;
+            line-height: 1.18;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            margin-bottom: 1.25rem;
+            text-shadow: 0 2px 10px rgba(15, 23, 42, 0.1);
+        }
+
+        .left-description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            max-width: 360px;
+        }
+
+        .left-footer {
+            position: relative;
+            z-index: 2;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        /* Right Side: Clean White Form Panel */
+        .split-right-panel {
+            flex: 1.15;
+            background: #ffffff;
+            padding: 3.25rem 3.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+
+
+        .right-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .right-header h2 {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #1e293b;
+            letter-spacing: -0.02em;
             margin-bottom: 0.35rem;
         }
 
-        .card-header p {
-            font-size: 0.875rem;
+        .right-header p {
+            font-size: 0.88rem;
             color: #64748b;
+            font-weight: 500;
         }
 
+        /* Form Controls */
         .form-group {
             margin-bottom: 1.25rem;
         }
 
-        .form-group label {
+        .form-label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.825rem;
             font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.4rem;
+            color: #334155;
+            margin-bottom: 0.45rem;
+            letter-spacing: 0.01em;
         }
 
-        .form-control {
+        .form-input-wrapper {
+            position: relative;
             width: 100%;
-            padding: 0.85rem 1rem;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            height: 48px;
+            padding: 0 1rem;
             border-radius: 12px;
-            border: 1px solid #cbd5e1;
-            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            background: #ffffff;
             color: #0f172a;
             font-family: inherit;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             transition: all 0.2s ease;
         }
 
-        .form-control:focus {
+        .form-control-custom:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.12);
             background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
         }
 
-        .btn-submit {
+        .form-control-custom::placeholder {
+            color: #94a3b8;
+            font-size: 0.88rem;
+        }
+
+        /* Text Toggle Password (NO ICONS) */
+        .btn-text-toggle-pwd {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .btn-text-toggle-pwd:hover {
+            color: #1e293b;
+            background: #e2e8f0;
+        }
+
+        /* Row: Remember Me & Reset Password */
+        .form-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.4rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.825rem;
+        }
+
+        .remember-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748b;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            accent-color: #4361ee;
+            cursor: pointer;
+        }
+
+        .link-reset-password {
+            background: none;
+            border: none;
+            color: #4361ee;
+            font-weight: 700;
+            font-size: 0.825rem;
+            cursor: pointer;
+            font-family: inherit;
+            padding: 0;
+            transition: color 0.15s;
+        }
+
+        .link-reset-password:hover {
+            color: #2b45bd;
+            text-decoration: underline;
+        }
+
+        /* Main Blue Submit Button */
+        .btn-main-login {
             width: 100%;
-            padding: 0.85rem;
+            height: 48px;
             border-radius: 12px;
             border: none;
-            background: #4f46e5;
+            background: linear-gradient(135deg, #4866f7 0%, #3a56d4 100%);
             color: #ffffff;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.98rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
-            margin-top: 0.5rem;
+            box-shadow: 0 6px 18px rgba(58, 86, 212, 0.28);
+            font-family: inherit;
         }
 
-        .btn-submit:hover {
-            background: #4338ca;
+        .btn-main-login:hover {
+            background: linear-gradient(135deg, #3a56d4 0%, #2b45bd 100%);
             transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 8px 22px rgba(58, 86, 212, 0.38);
         }
 
+        .btn-main-login:active {
+            transform: translateY(0);
+        }
+
+        /* Notice / Info text */
+        .login-info-box {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #f1f5f9;
+            text-align: center;
+        }
+
+        .login-info-box p {
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .login-info-box .highlight {
+            color: #4361ee;
+            font-weight: 700;
+        }
+
+        /* Alert Notifications */
         .alert-error {
             background: #fef2f2;
             border: 1px solid #fecaca;
             color: #dc2626;
             padding: 0.75rem 1rem;
             border-radius: 12px;
-            font-size: 0.85rem;
+            font-size: 0.825rem;
             font-weight: 600;
             margin-bottom: 1.25rem;
             text-align: center;
+            line-height: 1.45;
         }
 
         .alert-success {
@@ -173,48 +463,19 @@
             color: #15803d;
             padding: 0.75rem 1rem;
             border-radius: 12px;
-            font-size: 0.85rem;
+            font-size: 0.825rem;
             font-weight: 600;
             margin-bottom: 1.25rem;
             text-align: center;
+            line-height: 1.45;
         }
 
-        .lupa-sandi-container {
-            margin-top: 1.5rem;
-            text-align: center;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 1.25rem;
-        }
-
-        .btn-lupa-link {
-            background: none;
-            border: none;
-            color: #3b82f6;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .btn-lupa-link:hover {
-            color: #1d4ed8;
-        }
-
-        .footer-credits {
-            margin-top: 2rem;
-            color: #ffffff;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-align: center;
-            opacity: 0.9;
-        }
-
-        /* Modal Reset Password via OTP Gmail (Tanpa Icon) */
+        /* Modal Reset Password via OTP Gmail (TANPA MENGGUNAKAN ICON) */
         .modal-reset-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             z-index: 1000;
@@ -227,10 +488,10 @@
             background: #ffffff;
             border-radius: 24px;
             width: 100%;
-            max-width: 440px;
+            max-width: 450px;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 2rem;
+            padding: 2.25rem;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
             position: relative;
         }
@@ -245,6 +506,7 @@
             color: #475569;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-family: inherit;
         }
 
         .btn-text-close:hover {
@@ -280,30 +542,24 @@
             color: #15803d;
         }
 
-        .alert-box.alert-info {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1d4ed8;
-        }
-
         .btn-action-primary {
             width: 100%;
-            padding: 0.8rem 1rem;
+            height: 46px;
             border-radius: 12px;
             border: none;
-            background: #2563eb;
+            background: #4361ee;
             color: #ffffff;
             font-weight: 700;
             font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.25);
+            font-family: inherit;
         }
 
         .btn-action-primary:hover:not(:disabled) {
-            background: #1d4ed8;
+            background: #3a56d4;
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
         }
 
         .btn-action-primary:disabled {
@@ -315,22 +571,22 @@
 
         .btn-action-success {
             width: 100%;
-            padding: 0.85rem 1rem;
+            height: 46px;
             border-radius: 12px;
             border: none;
             background: #059669;
             color: #ffffff;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.98rem;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+            font-family: inherit;
         }
 
         .btn-action-success:hover:not(:disabled) {
             background: #047857;
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
         }
 
         .btn-action-success:disabled {
@@ -349,7 +605,7 @@
         }
 
         .account-info-card .info-label {
-            font-size: 0.75rem;
+            font-size: 0.725rem;
             font-weight: 700;
             color: #166534;
             text-transform: uppercase;
@@ -357,7 +613,7 @@
         }
 
         .account-info-card .info-name {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: #14532d;
             margin-top: 0.25rem;
@@ -372,7 +628,7 @@
 
         .text-center-otp {
             text-align: center;
-            letter-spacing: 4px;
+            letter-spacing: 6px;
             font-size: 1.25rem;
             font-weight: 700;
             font-family: monospace;
@@ -386,28 +642,83 @@
             font-weight: 600;
             cursor: pointer;
             text-decoration: underline;
+            font-family: inherit;
         }
 
         .btn-text-back:hover {
             color: #1e293b;
         }
+
+        /* Responsive Layout */
+        @media (max-width: 820px) {
+            .login-split-card {
+                flex-direction: column;
+                max-width: 480px;
+                border-radius: 20px;
+                min-height: auto;
+            }
+
+            .split-left-panel {
+                padding: 2.5rem 2rem;
+                min-height: 240px;
+            }
+
+            .left-headline {
+                font-size: 1.85rem;
+            }
+
+            .split-right-panel {
+                padding: 2.25rem 2rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="login-outer-frame">
-        <!-- Brand Header -->
-        <div class="header-brand">
-            <h1>E-TELLER BANK MINI SEKOLAH</h1>
-        </div>
+    <!-- Soft Background Decors -->
+    <div class="bg-deco-circle-1"></div>
+    <div class="bg-deco-circle-2"></div>
 
-        <!-- Inner White Card -->
-        <div class="login-card">
-            <div class="card-header">
-                <h2>Welcome Back!</h2>
-                <p>Silakan masukkan kredensial akun Anda untuk masuk.</p>
+    <!-- Main Split Card -->
+    <div class="login-split-card">
+
+        <!-- SISI KIRI: Blue Geometric Banner (Sesuai Desain Referensi) -->
+        <div class="split-left-panel">
+            <!-- Pure CSS Geometric Decorations (Tanpa Icon) -->
+            <div class="geo-glow-top"></div>
+            <div class="geo-dots-grid"></div>
+            <div class="geo-pill-1"></div>
+            <div class="geo-pill-2"></div>
+            <div class="geo-orbit-ring"></div>
+            <div class="geo-sphere-main"></div>
+            <div class="geo-sphere-small"></div>
+            <div class="geo-sphere-tiny"></div>
+            <div class="geo-dots-bottom"></div>
+
+            <div>
+                <div class="left-badge">skansaba</div>
             </div>
 
+            <div class="left-content">
+                <h1 class="left-headline">E-Teller<br>Bank Mini</h1>
+                <p class="left-description">
+                    Layanan operasional perbankan sekolah terpadu dan tabungan siswa yang praktis, cepat, dan aman.
+                </p>
+            </div>
+
+            <div class="left-footer">
+                Sistem Informasi Perbankan Mini &copy; 2026/2027
+            </div>
+        </div>
+
+        <!-- SISI KANAN: Clean White Login Card (Tanpa Icon & Tanpa Logo) -->
+        <div class="split-right-panel">
+            <div class="right-header">
+                <h2>Hello ! Welcome back</h2>
+                <p>Silakan masuk ke akun perbankan Anda</p>
+            </div>
+
+            <!-- Pesan Kesalahan / Sukses -->
             @if($errors->any())
                 <div class="alert-error">
                     {{ $errors->first() }}
@@ -420,45 +731,55 @@
                 </div>
             @endif
 
-            <div id="loginCardSuccessAlert" class="alert-success" style="display: {{ session('success_lupa') ? 'block' : 'none' }}; line-height: 1.5;">
+            <div id="loginCardSuccessAlert" class="alert-success" style="display: {{ session('success_lupa') ? 'block' : 'none' }};">
                 {{ session('success_lupa') }}
             </div>
 
+            <!-- Form Login -->
             <form action="{{ route('login') }}" method="POST">
                 @csrf
                 <div class="form-group">
-                    <label for="usernameInput">Username / Nama</label>
-                    <input type="text" name="username" id="usernameInput" class="form-control" required placeholder="Masukkan Username atau Nama Anda" autofocus>
-                </div>
-
-                <div class="form-group">
-                    <label for="passwordInput">Password</label>
-                    <div style="position: relative;">
-                        <input type="password" name="password" id="passwordInput" class="form-control" required placeholder="Masukkan Password Anda" style="padding-right: 2.75rem;">
-                        <button type="button" onclick="togglePasswordVisibility('passwordInput', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                    <label class="form-label" for="usernameInput">Email / NISN / Username</label>
+                    <div class="form-input-wrapper">
+                        <input type="text" name="username" id="usernameInput" class="form-control-custom" required placeholder="Masukkan email, NISN, atau username" value="{{ old('username') }}" autofocus>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-submit">Masuk Sistem</button>
+                <div class="form-group">
+                    <label class="form-label" for="passwordInput">Password</label>
+                    <div class="form-input-wrapper">
+                        <input type="password" name="password" id="passwordInput" class="form-control-custom" required placeholder="Masukkan kata sandi" style="padding-right: 5rem;">
+                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('passwordInput', this)">Lihat</button>
+                    </div>
+                </div>
+
+                <!-- Checkbox Ingat Saya & Link Lupa Kata Sandi -->
+                <div class="form-meta-row">
+                    <label class="remember-checkbox-label" for="rememberMe">
+                        <input type="checkbox" name="remember" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+
+                    <button type="button" class="link-reset-password" onclick="openResetModal()">
+                        Reset Password!
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-main-login">Login</button>
             </form>
 
-            <div class="lupa-sandi-container">
-                <button type="button" class="btn-lupa-link" onclick="openResetModal()">Lupa Sandi??</button>
+            <div class="login-info-box">
+                <p>Nasabah terdaftar dapat login langsung menggunakan <span class="highlight">alamat Gmail</span> atau <span class="highlight">NISN</span>.</p>
             </div>
         </div>
 
-        <div class="footer-credits">
-            &copy; 2026/2027 Sistem Informasi E-Teller Bank Mini Sekolah
-        </div>
     </div>
 
     <!-- MODAL LUPA SANDI VIA KODE OTP GMAIL (TANPA MENGGUNAKAN ICON) -->
     <div class="modal-reset-overlay" id="resetModal">
         <div class="modal-reset-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-                <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin:0;">Pemulihan Sandi Akun</h3>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0;">Pemulihan Sandi Akun</h3>
                 <button type="button" onclick="closeResetModal()" class="btn-text-close">Tutup</button>
             </div>
 
@@ -471,13 +792,13 @@
                 <div id="step1Alert" class="alert-box" style="display: none;"></div>
 
                 <div class="form-group">
-                    <label for="resetIdentifier">NISN atau Username</label>
-                    <input type="text" id="resetIdentifier" class="form-control" placeholder="Contoh: 1029384756 atau username" autocomplete="off">
+                    <label class="form-label" for="resetIdentifier">NISN atau Username</label>
+                    <input type="text" id="resetIdentifier" class="form-control-custom" placeholder="Contoh: 1029384756 atau username" autocomplete="off">
                 </div>
 
                 <div class="form-group">
-                    <label for="resetEmail">Alamat Gmail</label>
-                    <input type="email" id="resetEmail" class="form-control" placeholder="Contoh: ahmad.rizky@gmail.com" autocomplete="off">
+                    <label class="form-label" for="resetEmail">Alamat Gmail Terdaftar</label>
+                    <input type="email" id="resetEmail" class="form-control-custom" placeholder="Contoh: ahmad.rizky@gmail.com" autocomplete="off">
                 </div>
 
                 <div style="margin-bottom: 1.25rem;">
@@ -487,8 +808,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="resetOtp">Masukkan Kode OTP</label>
-                    <input type="text" id="resetOtp" class="form-control text-center-otp" placeholder="6 Digit OTP" maxlength="6" autocomplete="off">
+                    <label class="form-label" for="resetOtp">Masukkan Kode OTP</label>
+                    <input type="text" id="resetOtp" class="form-control-custom text-center-otp" placeholder="6 Digit OTP" maxlength="6" autocomplete="off">
                 </div>
 
                 <button type="button" id="btnSelanjutnya" class="btn-action-success" onclick="handleVerifikasiOtp()">
@@ -512,22 +833,18 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="resetNewPassword">Sandi Baru</label>
-                    <div style="position: relative;">
-                        <input type="password" id="resetNewPassword" class="form-control" placeholder="Masukkan kata sandi baru (min. 6 karakter)" style="padding-right: 2.75rem;">
-                        <button type="button" onclick="togglePasswordVisibility('resetNewPassword', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Sandi">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                    <label class="form-label" for="resetNewPassword">Sandi Baru</label>
+                    <div class="form-input-wrapper">
+                        <input type="password" id="resetNewPassword" class="form-control-custom" placeholder="Masukkan kata sandi baru (min. 6 karakter)" style="padding-right: 5rem;">
+                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('resetNewPassword', this)">Lihat</button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="resetNewPasswordConfirm">Konfirmasi Sandi Baru</label>
-                    <div style="position: relative;">
-                        <input type="password" id="resetNewPasswordConfirm" class="form-control" placeholder="Ulangi kata sandi baru" style="padding-right: 2.75rem;">
-                        <button type="button" onclick="togglePasswordVisibility('resetNewPasswordConfirm', this)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Sandi">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                    <label class="form-label" for="resetNewPasswordConfirm">Konfirmasi Sandi Baru</label>
+                    <div class="form-input-wrapper">
+                        <input type="password" id="resetNewPasswordConfirm" class="form-control-custom" placeholder="Ulangi kata sandi baru" style="padding-right: 5rem;">
+                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('resetNewPasswordConfirm', this)">Lihat</button>
                     </div>
                 </div>
 
@@ -551,13 +868,8 @@
             if (!input) return;
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
-
-            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
-            const eyeOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
-
-            btn.innerHTML = isPassword ? eyeOffSvg : eyeSvg;
-            btn.title = isPassword ? 'Sembunyikan' : 'Lihat';
-            btn.style.color = isPassword ? '#2563eb' : '#64748b';
+            btn.textContent = isPassword ? 'Sembunyikan' : 'Lihat';
+            btn.style.color = isPassword ? '#4361ee' : '#475569';
         }
 
         function getCsrfToken() {
@@ -716,7 +1028,7 @@
                 if (response.ok && data.success) {
                     currentResetToken = data.reset_token;
 
-                    // Otomatis pasang nama siapa dan username di Tahap 2
+                    // Otomatis pasang nama pemilik akun dan username di Tahap 2
                     document.getElementById('displayNamaUser').textContent = data.nama;
                     document.getElementById('displayUsernameUser').textContent = 'NISN / Username: ' + (data.username || identifier);
 

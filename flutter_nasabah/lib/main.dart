@@ -170,60 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showServerConfigDialog() {
-    final TextEditingController urlController =
-        TextEditingController(text: ApiConfig.baseUrl);
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Pengaturan URL Server'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Sesuaikan alamat backend Laravel sesuai perangkat uji coba Anda:',
-                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: urlController,
-                decoration: const InputDecoration(
-                  labelText: 'Base URL API',
-                  hintText: 'http://10.0.2.2:8000/api/nasabah',
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '• Emulator Android: http://10.0.2.2:8000/api/nasabah\n• Chrome/Web/Desktop: http://127.0.0.1:8000/api/nasabah\n• HP Fisik via Wi-Fi: http://[IP_Komputer]:8000/api/nasabah',
-                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  ApiConfig.baseUrl = urlController.text.trim();
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('URL Server berhasil diperbarui.')),
-                );
-              },
-              child: const Text('Simpan'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showLupaSandiDialog() {
     final TextEditingController emailController = TextEditingController();
@@ -505,21 +452,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 16),
 
-                // Server Config Link & Footer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _showServerConfigDialog,
-                      icon: const Icon(Icons.settings_outlined, size: 16),
-                      label: const Text(
-                        'Konfigurasi Server API',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                // Footer
                 const Text(
                   'Sistem Informasi E-Teller Bank Mini Sekolah\nUKK RPL 2026/2027',
                   textAlign: TextAlign.center,

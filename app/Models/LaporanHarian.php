@@ -23,6 +23,11 @@ class LaporanHarian extends Model
         'status_approval',
         'catatan_penolakan',
         'supervisor_id',
+        'submitted_at',
+    ];
+
+    protected $casts = [
+        'submitted_at' => 'datetime',
     ];
 
     public function teller()

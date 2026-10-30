@@ -278,11 +278,75 @@
     </nav>
 
     <div class="container">
+        <!-- NOTIFIKASI SUKSES / ERROR (LANGSUNG TAMPIL DI PALING ATAS DENGAN DESAIN MODERN) -->
         @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12); border-left: 5px solid #16a34a;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: #16a34a; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✓</div>
+                    <div>
+                        <div style="font-weight: 800; color: #15803d; font-size: 0.95rem;">Berhasil Dikonfirmasi</div>
+                        <div style="font-size: 0.88rem; color: #166534; margin-top: 2px;">{{ session('success') }}</div>
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #15803d; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            </div>
         @endif
+
         @if(session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
+            <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: #dc2626; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">!</div>
+                    <div>
+                        <div style="font-weight: 800; color: #b91c1c; font-size: 0.95rem;">Pemberitahuan Sistem</div>
+                        <div style="font-size: 0.88rem; color: #991b1b; margin-top: 2px;">{{ session('error') }}</div>
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #b91c1c; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            </div>
+        @endif
+
+        <!-- BANNER PERMINTAAN TAMBAHAN KAS TELLER MENUNGGU APPROVAL (LANGSUNG TAMPIL DI PALING ATAS) -->
+        @php $pendingKasTop = $pengajuanKasList->where('status', 'pending'); @endphp
+        @if($pendingKasTop->count() > 0)
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 16px; padding: 1.15rem 1.35rem; margin-bottom: 1.75rem; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <span style="background: #f59e0b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">!</span>
+                        <h4 style="margin: 0; color: #92400e; font-size: 1.05rem; font-weight: 800;">
+                            {{ $pendingKasTop->count() }} Pengajuan Tambahan Kas Teller Menunggu Persetujuan
+                        </h4>
+                    </div>
+                    <span style="font-size: 0.75rem; background: #fef3c7; color: #92400e; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid #fcd34d;">
+                        AKSI CEPAT ADMINISTRATOR
+                    </span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    @foreach($pendingKasTop as $pkTop)
+                    <div style="background: #ffffff; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a;">
+                                Teller: <span style="color: #2563eb;">{{ $pkTop->teller->nama_petugas ?? 'Teller' }}</span> &bull; 
+                                Nominal: <span style="color: #16a34a; font-size: 1.05rem;">Rp {{ number_format($pkTop->nominal, 0, ',', '.') }}</span>
+                            </div>
+                            <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
+                                Alasan: <em>"{{ $pkTop->alasan }}"</em> &bull; Waktu: {{ date('H:i', strtotime($pkTop->created_at)) }} WIB
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <form action="{{ route('admin.pengajuan-kas.approve', $pkTop->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pkTop->nominal, 0, ',', '.') }} untuk {{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}?')">
+                                @csrf
+                                <button type="submit" class="btn-success" style="padding: 0.45rem 1rem; font-size: 0.85rem; border-radius: 8px;">
+                                    ✓ ACC Kas
+                                </button>
+                            </form>
+                            <button type="button" class="btn-danger" style="padding: 0.45rem 0.85rem; font-size: 0.85rem; border-radius: 8px;" onclick="openRejectPengajuanModal({{ $pkTop->id }}, '{{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}', '{{ number_format($pkTop->nominal, 0, ',', '.') }}')">
+                                Tolak
+                            </button>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
         @endif
 
         <div class="grid">
@@ -302,10 +366,6 @@
                 <h4>Total Saldo Penabung</h4>
                 <div class="value">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
             </div>
-            <div class="card">
-                <h4>Tutup Kas Pending</h4>
-                <div class="value" style="color: #f59e0b;">{{ count($laporanPending) }}</div>
-            </div>
         </div>
 
         <!-- NAVIGATION TABS -->
@@ -313,7 +373,13 @@
             <button class="tab-btn active" onclick="switchTab('tab-users')">Manajemen User</button>
             <button class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa (CRUD)</button>
             <button class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung (Saver)</button>
-            <button class="tab-btn" onclick="switchTab('tab-supervisor')">Approval Tutup Kas (Supervisor)</button>
+            <button class="tab-btn" onclick="switchTab('tab-supervisor')">
+                Approval Kas & Tutup Kas
+                @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
+                @if($pendingKasCount > 0)
+                    <span style="background: #dc2626; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{{ $pendingKasCount }}</span>
+                @endif
+            </button>
             <button class="tab-btn" onclick="switchTab('tab-laporan-bulanan')">Laporan Bulanan & PDF</button>
             <button class="tab-btn" onclick="switchTab('tab-jurnal')">Jurnal Akuntansi</button>
             <button class="tab-btn" onclick="switchTab('tab-audit')">Audit Logs</button>
@@ -353,7 +419,34 @@
                 </div>
 
                 <div class="card">
-                    <h3 style="margin-top:0;">Daftar Pengguna Sistem</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <h3 style="margin:0;">Daftar Pengguna Sistem</h3>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Total: <strong>{{ count($users) }}</strong> pengguna</span>
+                    </div>
+
+                    <!-- PENCARIAN & FILTER USER -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="searchUser" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Nama, Username, Email..." oninput="filterUserTable()">
+                        </div>
+                        <div style="width: 160px;">
+                            <select id="filterUserRole" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterUserTable()">
+                                <option value="">Semua Role</option>
+                                <option value="administrator">Administrator</option>
+                                <option value="teller">Teller</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="nasabah">Nasabah</option>
+                            </select>
+                        </div>
+                        <div style="width: 140px;">
+                            <select id="filterUserStatus" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterUserTable()">
+                                <option value="">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="terblokir">Terblokir</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table>
                             <thead>
@@ -367,9 +460,9 @@
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tableUserBody">
                                 @foreach($users as $index => $u)
-                                <tr>
+                                <tr class="user-row" data-role="{{ strtolower($u->role) }}" data-status="{{ strtolower($u->status) }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $u->nama_petugas }}</td>
                                     <td><code>{{ $u->username }}</code></td>
@@ -398,6 +491,9 @@
                                     </td>
                                 </tr>
                                 @endforeach
+                                <tr id="userEmptySearch" style="display: none;">
+                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada pengguna sistem yang sesuai dengan pencarian atau filter role.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -437,21 +533,56 @@
                         <div class="form-group">
                             <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
                             <input type="password" name="password" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)">
-                            <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">Kata sandi digunakan siswa untuk login ke sistem (minimal 6 karakter).</small>
+                           
                         </div>
                         <div class="form-group">
                             <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
                             <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)">
-                            <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">PIN 6 digit angka digunakan untuk otorisasi penarikan uang tabungan di loket.</small>
                         </div>
                         <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Data Anggota</button>
                     </form>
                 </div>
 
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                        <h3 style="margin:0;">Daftar Anggota Siswa (Members)</h3>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Total: <strong>{{ count($members) }}</strong> siswa terdaftar</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="margin:0;">Daftar Anggota Siswa (Members)</h3>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <a href="{{ route('admin.dashboard', ['filter_member' => 'belum_aktif']) }}" class="badge {{ ($filterMember ?? 'belum_aktif') === 'belum_aktif' ? 'badge-role-teller' : 'badge-tidak-aktif' }}" style="text-decoration:none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                                Belum Aktif ({{ $totalBelumAktif }})
+                            </a>
+                            <a href="{{ route('admin.dashboard', ['filter_member' => 'semua']) }}" class="badge {{ ($filterMember ?? '') === 'semua' ? 'badge-role-teller' : 'badge-tidak-aktif' }}" style="text-decoration:none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                                Semua Siswa ({{ $totalMembers }})
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- PENCARIAN & FILTER ANGGOTA SISWA -->
+                    @php
+                        $uniqueMemberKelas = \App\Models\Member::whereNotNull('class_grade')->where('class_grade', '!=', '')->distinct()->pluck('class_grade')->sort()->values();
+                        $uniqueMemberAngkatan = \App\Models\Member::whereNotNull('graduation_year')->where('graduation_year', '!=', '')->distinct()->pluck('graduation_year')->push((string)date('Y'))->push((string)(date('Y')+1))->push((string)(date('Y')+2))->unique()->sort()->values();
+                    @endphp
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="searchMember" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Siswa (Nama, NIS, Email)..." oninput="filterMemberTable()">
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="filterMemberKelas" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterMemberTable()">
+                                <option value="">Semua Kelas</option>
+                                @foreach($uniqueMemberKelas as $uk)
+                                    <option value="{{ strtolower($uk) }}">{{ $uk }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="filterMemberAngkatan" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterMemberTable()">
+                                <option value="">Semua Angkatan</option>
+                                @foreach($uniqueMemberAngkatan as $ua)
+                                    <option value="{{ strtolower($ua) }}">{{ $ua }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <div class="table-responsive">
@@ -464,13 +595,13 @@
                                     <th>Email / Gmail</th>
                                     <th>Kelas</th>
                                     <th>Angkatan Keluar</th>
-                                    <th>Status Rekening</th>
+                                    <th>Status</th>
                                     <th>Aksi CRUD</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tableMemberBody">
                                 @forelse($members as $index => $m)
-                                <tr>
+                                <tr class="member-row" data-kelas="{{ strtolower($m->class_grade) }}" data-angkatan="{{ strtolower($m->graduation_year) }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $m->student_name }}</strong></td>
                                     <td><code>{{ $m->nis }}</code></td>
@@ -478,13 +609,15 @@
                                     <td>{{ $m->class_grade }}</td>
                                     <td>{{ $m->graduation_year }}</td>
                                     <td>
-                                        <span class="badge {{ $m->status === 'rekening aktif' ? 'badge-aktif' : 'badge-tidak-aktif' }}">
-                                             {{ strtoupper($m->status) }}
-                                        </span>
+                                        @if($m->status === 'rekening aktif')
+                                            <span class="badge badge-aktif">AKTIF</span>
+                                        @else
+                                            <span class="badge badge-tidak-aktif">BELUM AKTIF</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 0.35rem;">
-                                            <button type="button" class="btn-warning" onclick="openEditMemberModal('{{ $m->user_id }}', '{{ addslashes($m->student_name) }}', '{{ $m->nis }}', '{{ addslashes($m->email ?? '') }}', '{{ $m->class_grade }}', '{{ $m->graduation_year }}', '{{ $m->status }}')">
+                                            <button type="button" class="btn-warning" onclick="openEditMemberModal('{{ $m->user_id }}', '{{ addslashes($m->student_name) }}', '{{ $m->nis }}', '{{ addslashes($m->email ?? '') }}', '{{ $m->class_grade }}', '{{ $m->graduation_year }}')">
                                                 Edit
                                             </button>
                                             <form action="{{ route('admin.members.destroy', $m->user_id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data anggota {{ addslashes($m->student_name) }}?')" style="margin:0;">
@@ -496,9 +629,18 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada data anggota siswa yang terdaftar.</td>
+                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                        @if(($filterMember ?? 'belum_aktif') === 'belum_aktif')
+                                            Tidak ada anggota siswa yang belum aktif. Seluruh siswa yang telah menabung otomatis berpindah ke tab <strong>Manajemen User</strong> & <strong>Data Penabung</strong>.
+                                        @else
+                                            Belum ada data anggota siswa yang terdaftar.
+                                        @endif
+                                    </td>
                                 </tr>
                                 @endforelse
+                                <tr id="memberEmptySearch" style="display: none;">
+                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada data siswa yang sesuai dengan pencarian atau filter kelas/angkatan.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -509,10 +651,7 @@
         <!-- TAB 3: DATA PENABUNG (SAVER) -->
         <div id="tab-savers" class="tab-content">
             <div class="card">
-                <div class="notice-box">
-                    <strong>Pemberitahuan Sistem Otomatisasi Penabung:</strong><br>
-                    Tombol Tambah Manual (+) untuk Penabung telah ditiadakan sesuai hasil revisi. Data penabung otomatis dibuat (dikloning) saat siswa anggota mendatangi Teller dan melakukan setoran awal pertama minimal <strong>Rp 10.000</strong>.
-                </div>
+
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
@@ -521,6 +660,24 @@
                     </div>
                     <div>
                         <span class="badge badge-aktif" style="font-size: 0.85rem; padding: 0.5rem 1rem;">Total Saldo: Rp {{ number_format($totalSaldo, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+
+                <!-- PENCARIAN & FILTER PENABUNG -->
+                @php
+                    $uniqueSaverKelas = \App\Models\Saver::whereNotNull('class_grade')->where('class_grade', '!=', '')->distinct()->pluck('class_grade')->sort()->values();
+                @endphp
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchSaver" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Penabung (Nama, No Rekening, NIS)..." oninput="filterSaverTable()">
+                    </div>
+                    <div style="width: 160px;">
+                        <select id="filterSaverKelas" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterSaverTable()">
+                            <option value="">Semua Kelas</option>
+                            @foreach($uniqueSaverKelas as $sk)
+                                <option value="{{ strtolower($sk) }}">{{ $sk }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -537,9 +694,9 @@
                                 <th>Aksi Penabung</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tableSaverBody">
                             @forelse($savers as $s)
-                            <tr>
+                            <tr class="saver-row" data-kelas="{{ strtolower($s->class_grade) }}">
                                 <td><code>{{ $s->account_number }}</code></td>
                                 <td><strong>{{ $s->student_name }}</strong></td>
                                 <td><code>{{ $s->nis }}</code></td>
@@ -549,7 +706,7 @@
                                 <td>
                                     <div style="display: flex; gap: 0.35rem;">
                                         <button type="button" class="btn-warning" onclick="openResetPinModal('{{ $s->id }}', '{{ addslashes($s->student_name) }}', '{{ $s->account_number }}')">
-                                            Reset PIN
+                                             Reset PIN
                                         </button>
                                         <form action="{{ route('admin.savers.destroy', $s->id) }}" method="POST" onsubmit="return confirm('Perhatian: Akun penabung {{ addslashes($s->student_name) }} akan dinonaktifkan/dihapus, namun catatan histori transaksi tetap aman tersimpan untuk rekonsiliasi kas. Lanjutkan?')" style="margin:0;">
                                             @csrf
@@ -563,17 +720,119 @@
                                 <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada penabung aktif. Aktivasi penabung dilakukan oleh Teller melalui setoran awal minimal Rp 10.000.</td>
                             </tr>
                             @endforelse
+                            <tr id="saverEmptySearch" style="display: none;">
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada penabung yang sesuai dengan pencarian atau filter kelas.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 4: APPROVAL TUTUP KAS TELLER (FITUR SUPERVISOR YANG DISATUKAN KE ADMIN) -->
+        <!-- TAB 4: APPROVAL KAS & TUTUP KAS TELLER -->
         <div id="tab-supervisor" class="tab-content">
+            <!-- PENGAJUAN TAMBAHAN KAS TELLER -->
+            <div class="card" style="margin-bottom: 2rem; border-left: 4px solid #2563eb;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="margin: 0; color: #1e40af;">Pengajuan Tambahan Kas Teller</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Pengajuan dana tunai dari teller saat kas laci tidak cukup untuk melayani penarikan.</p>
+                    </div>
+                    @php $pendingCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
+                    @if($pendingCount > 0)
+                        <span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.85rem;">{{ $pendingCount }} Menunggu ACC</span>
+                    @endif
+                </div>
+
+                <div class="table-responsive" style="margin-top: 1rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Teller</th>
+                                <th>Nominal</th>
+                                <th>Alasan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($pengajuanKasList as $pk)
+                            <tr>
+                                <td>{{ $pk->created_at->format('d/m/Y H:i') }}</td>
+                                <td><strong>{{ $pk->teller->nama_petugas ?? 'Teller' }}</strong></td>
+                                <td><strong style="color: #2563eb;">Rp {{ number_format($pk->nominal, 0, ',', '.') }}</strong></td>
+                                <td style="max-width: 260px; white-space: normal;">
+                                    <div>{{ $pk->alasan }}</div>
+                                    @if($pk->status === 'rejected' && $pk->catatan_admin)
+                                        <div style="font-size: 0.8rem; color: #dc2626; margin-top: 5px; background: #fef2f2; border: 1px solid #fee2e2; padding: 4px 8px; border-radius: 6px;">
+                                            <strong>Alasan Ditolak:</strong> {{ $pk->catatan_admin }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($pk->status === 'pending')
+                                        <span class="badge" style="background: #fef3c7; color: #92400e;">Menunggu</span>
+                                    @elseif($pk->status === 'approved')
+                                        <span class="badge badge-aktif">Disetujui</span>
+                                    @else
+                                        <span class="badge badge-tidak-aktif">Ditolak</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($pk->status === 'pending')
+                                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                            <form action="{{ route('admin.pengajuan-kas.approve', $pk->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pk->nominal, 0, ',', '.') }}?')">
+                                                @csrf
+                                                <button type="submit" class="btn-success" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">ACC</button>
+                                            </form>
+                                            <button type="button" class="btn-danger" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onclick="openRejectPengajuanModal({{ $pk->id }}, '{{ addslashes($pk->teller->nama_petugas ?? 'Teller') }}', '{{ number_format($pk->nominal, 0, ',', '.') }}')">Tolak</button>
+                                        </div>
+                                    @else
+                                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                            @if($pk->status === 'approved')
+                                                Di-ACC oleh {{ $pk->admin->nama_petugas ?? 'Admin' }}
+                                            @else
+                                                <span style="color: #dc2626; font-weight: 600;">Ditolak oleh {{ $pk->admin->nama_petugas ?? 'Admin' }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada pengajuan tambahan kas.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="card" style="margin-bottom: 2rem;">
                 <h3 style="margin-top:0; color: #d97706; margin-bottom: 0.5rem;">Laporan Penutupan Kas Teller Menunggu Approval</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Administrator memvalidasi saldo akhir kas sistem dengan uang fisik kas laci teller sebelum menyetujui pemindahan ke brankas utama.</p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Administrator memvalidasi saldo akhir kas sistem dengan uang fisik kas laci teller sebelum menyetujui pemindahan ke brankas utama.</p>
+
+                <!-- PENCARIAN & FILTER KAS PENDING -->
+                @php
+                    $uniqueTahunPending = $laporanPending->map(fn($lp) => date('Y', strtotime($lp->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
+                @endphp
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchKasPending" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Nama Teller..." oninput="filterKasPendingTable()">
+                    </div>
+                    <div style="width: 170px;">
+                        <input type="date" id="filterKasPendingTanggal" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterKasPendingTable()" title="Filter Tanggal">
+                    </div>
+                    <div style="width: 140px;">
+                        <select id="filterKasPendingTahun" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterKasPendingTable()">
+                            <option value="">Semua Tahun</option>
+                            @foreach($uniqueTahunPending as $yt)
+                                <option value="{{ $yt }}">{{ $yt }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
 
                 <div class="table-responsive">
                     <table>
@@ -590,9 +849,9 @@
                                 <th>Aksi Approval</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tableKasPendingBody">
                             @forelse($laporanPending as $lp)
-                            <tr>
+                            <tr class="kas-pending-row" data-tanggal="{{ date('Y-m-d', strtotime($lp->tanggal)) }}" data-tahun="{{ date('Y', strtotime($lp->tanggal)) }}">
                                 <td><strong>{{ date('d/m/Y', strtotime($lp->tanggal)) }}</strong></td>
                                 <td>{{ $lp->teller->nama_petugas ?? 'Teller' }}</td>
                                 <td>Rp {{ number_format($lp->saldo_awal) }}</td>
@@ -625,6 +884,9 @@
                                 <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada laporan harian kas teller yang menunggu approval saat ini.</td>
                             </tr>
                             @endforelse
+                            <tr id="kasPendingEmptySearch" style="display: none;">
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada laporan kas pending yang sesuai dengan pencarian atau filter tanggal/tahun.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -632,7 +894,28 @@
 
             <div class="card">
                 <h3 style="margin-top:0; color: #16a34a; margin-bottom: 0.5rem;">Arsip Laporan Kas Disetujui (Cetak PDF)</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Laporan penutupan kas yang telah di-ACC. Transaksi akun yang dihapus tetap tersaji lengkap dan tidak terhapus pada PDF.</p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Laporan penutupan kas yang telah di-ACC. Transaksi akun yang dihapus tetap tersaji lengkap dan tidak terhapus pada PDF.</p>
+
+                <!-- PENCARIAN & FILTER KAS APPROVED -->
+                @php
+                    $uniqueTahunApproved = $laporanApproved->map(fn($la) => date('Y', strtotime($la->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
+                @endphp
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchKasApproved" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Nama Teller, Admin..." oninput="filterKasApprovedTable()">
+                    </div>
+                    <div style="width: 170px;">
+                        <input type="date" id="filterKasApprovedTanggal" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterKasApprovedTable()" title="Filter Tanggal">
+                    </div>
+                    <div style="width: 140px;">
+                        <select id="filterKasApprovedTahun" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterKasApprovedTable()">
+                            <option value="">Semua Tahun</option>
+                            @foreach($uniqueTahunApproved as $yt)
+                                <option value="{{ $yt }}">{{ $yt }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
 
                 <div class="table-responsive">
                     <table>
@@ -648,9 +931,9 @@
                                 <th>Dokumen PDF</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tableKasApprovedBody">
                             @forelse($laporanApproved as $la)
-                            <tr>
+                            <tr class="kas-approved-row" data-tanggal="{{ date('Y-m-d', strtotime($la->tanggal)) }}" data-tahun="{{ date('Y', strtotime($la->tanggal)) }}">
                                 <td><strong>{{ date('d/m/Y', strtotime($la->tanggal)) }}</strong></td>
                                 <td>{{ $la->teller->nama_petugas ?? 'Teller' }}</td>
                                 <td><strong style="color: #16a34a;">Rp {{ number_format($la->total_setoran) }}</strong></td>
@@ -669,6 +952,9 @@
                                 <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada arsip laporan yang disetujui.</td>
                             </tr>
                             @endforelse
+                            <tr id="kasApprovedEmptySearch" style="display: none;">
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada arsip laporan yang sesuai dengan pencarian atau filter tanggal/tahun.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -783,6 +1069,7 @@
                     $totalDebit = $jurnals->where('posisi', 'debit')->sum('jumlah');
                     $totalKredit = $jurnals->where('posisi', 'kredit')->sum('jumlah');
                     $isBalanced = ($totalDebit == $totalKredit);
+                    $uniqueTahunJurnal = $jurnals->map(fn($j) => date('Y', strtotime($j->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
                 @endphp
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
@@ -798,6 +1085,24 @@
                     </div>
                 </div>
 
+                <!-- PENCARIAN & FILTER JURNAL AKUNTANSI -->
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchJurnal" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari No. Transaksi, Keterangan Akun, Kode Ref..." oninput="filterJurnalTable()">
+                    </div>
+                    <div style="width: 170px;">
+                        <input type="date" id="filterJurnalTanggal" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterJurnalTable()" title="Filter Tanggal Spesifik">
+                    </div>
+                    <div style="width: 140px;">
+                        <select id="filterJurnalTahun" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterJurnalTable()">
+                            <option value="">Semua Tahun</option>
+                            @foreach($uniqueTahunJurnal as $yj)
+                                <option value="{{ $yj }}">{{ $yj }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-responsive" style="margin-top: 1rem;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
@@ -810,9 +1115,9 @@
                                 <th style="width: 12%; text-align: right;">Kredit (Rp)</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tableJurnalBody">
                             @forelse($jurnals as $j)
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <tr class="jurnal-row" data-tanggal="{{ date('Y-m-d', strtotime($j->tanggal)) }}" data-tahun="{{ date('Y', strtotime($j->tanggal)) }}" style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="font-size: 0.85rem; color: #64748b;">{{ $j->tanggal }}</td>
                                 <td>
                                     <code style="font-size: 0.85rem; font-weight: 600; color: #2563eb;">{{ $j->transaksi->no_transaksi ?? '-' }}</code>
@@ -841,6 +1146,9 @@
                                 <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada catatan jurnal akuntansi.</td>
                             </tr>
                             @endforelse
+                            <tr id="jurnalEmptySearch" style="display: none;">
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada catatan jurnal yang sesuai dengan pencarian atau filter tanggal/tahun.</td>
+                            </tr>
                         </tbody>
                         <tfoot>
                             <tr style="background: #f8fafc; font-weight: 800; border-top: 2px solid #cbd5e1;">
@@ -861,7 +1169,32 @@
         <!-- TAB 7: AUDIT LOGS -->
         <div id="tab-audit" class="tab-content">
             <div class="card">
-                <h3 style="margin-top:0;">Audit Trail Logs Aktivitas</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <h3 style="margin:0;">Audit Trail Logs Aktivitas</h3>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Total: <strong>{{ count($auditLogs) }}</strong> aktivitas</span>
+                </div>
+
+                <!-- PENCARIAN & FILTER AUDIT LOGS -->
+                @php
+                    $uniqueTahunAudit = $auditLogs->map(fn($l) => date('Y', strtotime($l->created_at)))->push((string)date('Y'))->unique()->sort()->values();
+                @endphp
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchAudit" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Pengguna, Aktivitas, Detail Log, IP..." oninput="filterAuditTable()">
+                    </div>
+                    <div style="width: 170px;">
+                        <input type="date" id="filterAuditTanggal" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterAuditTable()" title="Filter Tanggal Spesifik">
+                    </div>
+                    <div style="width: 140px;">
+                        <select id="filterAuditTahun" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterAuditTable()">
+                            <option value="">Semua Tahun</option>
+                            @foreach($uniqueTahunAudit as $ya)
+                                <option value="{{ $ya }}">{{ $ya }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -873,16 +1206,23 @@
                                 <th>IP Address</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach($auditLogs as $log)
-                            <tr>
+                        <tbody id="tableAuditBody">
+                            @forelse($auditLogs as $log)
+                            <tr class="audit-row" data-tanggal="{{ date('Y-m-d', strtotime($log->created_at)) }}" data-tahun="{{ date('Y', strtotime($log->created_at)) }}">
                                 <td>{{ $log->created_at }}</td>
-                                <td>{{ $log->user->nama_petugas ?? 'System' }}</td>
-                                <td><strong>{{ $log->aktivitas }}</strong></td>
+                                <td><strong>{{ $log->user->nama_petugas ?? 'System' }}</strong></td>
+                                <td><span class="badge badge-role-teller">{{ $log->aktivitas }}</span></td>
                                 <td>{{ $log->detail }}</td>
                                 <td><code>{{ $log->ip_address }}</code></td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada catatan aktivitas sistem.</td>
+                            </tr>
+                            @endforelse
+                            <tr id="auditEmptySearch" style="display: none;">
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada aktivitas log yang sesuai dengan pencarian pengguna atau filter tanggal/tahun.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -919,13 +1259,6 @@
                 <div class="form-group">
                     <label>Angkatan Keluar</label>
                     <input type="text" name="graduation_year" id="edit_graduation_year" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Status Rekening</label>
-                    <select name="status" id="edit_status" class="form-control" required>
-                        <option value="rekening tidak aktif">rekening tidak aktif</option>
-                        <option value="rekening aktif">rekening aktif</option>
-                    </select>
                 </div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
                     <button type="button" onclick="closeEditMemberModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
@@ -1017,6 +1350,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             restoreAdminActiveTab();
 
+            @if(session('success') || session('error'))
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            @endif
+
             // Pastikan setiap form (tambah, edit, hapus, approve, reject, reset PIN)
             // selalu menyimpan tab aktif sebelum submit ke server
             document.querySelectorAll('form').forEach(form => {
@@ -1032,14 +1369,13 @@
             });
         });
 
-        function openEditMemberModal(userId, name, nis, email, grade, gradYear, status) {
+        function openEditMemberModal(userId, name, nis, email, grade, gradYear) {
             document.getElementById('editMemberForm').action = '/admin/members/' + userId + '/update';
             document.getElementById('edit_student_name').value = name;
             document.getElementById('edit_nis').value = nis;
             document.getElementById('edit_email').value = email || '';
             document.getElementById('edit_class_grade').value = grade;
             document.getElementById('edit_graduation_year').value = gradYear;
-            document.getElementById('edit_status').value = status;
             document.getElementById('editMemberModal').style.display = 'flex';
         }
 
@@ -1082,6 +1418,229 @@
 
         function closeRejectModal() {
             document.getElementById('rejectLaporanModal').style.display = 'none';
+        }
+
+        function openRejectPengajuanModal(id, tellerNama, nominal) {
+            document.getElementById('rejectPengajuanForm').action = '/admin/pengajuan-kas/' + id + '/reject';
+            document.getElementById('rejectPengajuanTeller').innerText = tellerNama;
+            document.getElementById('rejectPengajuanNominal').innerText = 'Rp ' + nominal;
+            document.getElementById('rejectPengajuanCatatanInput').value = '';
+            document.getElementById('rejectPengajuanModal').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('rejectPengajuanCatatanInput').focus();
+            }, 100);
+        }
+
+        function closeRejectPengajuanModal() {
+            document.getElementById('rejectPengajuanModal').style.display = 'none';
+        }
+
+        // Live Search & Filter Functions
+        function filterUserTable() {
+            const query = (document.getElementById('searchUser')?.value || '').toLowerCase().trim();
+            const role = (document.getElementById('filterUserRole')?.value || '').toLowerCase();
+            const status = (document.getElementById('filterUserStatus')?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#tableUserBody tr.user-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rRole = row.getAttribute('data-role') || '';
+                const rStatus = row.getAttribute('data-status') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchRole = !role || rRole === role;
+                const matchStatus = !status || rStatus === status;
+
+                if (matchQuery && matchRole && matchStatus) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('userEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function filterMemberTable() {
+            const query = (document.getElementById('searchMember')?.value || '').toLowerCase().trim();
+            const kelas = (document.getElementById('filterMemberKelas')?.value || '').toLowerCase();
+            const angkatan = (document.getElementById('filterMemberAngkatan')?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#tableMemberBody tr.member-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rKelas = row.getAttribute('data-kelas') || '';
+                const rAngkatan = row.getAttribute('data-angkatan') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchKelas = !kelas || rKelas === kelas;
+                const matchAngkatan = !angkatan || rAngkatan === angkatan;
+
+                if (matchQuery && matchKelas && matchAngkatan) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('memberEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function filterSaverTable() {
+            const query = (document.getElementById('searchSaver')?.value || '').toLowerCase().trim();
+            const kelas = (document.getElementById('filterSaverKelas')?.value || '').toLowerCase();
+            const rows = document.querySelectorAll('#tableSaverBody tr.saver-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rKelas = row.getAttribute('data-kelas') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchKelas = !kelas || rKelas === kelas;
+
+                if (matchQuery && matchKelas) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('saverEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function filterKasPendingTable() {
+            const query = (document.getElementById('searchKasPending')?.value || '').toLowerCase().trim();
+            const tgl = (document.getElementById('filterKasPendingTanggal')?.value || '').trim();
+            const thn = (document.getElementById('filterKasPendingTahun')?.value || '').trim();
+            const rows = document.querySelectorAll('#tableKasPendingBody tr.kas-pending-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rTgl = row.getAttribute('data-tanggal') || '';
+                const rThn = row.getAttribute('data-tahun') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchTgl = !tgl || rTgl === tgl;
+                const matchThn = !thn || rThn === thn;
+
+                if (matchQuery && matchTgl && matchThn) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('kasPendingEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function filterKasApprovedTable() {
+            const query = (document.getElementById('searchKasApproved')?.value || '').toLowerCase().trim();
+            const tgl = (document.getElementById('filterKasApprovedTanggal')?.value || '').trim();
+            const thn = (document.getElementById('filterKasApprovedTahun')?.value || '').trim();
+            const rows = document.querySelectorAll('#tableKasApprovedBody tr.kas-approved-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rTgl = row.getAttribute('data-tanggal') || '';
+                const rThn = row.getAttribute('data-tahun') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchTgl = !tgl || rTgl === tgl;
+                const matchThn = !thn || rThn === thn;
+
+                if (matchQuery && matchTgl && matchThn) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('kasApprovedEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function filterJurnalTable() {
+            const query = (document.getElementById('searchJurnal')?.value || '').toLowerCase().trim();
+            const tgl = (document.getElementById('filterJurnalTanggal')?.value || '').trim();
+            const thn = (document.getElementById('filterJurnalTahun')?.value || '').trim();
+            const rows = document.querySelectorAll('#tableJurnalBody tr.jurnal-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rTgl = row.getAttribute('data-tanggal') || '';
+                const rThn = row.getAttribute('data-tahun') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchTgl = !tgl || rTgl === tgl;
+                const matchThn = !thn || rThn === thn;
+
+                if (matchQuery && matchTgl && matchThn) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('jurnalEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function filterAuditTable() {
+            const query = (document.getElementById('searchAudit')?.value || '').toLowerCase().trim();
+            const tgl = (document.getElementById('filterAuditTanggal')?.value || '').trim();
+            const thn = (document.getElementById('filterAuditTahun')?.value || '').trim();
+            const rows = document.querySelectorAll('#tableAuditBody tr.audit-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rTgl = row.getAttribute('data-tanggal') || '';
+                const rThn = row.getAttribute('data-tahun') || '';
+
+                const matchQuery = !query || text.includes(query);
+                const matchTgl = !tgl || rTgl === tgl;
+                const matchThn = !thn || rThn === thn;
+
+                if (matchQuery && matchTgl && matchThn) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('auditEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
         }
     </script>
 
@@ -1171,27 +1730,51 @@
 
     <!-- MODAL PENOLAKAN LAPORAN KAS DENGAN INPUT TEKS ALASAN -->
     <div class="modal-overlay" id="rejectLaporanModal">
-        <div class="modal-card" style="max-width: 480px; width: 95%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="font-size: 1.25rem; font-weight: 800; color: #dc2626; margin:0;">Tolak Laporan Kas Teller</h3>
+        <div class="modal-card" style="max-width: 440px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin:0;">Tolak Laporan</h3>
                 <button type="button" onclick="closeRejectModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
             </div>
 
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                Laporan Teller: <strong id="rejectTellerNama">-</strong> (Tanggal: <span id="rejectTanggal">-</span>)<br>
-                Selisih Kas Terdeteksi: <strong id="rejectSelisih" style="color: #dc2626;">-</strong>
-            </p>
+            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 1rem; line-height: 1.5;">
+                <span id="rejectTellerNama">-</span> &bull; Selisih: <strong id="rejectSelisih" style="color: #dc2626;">-</strong>
+            </div>
 
             <form id="rejectLaporanForm" method="POST">
                 @csrf
-                <div class="form-group">
-                    <label>Alasan / Catatan Penolakan untuk Teller <span style="color: #dc2626;">*</span></label>
-                    <input type="text" name="catatan_penolakan" id="rejectCatatanInput" class="form-control" required placeholder="Contoh: Uang fisik kurang Rp 300.000, silakan hitung ulang laci kas">
-                    <small style="color: #64748b; font-size: 0.8rem; margin-top: 4px; display: block;">Catatan ini otomatis diteruskan dan ditampilkan di dashboard Teller.</small>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; font-size: 0.85rem;">Alasan Penolakan <span style="color: #dc2626;">*</span></label>
+                    <input type="text" name="catatan_penolakan" id="rejectCatatanInput" class="form-control" required placeholder="Tulis alasan...">
                 </div>
-                <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
                     <button type="button" onclick="closeRejectModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
-                    <button type="submit" class="btn-danger" style="flex: 2;">Kirim Penolakan</button>
+                    <button type="submit" class="btn-danger" style="flex: 1.5;">Tolak Laporan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PENOLAKAN PENGAJUAN TAMBAHAN KAS -->
+    <div class="modal-overlay" id="rejectPengajuanModal">
+        <div class="modal-card" style="max-width: 440px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin:0;">Tolak Pengajuan Kas</h3>
+                <button type="button" onclick="closeRejectPengajuanModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
+            </div>
+
+            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 1rem; line-height: 1.5;">
+                Teller: <strong id="rejectPengajuanTeller">-</strong> &bull; Nominal: <strong id="rejectPengajuanNominal" style="color: #dc2626;">-</strong>
+            </div>
+
+            <form id="rejectPengajuanForm" method="POST">
+                @csrf
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; font-size: 0.85rem;">Alasan Penolakan <span style="color: #dc2626;">*</span></label>
+                    <input type="text" name="catatan_admin" id="rejectPengajuanCatatanInput" class="form-control" required placeholder="Contoh: Saldo kas utama belum mencukupi / salah input...">
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button type="button" onclick="closeRejectPengajuanModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
+                    <button type="submit" class="btn-danger" style="flex: 1.5;">Tolak Pengajuan</button>
                 </div>
             </form>
         </div>

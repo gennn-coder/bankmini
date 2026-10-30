@@ -236,6 +236,10 @@
             50% { top: 90%; opacity: 1; }
             100% { top: 6%; opacity: 0.85; }
         }
+        @keyframes spinDouble {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
         .modal-qr-overlay {
             display: none;
             position: fixed;
@@ -337,12 +341,9 @@
         <div id="modalTransaksiSukses" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
             <div style="background: #ffffff; border-radius: 24px; max-width: 500px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow: hidden;">
                 <!-- Header Modal -->
-                <div style="background: {{ $ts['jenis_trans'] === 'setoran' ? 'linear-gradient(135deg, #16a34a, #22c55e)' : 'linear-gradient(135deg, #dc2626, #ef4444)' }}; padding: 1.75rem 1.5rem; text-align: center; color: #ffffff;">
-                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto; font-size: 2rem; font-weight: bold;">
-                        ✓
-                    </div>
+                <div style="background: {{ $ts['jenis_trans'] === 'setoran' ? 'linear-gradient(135deg, #16a34a, #22c55e)' : 'linear-gradient(135deg, #dc2626, #ef4444)' }}; padding: 1.5rem 1.5rem; text-align: center; color: #ffffff;">
                     <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: 0.5px;">{{ $ts['judul'] ?? 'Transaksi Berhasil!' }}</h3>
-                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95;">Bukti transaksi telah dicatat ke kas & jurnal akuntansi</p>
+                    <p style="margin: 6px 0 0 0; font-size: 0.85rem; opacity: 0.95;">Bukti transaksi telah dicatat ke kas & jurnal akuntansi</p>
                 </div>
 
                 <!-- Body Modal Rincian Struk -->
@@ -384,8 +385,8 @@
 
                     <!-- Action Buttons -->
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                        <button type="button" onclick="cetakStruk('{{ $ts['no_transaksi'] }}', '{{ addslashes($ts['nama_siswa']) }}', '{{ $ts['no_rekening'] }}', '{{ $ts['jenis_trans'] }}', '{{ number_format($ts['nominal']) }}', '{{ $ts['waktu'] }}', '{{ number_format($ts['saldo_akhir'] ?? 0) }}')" style="flex: 2; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
-                            🖨️ Cetak Struk Transaksi
+                        <button type="button" onclick="cetakStruk('{{ $ts['no_transaksi'] }}', '{{ addslashes($ts['nama_siswa']) }}', '{{ $ts['no_rekening'] }}', '{{ $ts['jenis_trans'] }}', '{{ number_format($ts['nominal']) }}', '{{ $ts['waktu'] }}', '{{ number_format($ts['saldo_akhir'] ?? 0) }}')" style="flex: 2; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                            Cetak Struk Transaksi
                         </button>
                         <button type="button" onclick="document.getElementById('modalTransaksiSukses').style.display='none'" style="flex: 1; background: #e2e8f0; color: #334155; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
                             Tutup
@@ -401,24 +402,18 @@
         <div id="modalTransaksiGagal" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
             <div style="background: #ffffff; border-radius: 24px; max-width: 480px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow: hidden;">
                 <!-- Header Modal Gagal -->
-                <div style="background: linear-gradient(135deg, #dc2626, #ef4444); padding: 1.75rem 1.5rem; text-align: center; color: #ffffff;">
-                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto; font-size: 2rem; font-weight: bold;">
-                        ✕
-                    </div>
+                <div style="background: linear-gradient(135deg, #dc2626, #ef4444); padding: 1.5rem 1.5rem; text-align: center; color: #ffffff;">
                     <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: 0.5px;">Transaksi Gagal / Ditolak</h3>
-                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95;">Sistem mendeteksi kesalahan pada data transaksi</p>
+                    <p style="margin: 6px 0 0 0; font-size: 0.85rem; opacity: 0.95;">Sistem mendeteksi kesalahan pada data transaksi</p>
                 </div>
 
                 <!-- Body Modal -->
                 <div style="padding: 1.5rem 1.75rem; background: #fafafa;">
                     <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 16px; padding: 1.25rem; color: #991b1b; font-size: 0.92rem; line-height: 1.6;">
                         @if(session('error'))
-                            <div style="display: flex; gap: 0.6rem; align-items: flex-start;">
-                                <span style="font-size: 1.35rem; line-height: 1;">⚠️</span>
-                                <div>
-                                    <strong style="color: #b91c1c; font-size: 0.95rem;">Pemberitahuan:</strong><br>
-                                    {{ session('error') }}
-                                </div>
+                            <div>
+                                <strong style="color: #b91c1c; font-size: 0.95rem;">Pemberitahuan:</strong><br>
+                                {{ session('error') }}
                             </div>
                         @endif
 
@@ -435,11 +430,8 @@
                     </div>
 
                     @if(session('error') && str_contains(session('error'), 'PIN'))
-                        <div style="margin-top: 1rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #92400e; display: flex; gap: 0.5rem; align-items: center;">
-                            <span>💡</span>
-                            <div>
-                                Jika siswa lupa PIN keamanan 6-digit, silakan buka menu <strong>Lupa / Reset PIN Penabung</strong> untuk mengatur PIN baru.
-                            </div>
+                        <div style="margin-top: 1rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #92400e;">
+                            Jika siswa lupa PIN keamanan 6-digit, silakan buka menu <strong>Lupa / Reset PIN Penabung</strong> untuk mengatur PIN baru.
                         </div>
                     @endif
 
@@ -552,16 +544,37 @@
             </div>
         </div>
 
+        <!-- NOTIFIKASI SUKSES / ERROR (LANGSUNG TAMPIL DI PALING ATAS DENGAN DESAIN MODERN) -->
         @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12); border-left: 5px solid #16a34a;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: #16a34a; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✓</div>
+                    <div>
+                        <div style="font-weight: 800; color: #15803d; font-size: 0.95rem;">Berhasil Dikonfirmasi</div>
+                        <div style="font-size: 0.88rem; color: #166534; margin-top: 2px;">{{ session('success') }}</div>
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #15803d; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            </div>
         @endif
+
         @if(session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
+            <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: #dc2626; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">!</div>
+                    <div>
+                        <div style="font-weight: 800; color: #b91c1c; font-size: 0.95rem;">Pemberitahuan Sistem</div>
+                        <div style="font-size: 0.88rem; color: #991b1b; margin-top: 2px;">{{ session('error') }}</div>
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #b91c1c; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            </div>
         @endif
+
         @if($errors->any())
-            <div class="alert alert-error">
-                <strong>Terjadi kesalahan input form:</strong>
-                <ul style="margin: 4px 0 0; padding-left: 1.25rem;">
+            <div class="alert alert-error" style="box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
+                <strong style="color: #b91c1c;">Terjadi kesalahan input data:</strong>
+                <ul style="margin: 6px 0 0; padding-left: 1.25rem; font-size: 0.88rem; color: #991b1b;">
                     @foreach($errors->all() as $err)
                         <li>{{ $err }}</li>
                     @endforeach
@@ -569,18 +582,140 @@
             </div>
         @endif
 
-        <div class="grid">
-            <div class="card">
-                <h4>Total Transaksi Hari Ini</h4>
-                <div class="value">{{ count($transaksiHariIni) }}</div>
+        <!-- STATUS PENGAJUAN TAMBAHAN KAS AKTIF (LANGSUNG TAMPIL DI BAGIAN ATAS) -->
+        @if(isset($tambahanKasHariIni) && $tambahanKasHariIni->where('status', 'pending')->count() > 0)
+            @foreach($tambahanKasHariIni->where('status', 'pending') as $pk)
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 14px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08);">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: #f59e0b; color: #fff; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">⏳</div>
+                    <div>
+                        <div style="font-weight: 800; color: #92400e; font-size: 0.95rem;">
+                            Pengajuan Tambahan Kas: <strong>Rp {{ number_format($pk->nominal, 0, ',', '.') }}</strong> Sedang Menunggu Otorisasi Admin
+                        </div>
+                        <div style="font-size: 0.82rem; color: #b45309; margin-top: 2px;">
+                            Alasan: <em>"{{ $pk->alasan }}"</em> &bull; Diajukan pada: {{ date('H:i', strtotime($pk->created_at)) }} WIB
+                        </div>
+                    </div>
+                </div>
+                <span style="background: #fef3c7; color: #92400e; font-weight: 800; font-size: 0.78rem; padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid #fcd34d; letter-spacing: 0.5px;">
+                    STATUS: MENUNGGU ACC
+                </span>
             </div>
-            <div class="card">
-                <h4>Total Setoran Tunai</h4>
-                <div class="value" style="color: #16a34a;">Rp {{ number_format($totalSetoran, 0, ',', '.') }}</div>
+            @endforeach
+        @endif
+
+        @if(isset($tambahanKasHariIni) && $tambahanKasHariIni->where('status', 'rejected')->count() > 0)
+            @foreach($tambahanKasHariIni->where('status', 'rejected')->take(1) as $pk)
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 5px solid #dc2626; border-radius: 14px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: #dc2626; color: #fff; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✕</div>
+                    <div>
+                        <div style="font-weight: 800; color: #991b1b; font-size: 0.95rem;">
+                            Pengajuan Tambahan Kas Rp {{ number_format($pk->nominal, 0, ',', '.') }} Ditolak oleh Admin
+                        </div>
+                        <div style="font-size: 0.82rem; color: #b91c1c; margin-top: 2px;">
+                            Alasan Penolakan: <strong>{{ $pk->catatan_admin ?? 'Tidak disetujui / saldo kasir mencukupi' }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="openAjukanKasModal()" class="btn-primary" style="background: #dc2626; padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 8px;">
+                    Ajukan Ulang Kas
+                </button>
             </div>
-            <div class="card">
-                <h4>Total Penarikan Tunai</h4>
-                <div class="value" style="color: #dc2626;">Rp {{ number_format($totalPenarikan, 0, ',', '.') }}</div>
+            @endforeach
+        @endif
+
+        <!-- 4 KARTU STATISTIK KAS UTAMA (TERINTEGRASI DI PALING ATAS & KONSISTEN) -->
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+            <!-- KARTU 1: MODAL AWAL KAS -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">MODAL AWAL KAS</h4>
+                        @if(!$isModalAwalSet)
+                            <span style="font-size: 0.72rem; background: #fef3c7; color: #92400e; padding: 0.2rem 0.55rem; border-radius: 999px; font-weight: 700; border: 1px solid #fde68a;">
+                                ⚠️ Belum Diset
+                            </span>
+                        @endif
+                    </div>
+                    <div class="value" style="color: #2563eb; font-variant-numeric: tabular-nums;">
+                        Rp {{ number_format($modalAwal, 0, ',', '.') }}
+                    </div>
+                </div>
+
+                @if(!$isModalAwalSet)
+                    <!-- FORM INPUT CEPAT MODAL AWAL LANGSUNG DI DALAM KARTU ATAS -->
+                    <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
+                        <div style="font-size: 0.78rem; color: #64748b; margin-bottom: 0.5rem; font-weight: 600;">Input modal awal kas sebelum mulai:</div>
+                        <form action="{{ route('teller.modal-awal') }}" method="POST" class="prevent-double-submit" style="display: flex; gap: 0.4rem;">
+                            @csrf
+                            <input type="number" name="modal_awal" class="form-control" required min="1000" step="1000" placeholder="Rp..." style="padding: 0.45rem 0.75rem; font-size: 0.85rem; flex: 1;">
+                            <button type="submit" class="btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;">
+                                Simpan
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+
+            <!-- KARTU 2: SISA KAS DI LACI (DENGAN TOMBOL AJUKAN KAS LANGSUNG DI ATAS) -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: {{ $sisaKasLaci < 10000 ? '#fecaca' : 'var(--border-color)' }};">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">SISA KAS DI LACI</h4>
+                        <button type="button" onclick="openAjukanKasModal()" class="btn-primary" style="padding: 0.3rem 0.65rem; font-size: 0.75rem; border-radius: 8px; background: #2563eb; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);" title="Ajukan Tambahan Kas ke Admin">
+                            <span>+</span> Ajukan Kas
+                        </button>
+                    </div>
+                    <div class="value" style="color: {{ $sisaKasLaci >= 0 ? '#0f172a' : '#dc2626' }}; font-variant-numeric: tabular-nums;">
+                        Rp {{ number_format($sisaKasLaci, 0, ',', '.') }}
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.75rem; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.25rem;">
+                    @if($tambahanKasApproved > 0)
+                        <span style="color: #16a34a; font-weight: 700;">+ Rp {{ number_format($tambahanKasApproved, 0, ',', '.') }} ACC Admin</span>
+                    @elseif(isset($tambahanKasHariIni) && $tambahanKasHariIni->where('status', 'pending')->count() > 0)
+                        <span style="color: #d97706; font-weight: 700;">⏳ Ajuan Kas Menunggu ACC</span>
+                    @else
+                        <span style="color: #64748b;">Saldo fisik kas siap transaksi</span>
+                    @endif
+                    <a href="javascript:void(0)" onclick="openAjukanKasModal()" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 0.78rem;">Tambah Kas</a>
+                </div>
+            </div>
+
+            <!-- KARTU 3: TOTAL SETORAN TUNAI -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">TOTAL SETORAN TUNAI</h4>
+                    </div>
+                    <div class="value" style="color: #16a34a; font-variant-numeric: tabular-nums;">
+                        Rp {{ number_format($totalSetoran, 0, ',', '.') }}
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; font-size: 0.78rem;">
+                    <a href="javascript:void(0)" onclick="switchTab('tab-setoran')" style="color: #16a34a; font-weight: 700; text-decoration: underline;">
+                        Buka Form Setoran Siswa &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- KARTU 4: TOTAL PENARIKAN TUNAI -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">TOTAL PENARIKAN TUNAI</h4>
+                    </div>
+                    <div class="value" style="color: #dc2626; font-variant-numeric: tabular-nums;">
+                        Rp {{ number_format($totalPenarikan, 0, ',', '.') }}
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; font-size: 0.78rem;">
+                    <a href="javascript:void(0)" onclick="switchTab('tab-penarikan')" style="color: #dc2626; font-weight: 700; text-decoration: underline;">
+                        Buka Form Penarikan Siswa &rarr;
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -590,9 +725,6 @@
                 <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-600); font-weight: 800;">
                     Pencarian Rekening Penabung (Scan Barcode &amp; QR / No Rekening / NIS)
                 </h3>
-                <span style="font-size: 0.78rem; background: #e0f2fe; color: #0284c7; padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 700;">
-                    Kamera &amp; USB Barcode Scanner Ready
-                </span>
             </div>
             <div class="search-flex">
                 <input type="text" id="searchKeyword" class="form-control" placeholder="Scan Barcode / QR / Ketik No Rekening / NIS / Nama Siswa (Tekan Enter)" autofocus autocomplete="off" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); doSearchNasabah(); }">
@@ -642,8 +774,9 @@
                     </p>
                 </div>
 
-                <form action="{{ route('teller.aktivasi-anggota') }}" method="POST">
+                <form action="{{ route('teller.aktivasi-anggota') }}" method="POST" class="prevent-double-submit">
                     @csrf
+                    <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <div class="form-group">
                         <label>Pilih Siswa Anggota (Status: Rekening Belum Aktif)</label>
                         <select name="user_id" id="aktivasiMemberSelect" class="form-control" required onchange="onMemberSelectChange()">
@@ -691,8 +824,9 @@
         <div id="tab-setoran" class="tab-content">
             <div class="card" style="max-width: 600px; margin: 0 auto;">
                 <h3 style="margin-top:0; color: #16a34a; margin-bottom: 1.25rem;">Form Transaksi Setoran Tunai Penabung</h3>
-                <form action="{{ route('teller.setoran') }}" method="POST">
+                <form action="{{ route('teller.setoran') }}" method="POST" class="prevent-double-submit">
                     @csrf
+                    <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <div class="form-group">
                         <label>Pilih Penabung</label>
                         <select name="id_nasabah" id="setoranNasabahSelect" class="form-control" required>
@@ -722,15 +856,27 @@
         <!-- TAB 3: PENARIKAN TUNAI -->
         <div id="tab-penarikan" class="tab-content">
             <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <h3 style="margin-top:0; color: #dc2626; margin-bottom: 0.5rem;">Form Transaksi Penarikan Tunai Penabung</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4;">
-                    Aturan Wajib: Nominal penarikan minimal <strong>Rp 10.000</strong>, saldo sisa setelah penarikan tidak boleh kurang dari <strong>Rp 10.000</strong>, dan wajib verifikasi <strong>PIN 6-Digit Keamanan</strong> siswa.
-                </p>
+                <h3 style="margin-top:0; color: #dc2626; margin-bottom: 0.5rem;">Penarikan Tunai</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Minimal Rp 10.000, sisa saldo minimal Rp 10.000, verifikasi PIN 6-digit.</p>
+                
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.85rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #64748b;">Sisa Kas di Laci:</span>
+                    <strong style="color: {{ $sisaKasLaci >= 10000 ? '#16a34a' : '#dc2626' }};">Rp {{ number_format($sisaKasLaci) }}</strong>
+                    <button type="button" onclick="openAjukanKasModal()" style="background: none; border: none; color: #0284c7; font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.82rem;">
+                        Ajukan Tambahan Kas
+                    </button>
+                </div>
 
                 @if(session('error'))
-                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; color: #991b1b; font-size: 0.9rem; display: flex; gap: 0.5rem; align-items: flex-start;">
-                        <span style="font-size: 1.2rem; line-height: 1;">⚠️</span>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; color: #991b1b; font-size: 0.9rem;">
                         <div><strong>Gagal:</strong> {{ session('error') }}</div>
+                        @if(str_contains(session('error'), 'tidak cukup') || str_contains(session('error'), 'mencukupi'))
+                            <div style="margin-top: 0.5rem;">
+                                <button type="button" onclick="openAjukanKasModal()" class="btn-primary" style="background: #0284c7; padding: 0.4rem 0.8rem; font-size: 0.82rem;">
+                                    Ajukan Tambahan Kas ke Admin
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 @endif
                 @if($errors->any())
@@ -744,8 +890,9 @@
                     </div>
                 @endif
                 
-                <form action="{{ route('teller.penarikan') }}" method="POST">
+                <form action="{{ route('teller.penarikan') }}" method="POST" class="prevent-double-submit">
                     @csrf
+                    <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <div class="form-group">
                         <label>Pilih Penabung</label>
                         <select name="id_nasabah" id="penarikanNasabahSelect" class="form-control" required onchange="onPenarikanSelectChange()">
@@ -799,95 +946,221 @@
             </div>
         </div>
 
-        <!-- TAB 4: LUPA / RESET PIN PENABUNG -->
+        <!-- TAB 4: LUPA / RESET PIN PENABUNG (DENGAN VERIFIKASI KODE OTP) -->
         <div id="tab-reset-pin" class="tab-content">
-            <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <h3 style="margin-top:0; color: #d97706; margin-bottom: 0.5rem;">Layanan Lupa / Reset PIN 6-Digit Penabung</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4;">
-                    Jika siswa lupa PIN keamanan transaksinya, Teller dapat mereset PIN menjadi PIN baru setelah memverifikasi kartu identitas siswa.
-                </p>
+            <div class="card" style="max-width: 640px; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);">
+                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
+                    <h3 style="margin: 0; color: #d97706; font-size: 1.25rem; font-weight: 800;">
+                        Layanan Lupa / Reset PIN Penabung
+                    </h3>
+                </div>
 
-                <form action="{{ route('teller.reset-pin') }}" method="POST">
-                    @csrf
+                <!-- TAHAP 1: PILIH NASABAH & VERIFIKASI OTP -->
+                <div id="tabResetPinStep1">
+                    <div id="tabResetPinAlert1" style="display: none; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.88rem; font-weight: 600;"></div>
+
                     <div class="form-group">
-                        <label>Pilih Penabung</label>
-                        <select name="id_nasabah" id="resetPinSelect" class="form-control" required>
+                        <label>Pilih Penabung (Saver)</label>
+                        <select id="resetPinSelect" class="form-control" onchange="onTabResetPinSelectChange()">
                             <option value="">-- Pilih Penabung --</option>
                             @foreach($savers as $s)
-                                <option value="{{ $s->id }}">
+                                <option value="{{ $s->id }}" 
+                                    data-name="{{ $s->student_name }}" 
+                                    data-norek="{{ $s->account_number }}" 
+                                    data-nis="{{ $s->nis }}" 
+                                    data-email="{{ $s->email ?? ($s->member->email ?? '') }}">
                                     {{ $s->account_number }} - {{ $s->student_name }} (NIS: {{ $s->nis }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label>Masukkan PIN 6-Digit Baru</label>
-                        <input type="password" name="pin_baru" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru">
+                        <label>Identitas Penabung (NIS / No. Rekening)</label>
+                        <input type="text" id="tabResetPinIdentifier" class="form-control" placeholder="Contoh: 10001001 atau NIS Siswa" required>
                     </div>
-                    <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #d97706, #f59e0b); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
-                        Simpan PIN Baru Penabung
+
+                    <div class="form-group">
+                        <label>Alamat Gmail Siswa / Penabung</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="email" id="tabResetPinEmail" class="form-control" placeholder="Contoh: siswa@gmail.com" style="flex: 1;" required>
+                            <button type="button" id="btnTabKirimOtp" onclick="handleTabKirimOtp()" class="btn-primary" style="background: #d97706; padding: 0.65rem 1.15rem; font-size: 0.85rem; font-weight: 700; white-space: nowrap;">
+                                Kirim OTP
+                            </button>
+                        </div>
+                        <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 3px;">
+                            Kode OTP 6-digit akan dikirimkan ke kotak masuk (Inbox/Spam) Gmail ini.
+                        </small>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1.15rem;">
+                        <label>Masukkan 6-Digit Kode OTP dari Gmail</label>
+                        <input type="text" id="tabResetPinOtpCode" class="form-control" maxlength="6" placeholder="Contoh: 123456" style="letter-spacing: 4px; font-weight: 800; text-align: center; font-size: 1.25rem;">
+                    </div>
+
+                    <button type="button" id="btnTabVerifOtp" onclick="handleTabVerifOtp()" class="btn-primary" style="background: linear-gradient(135deg, #d97706, #f59e0b); width: 100%; margin-top: 1.25rem; padding: 0.85rem; font-size: 0.95rem; font-weight: 800; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);">
+                        Verifikasi OTP &amp; Lanjut Buat PIN
                     </button>
-                </form>
+                </div>
+
+                <!-- TAHAP 2: INPUT PIN 6-DIGIT BARU SETELAH OTP TERVERIFIKASI -->
+                <div id="tabResetPinStep2" style="display: none;">
+                    <div id="tabResetPinAlert2" style="display: none; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.88rem; font-weight: 600;"></div>
+
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
+                        <div style="color: #1e40af; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Nasabah Terverifikasi:</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-top: 2px;" id="tabResetPinNamaSiswa">-</div>
+                        <div style="color: #64748b; font-size: 0.82rem;" id="tabResetPinRekeningSiswa">-</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Buat PIN 6-Digit Baru</label>
+                        <input type="password" id="tabResetPinBaru" class="form-control" maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Konfirmasi PIN 6-Digit Baru</label>
+                        <input type="password" id="tabResetPinBaruConfirm" class="form-control" maxlength="6" minlength="6" placeholder="Ulangi 6 angka PIN baru" required>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" onclick="goToTabResetPinStep1()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1;">
+                            Batal
+                        </button>
+                        <button type="button" id="btnTabSimpanPin" onclick="handleTabSimpanPin()" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #22c55e); flex: 2; padding: 0.85rem; font-weight: 800; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                            Simpan PIN Baru &amp; Aktifkan
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- TAB 5: PENUTUPAN KAS & LAPORAN HARIAN -->
         <div id="tab-laporan" class="tab-content">
-            <div class="card" style="max-width: 680px; margin: 0 auto;">
-                <h3 style="margin-top:0; margin-bottom: 0.5rem;">Penutupan Kas & Laporan Harian Teller</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-                    Hitung dan masukkan jumlah uang fisik di laci kas. Laporan akan dikirim ke Administrator untuk approval dan pemindahan kas ke brankas utama.
-                </p>
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h3 style="margin-top:0; margin-bottom: 1.25rem;">Laporan Kas Harian</h3>
 
-                <div style="background: #eff6ff; padding: 1.25rem; border-radius: 14px; border: 1px solid #bfdbfe; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.7;">
-                    <div>Tanggal Operasional: <strong>{{ date('d F Y') }}</strong></div>
-                    <div>Total Setoran Hari Ini: <strong style="color: #16a34a;">+ Rp {{ number_format($totalSetoran) }}</strong></div>
-                    <div>Total Penarikan Hari Ini: <strong style="color: #dc2626;">- Rp {{ number_format($totalPenarikan) }}</strong></div>
-                    <div>Saldo Akhir Sistem Kas: <strong>Rp {{ number_format($totalSetoran - $totalPenarikan) }}</strong></div>
-                    <div>Status Approval Administrator: 
-                        <strong style="text-transform: uppercase; color: {{ ($laporanHariIni->status_approval ?? 'pending') === 'approved' ? '#16a34a' : (($laporanHariIni->status_approval ?? '') === 'rejected' ? '#dc2626' : '#d97706') }};">
-                            {{ $laporanHariIni->status_approval ?? 'BELUM DISUBMIT' }}
-                        </strong>
+                <div style="background: #eff6ff; padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid #bfdbfe; margin-bottom: 1.25rem; font-size: 0.88rem; line-height: 1.8;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Tanggal:</span>
+                        <strong>{{ date('d/m/Y') }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Modal Awal Kas:</span>
+                        <strong style="color: #2563eb;">Rp {{ number_format($modalAwal) }}</strong>
+                    </div>
+                    @if($tambahanKasApproved > 0)
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Tambahan Kas (ACC Admin):</span>
+                        <strong style="color: #16a34a;">+ Rp {{ number_format($tambahanKasApproved) }}</strong>
+                    </div>
+                    @endif
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Total Setoran:</span>
+                        <strong style="color: #16a34a;">+ Rp {{ number_format($totalSetoran) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Total Penarikan:</span>
+                        <strong style="color: #dc2626;">- Rp {{ number_format($totalPenarikan) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 1px dashed #bfdbfe; padding-top: 4px; margin-top: 4px;">
+                        <span style="color: #64748b;">Saldo Kas di Laci:</span>
+                        <strong style="color: #0f172a;">Rp {{ number_format($sisaKasLaci) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                        <span style="color: #64748b;">Status Approval:</span>
+                        @if(!$isLaporanSubmitted)
+                            <strong style="color: #64748b;">BELUM TUTUP KAS</strong>
+                        @elseif($laporanHariIni->status_approval === 'approved')
+                            <strong style="color: #16a34a;">DISETUJUI (KAS PINDAH KE ADMIN)</strong>
+                        @elseif($laporanHariIni->status_approval === 'rejected')
+                            <strong style="color: #dc2626;">DITOLAK ADMIN</strong>
+                        @else
+                            <strong style="color: #d97706;">MENUNGGU ACC ADMIN</strong>
+                        @endif
                     </div>
                 </div>
 
+                @if($tambahanKasHariIni->count() > 0)
+                <div style="margin-bottom: 1.25rem;">
+                    <div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 0.4rem; color: #334155;">Pengajuan Tambahan Kas Hari Ini</div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nominal</th>
+                                    <th>Alasan</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($tambahanKasHariIni as $tk)
+                                <tr>
+                                    <td><strong>Rp {{ number_format($tk->nominal) }}</strong></td>
+                                    <td>
+                                        <div>{{ $tk->alasan }}</div>
+                                        @if($tk->status === 'rejected' && $tk->catatan_admin)
+                                            <div style="font-size: 0.8rem; color: #dc2626; margin-top: 4px; background: #fef2f2; border: 1px solid #fee2e2; padding: 4px 8px; border-radius: 6px;">
+                                                <strong>Alasan Ditolak:</strong> {{ $tk->catatan_admin }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span style="font-size: 0.8rem; font-weight: 700; color: {{ $tk->status === 'approved' ? '#16a34a' : ($tk->status === 'rejected' ? '#dc2626' : '#d97706') }};">
+                                            {{ strtoupper($tk->status) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
+
                 @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
-                    <div style="background: #fef2f2; border: 2px solid #ef4444; border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem;">
-                        <h4 style="margin: 0 0 0.5rem; color: #dc2626; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            ⚠️ Laporan Kas Anda Ditolak oleh Administrator
-                        </h4>
-                        <div style="background: #ffffff; border-left: 4px solid #dc2626; padding: 0.75rem 1rem; border-radius: 6px; margin: 0.75rem 0;">
-                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Catatan / Alasan Penolakan dari Admin:</div>
-                            <div style="font-size: 0.95rem; color: #0f172a; font-weight: 600; margin-top: 4px;">
-                                "{{ $laporanHariIni->catatan_penolakan ?? 'Terdapat ketidaksesuaian uang fisik kas laci. Silakan hitung ulang.' }}"
-                            </div>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
+                        <div style="font-weight: 700; color: #dc2626; font-size: 0.95rem; margin-bottom: 4px;">
+                            Laporan Ditolak Admin
                         </div>
-                        <p style="margin: 0; font-size: 0.85rem; color: #991b1b;">
-                            Silakan periksa dan hitung kembali uang fisik kas di laci kas Anda, lalu masukkan nominal yang sesuai pada formulir di bawah ini dan klik tombol <strong>Perbarui & Kirim Ulang</strong>.
-                        </p>
+                        <div style="color: #991b1b; font-size: 0.88rem;">
+                            Alasan: <strong>"{{ $laporanHariIni->catatan_penolakan ?? 'Periksa kembali hitungan uang fisik.' }}"</strong>
+                        </div>
                     </div>
                 @endif
 
-                @if($laporanHariIni && $laporanHariIni->status_approval === 'approved')
-                    <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: center;">
-                        <h4 style="margin:0 0 0.5rem; color: #15803d;">Laporan Hari Ini Telah Disetujui (ACC) oleh Administrator!</h4>
-                        <p style="margin:0 0 1rem; font-size: 0.85rem; color: #166534;">Anda dapat mengunduh dokumen resmi laporan harian kas dalam format PDF:</p>
-                        <a href="{{ route('admin.laporan.pdf', $laporanHariIni->id) }}" class="btn-success">
-                            Download Dokumen PDF Laporan Harian
+                @if(!$isModalAwalSet)
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1rem; color: #1e40af; font-size: 0.88rem;">
+                        Input modal awal kas terlebih dahulu sebelum melakukan penutupan kas.
+                    </div>
+                @elseif(!$isLaporanSubmitted || $laporanHariIni->status_approval === 'rejected')
+                    <form action="{{ route('teller.laporan-harian') }}" method="POST" class="prevent-double-submit">
+                        @csrf
+                        <div class="form-group">
+                            <label>Uang Fisik Kas di Laci (Rp)</label>
+                            <input type="number" name="uang_fisik" class="form-control" required min="0" value="{{ $sisaKasLaci }}" placeholder="Nominal uang fisik...">
+                            <small style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 4px;">
+                                Laporan kas harian hanya 1 kali per hari. Masukkan nominal uang fisik laci kasir.
+                            </small>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+                            {{ ($laporanHariIni && $laporanHariIni->status_approval === 'rejected') ? 'Kirim Perbaikan Laporan Kas' : 'Kirim Laporan Kas Harian' }}
+                        </button>
+                    </form>
+                @elseif($laporanHariIni->status_approval === 'approved')
+                    <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1rem 1.25rem; font-size: 0.9rem; color: #166534;">
+                        <div style="font-weight: 700; margin-bottom: 4px;">Laporan Kas Disetujui Admin</div>
+                        <div style="margin-bottom: 0.75rem;">Uang kas sebesar <strong>Rp {{ number_format($laporanHariIni->saldo_akhir_sistem) }}</strong> telah disetujui dan dipindahkan ke brankas Admin.</div>
+                        <a href="{{ route('admin.laporan.pdf', $laporanHariIni->id) }}" class="btn-success" style="display: inline-block; padding: 0.45rem 0.9rem; font-size: 0.85rem; text-decoration: none;">
+                            Download PDF Laporan
                         </a>
                     </div>
-                @endif
-
-                <form action="{{ route('teller.laporan-harian') }}" method="POST">
-                    @csrf
-                    <div class="form-group">
-                        <label>Jumlah Uang Fisik Kas di Laci Teller (Rp)</label>
-                        <input type="number" name="uang_fisik" class="form-control" required min="0" value="{{ $laporanHariIni->uang_fisik ?? ($totalSetoran - $totalPenarikan) }}" placeholder="Input hitungan uang fisik kas">
+                @else
+                    <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 1rem 1.25rem; font-size: 0.9rem; color: #92400e;">
+                        <div style="font-weight: 700; margin-bottom: 4px;">Laporan Kas Sudah Dikirim</div>
+                        <div>Uang fisik dilaporkan: <strong>Rp {{ number_format($laporanHariIni->uang_fisik) }}</strong>. Laporan hanya 1 kali per hari dan sedang menunggu approval dari Admin.</div>
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
-                        {{ $laporanHariIni ? 'Perbarui & Kirim Ulang ke Administrator' : 'Kirim Laporan Kas ke Administrator' }}
-                    </button>
-                </form>
+                @endif
             </div>
         </div>
 
@@ -1017,6 +1290,88 @@
     </div>
 
     <script>
+        // ==========================================================
+        // PENCEGAHAN DOUBLE SUBMIT / DOUBLE ENTRY (KLIK GANDA FORM)
+        // ==========================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('form.prevent-double-submit').forEach(function(form) {
+                let isSubmitting = false;
+
+                form.addEventListener('submit', function(e) {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+
+                    if (!form.checkValidity()) {
+                        return;
+                    }
+
+                    isSubmitting = true;
+                    form.dataset.submitting = 'true';
+
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.setAttribute('data-original-html', submitBtn.innerHTML);
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.7';
+                        submitBtn.style.cursor = 'not-allowed';
+                        submitBtn.style.pointerEvents = 'none';
+                        submitBtn.innerHTML = `
+                            <span style="display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+                                <svg style="animation: spinDouble 0.9s linear infinite; width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path></svg>
+                                Sedang Memproses... Harap Tunggu
+                            </span>
+                        `;
+                    }
+
+                    form.style.pointerEvents = 'none';
+                });
+
+                form.querySelectorAll('button[type="submit"]').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        if (isSubmitting) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        }
+                    });
+                });
+
+                // Reset jika validasi browser membatalkan submit
+                form.addEventListener('invalid', function() {
+                    isSubmitting = false;
+                    form.dataset.submitting = 'false';
+                    form.style.pointerEvents = 'auto';
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn && submitBtn.hasAttribute('data-original-html')) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                        submitBtn.style.pointerEvents = 'auto';
+                        submitBtn.innerHTML = submitBtn.getAttribute('data-original-html');
+                    }
+                }, true);
+            });
+        });
+
+        // Reset state jika browser membuka halaman dari BFCache
+        window.addEventListener('pageshow', function() {
+            document.querySelectorAll('form.prevent-double-submit').forEach(function(form) {
+                form.dataset.submitting = 'false';
+                form.style.pointerEvents = 'auto';
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn && submitBtn.hasAttribute('data-original-html')) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                    submitBtn.style.pointerEvents = 'auto';
+                    submitBtn.innerHTML = submitBtn.getAttribute('data-original-html');
+                }
+            });
+        });
+
         let selectedSaverData = null;
 
         function switchTab(tabId) {
@@ -1130,7 +1485,263 @@
             if (!selectedSaverData) return;
             switchTab('tab-reset-pin');
             const sel = document.getElementById('resetPinSelect');
-            sel.value = selectedSaverData.id;
+            if (sel) {
+                sel.value = selectedSaverData.id;
+                onTabResetPinSelectChange();
+            }
+            const idInput = document.getElementById('tabResetPinIdentifier');
+            const emailInput = document.getElementById('tabResetPinEmail');
+            if (idInput && (selectedSaverData.no_rekening || selectedSaverData.nis)) {
+                idInput.value = selectedSaverData.no_rekening || selectedSaverData.nis;
+            }
+            if (emailInput && selectedSaverData.email) {
+                emailInput.value = selectedSaverData.email;
+            }
+            goToTabResetPinStep1();
+        }
+
+        // ====================================================
+        // FITUR TAB 4: LUPA / RESET PIN DENGAN KODE OTP
+        // ====================================================
+        let tabResetPinResetToken = null;
+        let tabResetPinOtpTimer = null;
+
+        function onTabResetPinSelectChange() {
+            const sel = document.getElementById('resetPinSelect');
+            const opt = sel && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex] : null;
+            const idInput = document.getElementById('tabResetPinIdentifier');
+            const emailInput = document.getElementById('tabResetPinEmail');
+
+            if (opt) {
+                const norek = opt.getAttribute('data-norek') || '';
+                const nis = opt.getAttribute('data-nis') || '';
+                const email = opt.getAttribute('data-email') || '';
+                if (idInput) idInput.value = norek || nis;
+                if (emailInput) emailInput.value = email;
+            }
+            hideTabResetPinAlert(1);
+            hideTabResetPinAlert(2);
+        }
+
+        function goToTabResetPinStep1() {
+            const s1 = document.getElementById('tabResetPinStep1');
+            const s2 = document.getElementById('tabResetPinStep2');
+            if (s1) s1.style.display = 'block';
+            if (s2) s2.style.display = 'none';
+            hideTabResetPinAlert(1);
+            hideTabResetPinAlert(2);
+        }
+
+        function showTabResetPinAlert(step, msg, type) {
+            const el = document.getElementById('tabResetPinAlert' + step);
+            if (!el) return;
+            el.style.display = 'block';
+            el.innerText = msg;
+            if (type === 'success') {
+                el.style.background = '#dcfce7';
+                el.style.color = '#15803d';
+                el.style.border = '1px solid #bbf7d0';
+            } else {
+                el.style.background = '#fef2f2';
+                el.style.color = '#b91c1c';
+                el.style.border = '1px solid #fecaca';
+            }
+        }
+
+        function hideTabResetPinAlert(step) {
+            const el = document.getElementById('tabResetPinAlert' + step);
+            if (el) el.style.display = 'none';
+        }
+
+        async function handleTabKirimOtp() {
+            const identifier = document.getElementById('tabResetPinIdentifier').value.trim();
+            const email = document.getElementById('tabResetPinEmail').value.trim();
+            const btn = document.getElementById('btnTabKirimOtp');
+
+            hideTabResetPinAlert(1);
+
+            if (!identifier) {
+                showTabResetPinAlert(1, 'Pilih penabung atau ketik NIS / Nomor Rekening siswa terlebih dahulu.', 'error');
+                document.getElementById('tabResetPinIdentifier').focus();
+                return;
+            }
+            if (!email) {
+                showTabResetPinAlert(1, 'Masukkan alamat Gmail siswa untuk menerima kode OTP.', 'error');
+                document.getElementById('tabResetPinEmail').focus();
+                return;
+            }
+
+            btn.disabled = true;
+            const orig = btn.innerText;
+            btn.innerText = 'Mengirim...';
+
+            try {
+                const res = await fetch('{{ route("lupa-sandi.kirim-otp") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ identifier, email })
+                });
+                let data = null;
+                try { data = await res.json(); } catch (_) { data = null; }
+
+                if (res.ok && data && data.success) {
+                    showTabResetPinAlert(1, data.message, 'success');
+                    document.getElementById('tabResetPinOtpCode').focus();
+
+                    let t = 60;
+                    btn.innerText = 'Ulang (' + t + 's)';
+                    if (tabResetPinOtpTimer) clearInterval(tabResetPinOtpTimer);
+                    tabResetPinOtpTimer = setInterval(() => {
+                        t--;
+                        if (t <= 0) {
+                            clearInterval(tabResetPinOtpTimer);
+                            tabResetPinOtpTimer = null;
+                            btn.disabled = false;
+                            btn.innerText = 'Kirim Ulang OTP';
+                        } else {
+                            btn.innerText = 'Ulang (' + t + 's)';
+                        }
+                    }, 1000);
+                } else {
+                    const msg = (data && data.message) ? data.message : ('Gagal mengirim kode OTP (Status ' + res.status + '). Silakan periksa kembali alamat Gmail atau koneksi server.');
+                    showTabResetPinAlert(1, msg, 'error');
+                    btn.disabled = false;
+                    btn.innerText = orig;
+                }
+            } catch (e) {
+                showTabResetPinAlert(1, 'Terjadi kesalahan sistem saat kirim OTP: ' + e.message, 'error');
+                btn.disabled = false;
+                btn.innerText = orig;
+            }
+        }
+
+        async function handleTabVerifOtp() {
+            const identifier = document.getElementById('tabResetPinIdentifier').value.trim();
+            const email = document.getElementById('tabResetPinEmail').value.trim();
+            const otp = document.getElementById('tabResetPinOtpCode').value.trim();
+            const btn = document.getElementById('btnTabVerifOtp');
+
+            hideTabResetPinAlert(1);
+
+            if (!identifier || !email) {
+                showTabResetPinAlert(1, 'Mohon lengkapi identitas dan email siswa.', 'error');
+                return;
+            }
+            if (!otp || otp.length < 6) {
+                showTabResetPinAlert(1, 'Masukkan 6 digit kode OTP yang diterima di Gmail siswa.', 'error');
+                document.getElementById('tabResetPinOtpCode').focus();
+                return;
+            }
+
+            btn.disabled = true;
+            const orig = btn.innerText;
+            btn.innerText = 'Memverifikasi OTP...';
+
+            try {
+                const res = await fetch('{{ route("lupa-sandi.verifikasi-otp") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ identifier, email, otp })
+                });
+                let data = null;
+                try { data = await res.json(); } catch (_) { data = null; }
+
+                if (res.ok && data && data.success) {
+                    tabResetPinResetToken = data.reset_token;
+                    document.getElementById('tabResetPinNamaSiswa').innerText = data.nama || identifier;
+                    document.getElementById('tabResetPinRekeningSiswa').innerText = 'NIS / Akun: ' + (data.username || identifier);
+
+                    document.getElementById('tabResetPinStep1').style.display = 'none';
+                    document.getElementById('tabResetPinStep2').style.display = 'block';
+                    document.getElementById('tabResetPinBaru').value = '';
+                    document.getElementById('tabResetPinBaruConfirm').value = '';
+                    document.getElementById('tabResetPinBaru').focus();
+                } else {
+                    const msg = (data && data.message) ? data.message : ('Kode OTP tidak valid atau kadaluarsa (Status ' + res.status + ').');
+                    showTabResetPinAlert(1, msg, 'error');
+                }
+            } catch (e) {
+                showTabResetPinAlert(1, 'Gagal verifikasi OTP: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = orig;
+            }
+        }
+
+        async function handleTabSimpanPin() {
+            const pin = document.getElementById('tabResetPinBaru').value.trim();
+            const pinConfirm = document.getElementById('tabResetPinBaruConfirm').value.trim();
+            const btn = document.getElementById('btnTabSimpanPin');
+
+            hideTabResetPinAlert(2);
+
+            if (!pin || pin.length !== 6 || !/^\d+$/.test(pin)) {
+                showTabResetPinAlert(2, 'PIN baru wajib berupa 6 angka digit.', 'error');
+                document.getElementById('tabResetPinBaru').focus();
+                return;
+            }
+
+            if (pin !== pinConfirm) {
+                showTabResetPinAlert(2, 'Konfirmasi PIN baru tidak cocok.', 'error');
+                document.getElementById('tabResetPinBaruConfirm').focus();
+                return;
+            }
+
+            if (!tabResetPinResetToken) {
+                showTabResetPinAlert(2, 'Sesi verifikasi kadaluarsa. Silakan ulangi.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            const orig = btn.innerText;
+            btn.innerText = 'Menyimpan PIN...';
+
+            try {
+                const res = await fetch('{{ route("lupa-pin.simpan-pin") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        reset_token: tabResetPinResetToken,
+                        pin: pin,
+                        pin_confirmation: pinConfirm
+                    })
+                });
+                let data = null;
+                try { data = await res.json(); } catch (_) { data = null; }
+
+                if (res.ok && data && data.success) {
+                    const penarikanPinInput = document.getElementById('penarikanPin');
+                    if (penarikanPinInput) {
+                        penarikanPinInput.value = pin;
+                    }
+                    alert('✓ Berhasil! PIN 6-digit baru nasabah telah berhasil disimpan dan diaktifkan melalui verifikasi OTP.');
+                    goToTabResetPinStep1();
+                    document.getElementById('tabResetPinOtpCode').value = '';
+                    document.getElementById('tabResetPinBaru').value = '';
+                    document.getElementById('tabResetPinBaruConfirm').value = '';
+                    tabResetPinResetToken = null;
+                } else {
+                    const msg = (data && data.message) ? data.message : ('Gagal menyimpan PIN baru (Status ' + res.status + '). Silakan coba lagi.');
+                    showTabResetPinAlert(2, msg, 'error');
+                }
+            } catch (e) {
+                showTabResetPinAlert(2, 'Gagal menyimpan PIN: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = orig;
+            }
         }
 
         // ==========================================
@@ -1836,6 +2447,83 @@
         if (typeof Html5Qrcode === 'undefined') {
             document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
         }
+    </script>
+    <!-- MODAL PENGAJUAN TAMBAHAN KAS (DESAIN ELEGAN FINTECH DENGAN QUICK CHIPS) -->
+    <div id="ajukanKasModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="max-width: 460px; width: 100%; background: #ffffff; border-radius: 20px; padding: 1.75rem; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1px solid rgba(226, 232, 240, 0.8);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <div>
+                    <h3 style="font-size: 1.18rem; font-weight: 800; color: #0f172a; margin: 0;">Ajukan Tambahan Kas</h3>
+                    <p style="margin: 3px 0 0; font-size: 0.82rem; color: #64748b;">Permintaan dana tunai operasional kasir ke Admin</p>
+                </div>
+                <button type="button" onclick="closeAjukanKasModal()" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; font-weight: 700; line-height: 1;">&times;</button>
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.85rem; color: #1e40af; font-weight: 600;">Sisa Kas Laci Saat Ini:</span>
+                <strong style="color: #0f172a; font-size: 1rem; font-variant-numeric: tabular-nums;">Rp {{ number_format($sisaKasLaci, 0, ',', '.') }}</strong>
+            </div>
+
+            <form action="{{ route('teller.ajukan-kas') }}" method="POST" class="prevent-double-submit">
+                @csrf
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Nominal Tambahan (Rp) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" id="inputNominalKas" name="nominal" class="form-control" required min="1000" step="1000" placeholder="Contoh: 500000" style="font-weight: 700; font-size: 1.05rem;">
+                    
+                    <!-- Quick Amount Chips -->
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" onclick="setNominalKas(500000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">+500 Ribu</button>
+                        <button type="button" onclick="setNominalKas(1000000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">+1 Juta</button>
+                        <button type="button" onclick="setNominalKas(2000000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">+2 Juta</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Alasan / Keterangan Kebutuhan Kas <span style="color: #dc2626;">*</span></label>
+                    <input type="text" id="inputAlasanKas" name="alasan" class="form-control" required placeholder="Contoh: Antrean penarikan siswa tinggi...">
+                    
+                    <!-- Quick Reason Chips -->
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" onclick="setAlasanKas('Antrean penarikan tabungan siswa meningkat')" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.72rem; color: #64748b; cursor: pointer;">Penarikan Siswa Meningkat</button>
+                        <button type="button" onclick="setAlasanKas('Pencairan dana kegiatan/ekskul')" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.72rem; color: #64748b; cursor: pointer;">Pencairan Kegiatan</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" onclick="closeAjukanKasModal()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1; padding: 0.7rem;">Batal</button>
+                    <button type="submit" class="btn-primary" style="flex: 2; padding: 0.7rem; font-size: 0.92rem;">Kirim Pengajuan Kas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAjukanKasModal() {
+            const m = document.getElementById('ajukanKasModal');
+            if (m) {
+                m.style.display = 'flex';
+                setTimeout(() => document.getElementById('inputNominalKas')?.focus(), 100);
+            }
+        }
+        function closeAjukanKasModal() {
+            const m = document.getElementById('ajukanKasModal');
+            if (m) m.style.display = 'none';
+        }
+        function setNominalKas(val) {
+            const input = document.getElementById('inputNominalKas');
+            if (input) input.value = val;
+        }
+        function setAlasanKas(text) {
+            const input = document.getElementById('inputAlasanKas');
+            if (input) input.value = text;
+        }
+
+        // Pastikan saat ada konfirmasi transaksi/laporan, layar langsung fokus di atas
+        @if(session('success') || session('error') || $errors->any())
+            window.addEventListener('DOMContentLoaded', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        @endif
     </script>
 </body>
 </html>

@@ -39,12 +39,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/laporan/{id}/reject', [AdminController::class, 'rejectLaporan'])->name('admin.laporan.reject');
     Route::get('/admin/laporan/{id}/pdf', [AdminController::class, 'downloadLaporanHarianPdf'])->name('admin.laporan.pdf');
     Route::get('/admin/laporan-bulanan/pdf', [AdminController::class, 'downloadLaporanBulananPdf'])->name('admin.laporan-bulanan.pdf');
+    Route::post('/admin/pengajuan-kas/{id}/approve', [AdminController::class, 'approvePengajuanKas'])->name('admin.pengajuan-kas.approve');
+    Route::post('/admin/pengajuan-kas/{id}/reject', [AdminController::class, 'rejectPengajuanKas'])->name('admin.pengajuan-kas.reject');
 
     // Teller
     Route::get('/teller/dashboard', [DashboardController::class, 'teller'])->name('teller.dashboard');
     Route::get('/teller/cari-nasabah', [TellerController::class, 'cariNasabah'])->name('teller.cari-nasabah');
     Route::get('/teller/cari-anggota', [TellerController::class, 'cariAnggota'])->name('teller.cari-anggota');
     Route::post('/teller/aktivasi-anggota', [TellerController::class, 'aktivasiAnggota'])->name('teller.aktivasi-anggota');
+    Route::post('/teller/input-modal-awal', [TellerController::class, 'inputModalAwal'])->name('teller.modal-awal');
+    Route::post('/teller/ajukan-kas', [TellerController::class, 'ajukanTambahanKas'])->name('teller.ajukan-kas');
     Route::post('/teller/setoran', [TellerController::class, 'setoran'])->name('teller.setoran');
     Route::post('/teller/penarikan', [TellerController::class, 'penarikan'])->name('teller.penarikan');
     Route::post('/teller/reset-pin', [TellerController::class, 'resetPin'])->name('teller.reset-pin');
