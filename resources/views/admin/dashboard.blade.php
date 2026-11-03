@@ -44,7 +44,7 @@
             gap: 1rem;
         }
         .container {
-            max-width: 1320px;
+            max-width: 1380px;
             width: 100%;
             margin: 2rem auto;
             padding: 0 1.5rem;
@@ -144,17 +144,19 @@
         }
         .nav-tabs {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 0.35rem;
             margin-bottom: 1.75rem;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 0.5rem;
-            max-width: 100%;
+            width: 100%;
         }
         .tab-btn {
             background: transparent;
             border: none;
-            padding: 0.65rem 1.25rem;
+            padding: 0.55rem 0.85rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: var(--text-muted);
             cursor: pointer;
@@ -549,12 +551,12 @@
                             <h3 style="margin:0;">Daftar Anggota Siswa (Members)</h3>
                         </div>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <a href="{{ route('admin.dashboard', ['filter_member' => 'belum_aktif']) }}" class="badge {{ ($filterMember ?? 'belum_aktif') === 'belum_aktif' ? 'badge-role-teller' : 'badge-tidak-aktif' }}" style="text-decoration:none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                            <button type="button" id="btnFilterBelumAktif" onclick="setMemberStatusFilter('belum_aktif')" class="badge badge-role-teller" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
                                 Belum Aktif ({{ $totalBelumAktif }})
-                            </a>
-                            <a href="{{ route('admin.dashboard', ['filter_member' => 'semua']) }}" class="badge {{ ($filterMember ?? '') === 'semua' ? 'badge-role-teller' : 'badge-tidak-aktif' }}" style="text-decoration:none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                            </button>
+                            <button type="button" id="btnFilterSemua" onclick="setMemberStatusFilter('semua')" class="badge badge-tidak-aktif" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
                                 Semua Siswa ({{ $totalMembers }})
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -601,7 +603,7 @@
                             </thead>
                             <tbody id="tableMemberBody">
                                 @forelse($members as $index => $m)
-                                <tr class="member-row" data-kelas="{{ strtolower($m->class_grade) }}" data-angkatan="{{ strtolower($m->graduation_year) }}">
+                                <tr class="member-row" data-status="{{ $m->status === 'rekening aktif' ? 'aktif' : 'belum_aktif' }}" data-kelas="{{ strtolower($m->class_grade) }}" data-angkatan="{{ strtolower($m->graduation_year) }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $m->student_name }}</strong></td>
                                     <td><code>{{ $m->nis }}</code></td>
@@ -617,7 +619,7 @@
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 0.35rem;">
-                                            <button type="button" class="btn-warning" onclick="openEditMemberModal('{{ $m->user_id }}', '{{ addslashes($m->student_name) }}', '{{ $m->nis }}', '{{ addslashes($m->email ?? '') }}', '{{ $m->class_grade }}', '{{ $m->graduation_year }}')">
+                                             <button type="button" class="btn-warning" onclick="openEditMemberModal('{{ $m->user_id }}', '{{ addslashes($m->student_name) }}', '{{ $m->nis }}', '{{ addslashes($m->email ?? '') }}', '{{ $m->class_grade }}', '{{ $m->graduation_year }}')">
                                                 Edit
                                             </button>
                                             <form action="{{ route('admin.members.destroy', $m->user_id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data anggota {{ addslashes($m->student_name) }}?')" style="margin:0;">
@@ -630,16 +632,12 @@
                                 @empty
                                 <tr>
                                     <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-                                        @if(($filterMember ?? 'belum_aktif') === 'belum_aktif')
-                                            Tidak ada anggota siswa yang belum aktif. Seluruh siswa yang telah menabung otomatis berpindah ke tab <strong>Manajemen User</strong> & <strong>Data Penabung</strong>.
-                                        @else
-                                            Belum ada data anggota siswa yang terdaftar.
-                                        @endif
+                                        Belum ada data anggota siswa yang terdaftar.
                                     </td>
                                 </tr>
                                 @endforelse
                                 <tr id="memberEmptySearch" style="display: none;">
-                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada data siswa yang sesuai dengan pencarian atau filter kelas/angkatan.</td>
+                                    <td colspan="8" id="memberEmptyText" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada anggota siswa yang sesuai dengan filter atau pencarian.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1295,6 +1293,10 @@
     </div>
 
     <script>
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
         function switchTab(tabId) {
             if (!tabId) return;
             const targetContent = document.getElementById(tabId);
@@ -1317,8 +1319,8 @@
             } catch (e) {}
 
             try {
-                if (window.history && window.history.replaceState) {
-                    window.history.replaceState(null, null, '#' + tabId);
+                if (window.history && window.history.replaceState && window.location.hash) {
+                    window.history.replaceState(null, null, window.location.pathname + window.location.search);
                 }
             } catch (e) {}
         }
@@ -1327,12 +1329,10 @@
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const queryTab = urlParams.get('tab');
-                const hashTab = window.location.hash ? window.location.hash.substring(1) : null;
                 const sessionTab = sessionStorage.getItem('admin_active_tab');
                 const localTab = localStorage.getItem('admin_active_tab');
 
                 const tabToActivate = (queryTab && document.getElementById(queryTab)) ? queryTab
-                                    : (hashTab && document.getElementById(hashTab)) ? hashTab
                                     : (sessionTab && document.getElementById(sessionTab)) ? sessionTab
                                     : (localTab && document.getElementById(localTab)) ? localTab
                                     : null;
@@ -1349,6 +1349,7 @@
         // Restore tab kembali saat DOM selesai dimuat dan pasang listener submit form
         document.addEventListener('DOMContentLoaded', () => {
             restoreAdminActiveTab();
+            filterMemberTable();
 
             @if(session('success') || session('error'))
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1466,6 +1467,24 @@
             }
         }
 
+        let currentMemberStatusFilter = 'belum_aktif';
+
+        function setMemberStatusFilter(status) {
+            currentMemberStatusFilter = status;
+            const btnBelum = document.getElementById('btnFilterBelumAktif');
+            const btnSemua = document.getElementById('btnFilterSemua');
+            if (btnBelum && btnSemua) {
+                if (status === 'belum_aktif') {
+                    btnBelum.className = 'badge badge-role-teller';
+                    btnSemua.className = 'badge badge-tidak-aktif';
+                } else {
+                    btnBelum.className = 'badge badge-tidak-aktif';
+                    btnSemua.className = 'badge badge-role-teller';
+                }
+            }
+            filterMemberTable();
+        }
+
         function filterMemberTable() {
             const query = (document.getElementById('searchMember')?.value || '').toLowerCase().trim();
             const kelas = (document.getElementById('filterMemberKelas')?.value || '').toLowerCase();
@@ -1477,12 +1496,14 @@
                 const text = row.innerText.toLowerCase();
                 const rKelas = row.getAttribute('data-kelas') || '';
                 const rAngkatan = row.getAttribute('data-angkatan') || '';
+                const rStatus = row.getAttribute('data-status') || '';
 
+                const matchStatus = (currentMemberStatusFilter === 'semua') || (rStatus === 'belum_aktif');
                 const matchQuery = !query || text.includes(query);
                 const matchKelas = !kelas || rKelas === kelas;
                 const matchAngkatan = !angkatan || rAngkatan === angkatan;
 
-                if (matchQuery && matchKelas && matchAngkatan) {
+                if (matchStatus && matchQuery && matchKelas && matchAngkatan) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -1491,8 +1512,16 @@
             });
 
             const emptyRow = document.getElementById('memberEmptySearch');
+            const emptyText = document.getElementById('memberEmptyText');
             if (emptyRow) {
-                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+                emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+                if (emptyText) {
+                    if (currentMemberStatusFilter === 'belum_aktif' && !query && !kelas && !angkatan) {
+                        emptyText.innerHTML = 'Tidak ada anggota siswa yang belum aktif. Seluruh siswa yang telah menabung otomatis berpindah ke tab <strong>Manajemen User</strong> & <strong>Data Penabung</strong>.';
+                    } else {
+                        emptyText.innerText = 'Tidak ada data siswa yang sesuai dengan filter atau pencarian.';
+                    }
+                }
             }
         }
 

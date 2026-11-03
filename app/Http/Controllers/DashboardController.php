@@ -13,6 +13,7 @@ use App\Models\LaporanHarian;
 use App\Models\AuditLog;
 use App\Models\JurnalAkuntansi;
 use App\Models\PengajuanKas;
+use App\Models\Pengaturan;
 
 class DashboardController extends Controller
 {
@@ -56,12 +57,7 @@ class DashboardController extends Controller
         $totalSaldo = Rekening::sum('saldo');
 
         $filterMember = $request->query('filter_member', 'belum_aktif');
-        if ($filterMember === 'semua') {
-            $members = Member::orderBy('created_at', 'desc')->get();
-        } else {
-            // Default: hanya menampilkan anggota siswa yang statusnya BELUM AKTIF
-            $members = Member::where('status', '!=', 'rekening aktif')->orderBy('created_at', 'desc')->get();
-        }
+        $members = Member::orderBy('created_at', 'desc')->get();
 
         $savers = Saver::with('rekening')->orderBy('created_at', 'desc')->get();
 
@@ -178,12 +174,15 @@ class DashboardController extends Controller
         $monthlySetoran = $monthlyTransactions->where('jenis_trans', 'setoran')->sum('nominal');
         $monthlyPenarikan = $monthlyTransactions->where('jenis_trans', 'penarikan')->sum('nominal');
 
+        $statusLayanan = Pengaturan::getStatusLayanan();
+
         return view('teller.dashboard', compact(
             'user', 'transaksiHariIni', 'totalSetoran', 'totalPenarikan',
             'savers', 'membersUnactivated', 'laporanHariIni',
             'modalAwal', 'isModalAwalSet', 'tambahanKasHariIni', 'tambahanKasApproved', 'sisaKasLaci',
             'isLaporanSubmitted', 'isLaporanApproved',
-            'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan'
+            'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
+            'statusLayanan'
         ));
     }
 
@@ -206,7 +205,8 @@ class DashboardController extends Controller
         $transaksi = $saver
             ? Transaksi::where('saver_id', $saver->id)->orderBy('tanggal', 'desc')->get()
             : collect();
+        $statusLayanan = Pengaturan::getStatusLayanan();
 
-        return view('nasabah.dashboard', compact('user', 'saver', 'nasabah', 'member', 'transaksi'));
+        return view('nasabah.dashboard', compact('user', 'saver', 'nasabah', 'member', 'transaksi', 'statusLayanan'));
     }
 }

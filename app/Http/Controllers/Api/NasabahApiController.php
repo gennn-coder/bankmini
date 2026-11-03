@@ -101,6 +101,7 @@ class NasabahApiController extends Controller
                 'saldo' => $saldo,
                 'status_rekening' => $statusRekening,
                 'is_aktif' => ($saverData && $statusRekening === 'aktif'),
+                'status_layanan' => \App\Models\Pengaturan::getStatusLayanan(),
                 'qr_url' => $saverData ? ('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data=' . $saverData->account_number) : '',
             ]
         ]);
@@ -147,6 +148,7 @@ class NasabahApiController extends Controller
                 'saldo' => $saldo,
                 'status_rekening' => $statusRekening,
                 'is_aktif' => ($saver && $statusRekening === 'aktif'),
+                'status_layanan' => \App\Models\Pengaturan::getStatusLayanan(),
                 'qr_url' => $saver ? ('https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=15&data=' . $saver->account_number) : '',
             ]
         ]);

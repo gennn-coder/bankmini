@@ -141,6 +141,37 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.2);
             position: relative;
         }
+        /* Badge Status Layanan (Tanpa Icon, Bersih & Minimalis) */
+        .status-badge-buka {
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            letter-spacing: 0.3px;
+        }
+        .status-badge-istirahat {
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+            letter-spacing: 0.3px;
+        }
+        .status-badge-tutup {
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            letter-spacing: 0.3px;
+        }
     </style>
 </head>
 <body>
@@ -149,7 +180,10 @@
             <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Nasabah</h2>
             <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div id="badgeStatusContainer" class="status-badge-{{ $statusLayanan }}">
+                <span id="labelStatusLayanan">{{ ucfirst($statusLayanan) }}</span>
+            </div>
             <span>Halo, <strong>{{ $nasabah->nama_siswa ?? $user->nama_petugas }}</strong></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
@@ -305,6 +339,23 @@
             const m = document.getElementById('qrModal');
             if (m) m.style.display = 'none';
         }
+
+        // Auto-refresh status layanan teller
+        setInterval(() => {
+            fetch('{{ route("status-layanan") }}')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.status) {
+                        const container = document.getElementById('badgeStatusContainer');
+                        const label = document.getElementById('labelStatusLayanan');
+                        if (container && label) {
+                            container.className = 'status-badge-' + data.status;
+                            label.innerText = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                        }
+                    }
+                })
+                .catch(() => {});
+        }, 4000);
     </script>
 </body>
 </html>

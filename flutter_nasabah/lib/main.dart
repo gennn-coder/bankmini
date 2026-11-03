@@ -724,6 +724,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final kelas = _nasabahData['kelas'] ?? '-';
     final nis = _nasabahData['nis'] ?? '-';
     final saldo = _nasabahData['saldo'] ?? 0;
+    final statusLayanan = (_nasabahData['status_layanan'] ?? 'buka').toString().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
@@ -741,6 +742,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusLayanan == 'buka'
+                    ? const Color(0xFFDCFCE7)
+                    : statusLayanan == 'istirahat'
+                        ? const Color(0xFFFEF3C7)
+                        : const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                statusLayanan == 'buka'
+                    ? 'Buka'
+                    : statusLayanan == 'istirahat'
+                        ? 'Istirahat'
+                        : 'Tutup',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: statusLayanan == 'buka'
+                      ? const Color(0xFF15803D)
+                      : statusLayanan == 'istirahat'
+                          ? const Color(0xFFB45309)
+                          : const Color(0xFFB91C1C),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           IconButton(
             tooltip: 'Keluar',
             icon: const Icon(Icons.logout),

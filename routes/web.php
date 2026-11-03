@@ -53,11 +53,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/teller/penarikan', [TellerController::class, 'penarikan'])->name('teller.penarikan');
     Route::post('/teller/reset-pin', [TellerController::class, 'resetPin'])->name('teller.reset-pin');
     Route::post('/teller/laporan-harian', [TellerController::class, 'submitLaporanHarian'])->name('teller.laporan-harian');
-
-    // Supervisor (Redirect langsung ke Admin Dashboard)
-    Route::get('/supervisor/dashboard', [DashboardController::class, 'supervisor'])->name('supervisor.dashboard');
-    Route::post('/supervisor/laporan/{id}/approve', [AdminController::class, 'approveLaporan'])->name('supervisor.laporan.approve');
-    Route::post('/supervisor/laporan/{id}/reject', [AdminController::class, 'rejectLaporan'])->name('supervisor.laporan.reject');
+    Route::post('/teller/status-layanan', [TellerController::class, 'updateStatusLayanan'])->name('teller.status-layanan');
+    Route::get('/status-layanan', function() {
+        return response()->json(['status' => \App\Models\Pengaturan::getStatusLayanan()]);
+    })->name('status-layanan');
 
     // Nasabah / Saver
     Route::get('/nasabah/dashboard', [DashboardController::class, 'nasabah'])->name('nasabah.dashboard');

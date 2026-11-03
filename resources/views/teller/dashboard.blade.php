@@ -111,24 +111,79 @@
             align-items: center;
             gap: 0.5rem;
         }
+        /* Status Layanan Toggle (Tanpa Icon, Bersih & Minimalis) */
+        .status-toggle-wrapper {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            gap: 3px;
+        }
+        .btn-status-option {
+            border: none;
+            background: transparent;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 7px;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+        .btn-status-option:hover {
+            color: #1e293b;
+        }
+        .btn-status-option.active-buka {
+            background: #16a34a;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+        }
+        .btn-status-option.active-istirahat {
+            background: #d97706;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+        }
+        .btn-status-option.active-tutup {
+            background: #dc2626;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+        }
         .nav-tabs {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 0.4rem;
             margin-bottom: 1.75rem;
             border-bottom: 2px solid var(--border-color);
-            padding-bottom: 0.5rem;
+            padding-bottom: 0.65rem;
             max-width: 100%;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .nav-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+        .nav-tabs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .nav-tabs::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
         }
         .tab-btn {
             background: transparent;
             border: none;
-            padding: 0.65rem 1.25rem;
+            padding: 0.6rem 0.95rem;
+            font-size: 0.88rem;
             font-weight: 700;
             color: var(--text-muted);
             cursor: pointer;
             border-radius: 10px;
             white-space: nowrap;
+            flex-shrink: 0;
             transition: all 0.2s ease;
         }
         .tab-btn:hover {
@@ -326,7 +381,12 @@
             <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Teller</h2>
             <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div class="status-toggle-wrapper">
+                <button type="button" onclick="ubahStatusLayanan('buka')" id="btn-status-buka" class="btn-status-option {{ $statusLayanan === 'buka' ? 'active-buka' : '' }}">Buka</button>
+                <button type="button" onclick="ubahStatusLayanan('istirahat')" id="btn-status-istirahat" class="btn-status-option {{ $statusLayanan === 'istirahat' ? 'active-istirahat' : '' }}">Istirahat</button>
+                <button type="button" onclick="ubahStatusLayanan('tutup')" id="btn-status-tutup" class="btn-status-option {{ $statusLayanan === 'tutup' ? 'active-tutup' : '' }}">Tutup</button>
+            </div>
             <span>Halo, <strong>{{ $user->nama_petugas }}</strong></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
@@ -2516,6 +2576,30 @@
         function setAlasanKas(text) {
             const input = document.getElementById('inputAlasanKas');
             if (input) input.value = text;
+        }
+
+        function ubahStatusLayanan(status) {
+            const btnBuka = document.getElementById('btn-status-buka');
+            const btnIstirahat = document.getElementById('btn-status-istirahat');
+            const btnTutup = document.getElementById('btn-status-tutup');
+
+            if (btnBuka) btnBuka.className = 'btn-status-option' + (status === 'buka' ? ' active-buka' : '');
+            if (btnIstirahat) btnIstirahat.className = 'btn-status-option' + (status === 'istirahat' ? ' active-istirahat' : '');
+            if (btnTutup) btnTutup.className = 'btn-status-option' + (status === 'tutup' ? ' active-tutup' : '');
+
+            fetch('{{ route("teller.status-layanan") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(res => res.json())
+            .catch(err => {
+                console.error('Gagal memperbarui status layanan:', err);
+            });
         }
 
         // Pastikan saat ada konfirmasi transaksi/laporan, layar langsung fokus di atas

@@ -11,6 +11,7 @@ use App\Models\JurnalAkuntansi;
 use App\Models\LaporanHarian;
 use App\Models\AuditLog;
 use App\Models\PengajuanKas;
+use App\Models\Pengaturan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
@@ -719,5 +720,35 @@ class TellerController extends Controller
         ]);
 
         return back()->with('success', 'Pengajuan tambahan kas Rp ' . number_format($request->nominal) . ' terkirim ke Admin.');
+    }
+
+    /**
+     * Update status operasional layanan loket teller (buka, istirahat, tutup)
+     */
+    public function updateStatusLayanan(Request $request)
+    {
+        $status = strtolower(trim($request->input('status')));
+        if (!in_array($status, ['buka', 'istirahat', 'tutup'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status tidak valid. Pilihan: buka, istirahat, tutup.'
+            ], 422);
+        }
+
+        Pengaturan::setStatusLayanan($status);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Ubah Status Layanan',
+            'detail' => 'Teller ' . auth()->user()->nama_petugas . ' mengubah status loket menjadi ' . strtoupper($status),
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status' => $status,
+            'label' => ucfirst($status),
+            'message' => 'Status layanan berhasil diubah menjadi ' . ucfirst($status) . '.',
+        ]);
     }
 }
