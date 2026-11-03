@@ -153,37 +153,24 @@
         .nav-tabs {
             display: flex;
             align-items: center;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 0.4rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
             margin-bottom: 1.75rem;
             border-bottom: 2px solid var(--border-color);
-            padding-bottom: 0.65rem;
-            max-width: 100%;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-        }
-        .nav-tabs::-webkit-scrollbar {
-            height: 4px;
-        }
-        .nav-tabs::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .nav-tabs::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
+            padding-bottom: 0.75rem;
+            width: 100%;
         }
         .tab-btn {
             background: transparent;
             border: none;
-            padding: 0.6rem 0.95rem;
-            font-size: 0.88rem;
+            padding: 0.55rem 0.85rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: var(--text-muted);
             cursor: pointer;
             border-radius: 10px;
             white-space: nowrap;
-            flex-shrink: 0;
             transition: all 0.2s ease;
         }
         .tab-btn:hover {
@@ -491,7 +478,7 @@
 
                     @if(session('error') && str_contains(session('error'), 'PIN'))
                         <div style="margin-top: 1rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #92400e;">
-                            Jika siswa lupa PIN keamanan 6-digit, silakan buka menu <strong>Lupa / Reset PIN Penabung</strong> untuk mengatur PIN baru.
+                            Jika siswa lupa PIN keamanan 6-digit, silakan buka menu <strong>Reset PIN Nasabah</strong> untuk mengatur PIN baru.
                         </div>
                     @endif
 
@@ -774,7 +761,7 @@
                     </div>
                 </div>
                 <div style="margin-top: 0.75rem; font-size: 0.78rem;">
-                    <a href="javascript:void(0)" onclick="switchTab('tab-setoran')" style="color: #16a34a; font-weight: 700; text-decoration: underline;">
+                    <a href="javascript:void(0)" onclick="switchTab('tab-setoran', true)" style="color: #16a34a; font-weight: 700; text-decoration: underline;">
                         Buka Form Setoran Siswa &rarr;
                     </a>
                 </div>
@@ -791,7 +778,7 @@
                     </div>
                 </div>
                 <div style="margin-top: 0.75rem; font-size: 0.78rem;">
-                    <a href="javascript:void(0)" onclick="switchTab('tab-penarikan')" style="color: #dc2626; font-weight: 700; text-decoration: underline;">
+                    <a href="javascript:void(0)" onclick="switchTab('tab-penarikan', true)" style="color: #dc2626; font-weight: 700; text-decoration: underline;">
                         Buka Form Penarikan Siswa &rarr;
                     </a>
                 </div>
@@ -802,7 +789,7 @@
         <div class="search-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
                 <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-600); font-weight: 800;">
-                    Pencarian Rekening Penabung (Scan Barcode &amp; QR / No Rekening / NIS)
+                    Pencarian Rekening Penabung
                 </h3>
             </div>
             <div class="search-flex">
@@ -834,10 +821,10 @@
 
         <!-- NAVIGATION TABS -->
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota (Otomatis)</button>
+            <button class="tab-btn active" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
             <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
             <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
-            <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Lupa / Reset PIN Penabung</button>
+            <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
             <button class="tab-btn" onclick="switchTab('tab-laporan')">
                 Penutupan Kas & Laporan
                 @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
@@ -1035,7 +1022,7 @@
             <div class="card" style="max-width: 640px; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);">
                 <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">
                     <h3 style="margin: 0; color: #d97706; font-size: 1.25rem; font-weight: 800;">
-                        Layanan Lupa / Reset PIN Penabung
+                        Layanan Reset PIN Nasabah
                     </h3>
                 </div>
 
@@ -1461,7 +1448,7 @@
 
         let selectedSaverData = null;
 
-        function switchTab(tabId) {
+        function switchTab(tabId, shouldScroll = false) {
             if (!tabId) return;
             const targetContent = document.getElementById(tabId);
             if (!targetContent) return;
@@ -1478,6 +1465,19 @@
             });
             
             targetContent.classList.add('active');
+
+            if (shouldScroll) {
+                setTimeout(() => {
+                    const navTabs = document.querySelector('.nav-tabs');
+                    if (navTabs) {
+                        const yOffset = -20;
+                        const y = navTabs.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                    } else {
+                        targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 60);
+            }
 
             try {
                 sessionStorage.setItem('teller_active_tab', tabId);
@@ -1537,10 +1537,10 @@
 
         function selectForSetoran() {
             if (!selectedSaverData) return;
-            switchTab('tab-setoran');
+            switchTab('tab-setoran', true);
             const sel = document.getElementById('setoranNasabahSelect');
             sel.value = selectedSaverData.id;
-            document.getElementById('setoranNominal').focus();
+            setTimeout(() => document.getElementById('setoranNominal')?.focus(), 250);
         }
 
         function onPenarikanSelectChange() {
@@ -1561,11 +1561,11 @@
 
         function selectForPenarikan() {
             if (!selectedSaverData) return;
-            switchTab('tab-penarikan');
+            switchTab('tab-penarikan', true);
             const sel = document.getElementById('penarikanNasabahSelect');
             sel.value = selectedSaverData.id;
             onPenarikanSelectChange();
-            document.getElementById('penarikanNominal').focus();
+            setTimeout(() => document.getElementById('penarikanNominal')?.focus(), 250);
         }
 
         function selectForResetPin() {

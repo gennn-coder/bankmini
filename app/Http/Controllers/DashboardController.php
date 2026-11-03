@@ -139,17 +139,6 @@ class DashboardController extends Controller
             ->where('tanggal', date('Y-m-d'))
             ->first();
 
-        // Prioritaskan menampilkan laporan yang ditolak Admin agar teller langsung melihat catatan penolakan
-        if (!$laporanHariIni || $laporanHariIni->status_approval !== 'rejected') {
-            $laporanDitolak = LaporanHarian::where('user_id', $user->id)
-                ->where('status_approval', 'rejected')
-                ->orderBy('tanggal', 'desc')
-                ->first();
-            if ($laporanDitolak) {
-                $laporanHariIni = $laporanDitolak;
-            }
-        }
-
         // Data Modal Awal & Pengajuan Tambahan Kas Hari Ini
         $modalAwal = $laporanHariIni ? (int)$laporanHariIni->saldo_awal : 0;
         $isModalAwalSet = $laporanHariIni && $laporanHariIni->saldo_awal > 0;

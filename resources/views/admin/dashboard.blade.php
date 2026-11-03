@@ -175,6 +175,61 @@
         }
         .tab-content { display: none; width: 100%; }
         .tab-content.active { display: block; }
+        .sub-filter-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+        .sub-filter-bar {
+            display: inline-flex;
+            background: #e2e8f0;
+            padding: 5px;
+            border-radius: 14px;
+            gap: 4px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .sub-filter-btn {
+            background: transparent;
+            color: #475569;
+            border: none;
+            padding: 0.6rem 1.35rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        .sub-filter-btn:hover {
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.6);
+        }
+        .sub-filter-btn.active {
+            background: #0f172a !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
+        }
+        .sub-badge {
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .sub-badge-danger {
+            background: #ef4444;
+            color: #ffffff;
+        }
+        .sub-badge-warning {
+            background: #f59e0b;
+            color: #ffffff;
+        }
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -729,7 +784,30 @@
 
         <!-- TAB 4: APPROVAL KAS & TUTUP KAS TELLER -->
         <div id="tab-supervisor" class="tab-content">
-            <!-- PENGAJUAN TAMBAHAN KAS TELLER -->
+            <!-- SUB-FILTER BUTTONS (DI TENGAH, TANPA ICON, BUKAN WARNA BIRU) -->
+            <div class="sub-filter-wrapper">
+                <div class="sub-filter-bar">
+                    <button type="button" class="sub-filter-btn active" onclick="switchSubFilter('sub-pengajuan-kas')">
+                        Pengajuan Kas Teller
+                        @php $pendingKasSub = $pengajuanKasList->where('status', 'pending')->count(); @endphp
+                        @if($pendingKasSub > 0)
+                            <span class="sub-badge sub-badge-danger">{{ $pendingKasSub }}</span>
+                        @endif
+                    </button>
+                    <button type="button" class="sub-filter-btn" onclick="switchSubFilter('sub-laporan-penutup')">
+                        Laporan Penutup Kas
+                        @if($laporanPending->count() > 0)
+                            <span class="sub-badge sub-badge-warning">{{ $laporanPending->count() }}</span>
+                        @endif
+                    </button>
+                    <button type="button" class="sub-filter-btn" onclick="switchSubFilter('sub-arsip-laporan')">
+                        Arsip Laporan
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUB-CONTENT: PENGAJUAN TAMBAHAN KAS TELLER -->
+            <div id="sub-pengajuan-kas" class="sub-filter-content" style="display: block;">
             <div class="card" style="margin-bottom: 2rem; border-left: 4px solid #2563eb;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
@@ -806,7 +884,10 @@
                     </table>
                 </div>
             </div>
+            </div>
 
+            <!-- SUB-CONTENT: LAPORAN PENUTUP KAS -->
+            <div id="sub-laporan-penutup" class="sub-filter-content" style="display: none;">
             <div class="card" style="margin-bottom: 2rem;">
                 <h3 style="margin-top:0; color: #d97706; margin-bottom: 0.5rem;">Laporan Penutupan Kas Teller Menunggu Approval</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Administrator memvalidasi saldo akhir kas sistem dengan uang fisik kas laci teller sebelum menyetujui pemindahan ke brankas utama.</p>
@@ -889,7 +970,10 @@
                     </table>
                 </div>
             </div>
+            </div>
 
+            <!-- SUB-CONTENT: ARSIP LAPORAN -->
+            <div id="sub-arsip-laporan" class="sub-filter-content" style="display: none;">
             <div class="card">
                 <h3 style="margin-top:0; color: #16a34a; margin-bottom: 0.5rem;">Arsip Laporan Kas Disetujui (Cetak PDF)</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Laporan penutupan kas yang telah di-ACC. Transaksi akun yang dihapus tetap tersaji lengkap dan tidak terhapus pada PDF.</p>
@@ -956,6 +1040,7 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
         </div>
 
@@ -1302,7 +1387,7 @@
             const targetContent = document.getElementById(tabId);
             if (!targetContent) return;
 
-            document.querySelectorAll('.tab-btn').forEach(btn => {
+            document.querySelectorAll('.nav-tabs > .tab-btn').forEach(btn => {
                 btn.classList.remove('active');
                 const oc = btn.getAttribute('onclick');
                 if (oc && oc.includes("'" + tabId + "'")) {
@@ -1325,6 +1410,31 @@
             } catch (e) {}
         }
 
+        function switchSubFilter(subId) {
+            if (!subId) return;
+            // Sembunyikan semua konten sub-filter
+            document.querySelectorAll('.sub-filter-content').forEach(el => {
+                el.style.display = 'none';
+            });
+            // Tampilkan konten yang dipilih
+            const target = document.getElementById(subId);
+            if (target) target.style.display = 'block';
+
+            // Update status tombol filter
+            document.querySelectorAll('.sub-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                const oc = btn.getAttribute('onclick');
+                if (oc && oc.includes("'" + subId + "'")) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Simpan state sub-filter aktif
+            try {
+                sessionStorage.setItem('admin_active_sub_filter', subId);
+            } catch (e) {}
+        }
+
         function restoreAdminActiveTab() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1339,6 +1449,12 @@
 
                 if (tabToActivate && document.getElementById(tabToActivate)) {
                     switchTab(tabToActivate);
+                }
+
+                // Restore sub-filter state
+                const savedSubFilter = sessionStorage.getItem('admin_active_sub_filter');
+                if (savedSubFilter && document.getElementById(savedSubFilter)) {
+                    switchSubFilter(savedSubFilter);
                 }
             } catch (e) {}
         }
@@ -1364,6 +1480,13 @@
                         try {
                             sessionStorage.setItem('admin_active_tab', activeContent.id);
                             localStorage.setItem('admin_active_tab', activeContent.id);
+                        } catch(e) {}
+                    }
+                    // Save active sub-filter
+                    const activeSubFilter = document.querySelector('.sub-filter-content[style*="display: block"], .sub-filter-content[style*="display:block"]');
+                    if (activeSubFilter && activeSubFilter.id) {
+                        try {
+                            sessionStorage.setItem('admin_active_sub_filter', activeSubFilter.id);
                         } catch(e) {}
                     }
                 });
