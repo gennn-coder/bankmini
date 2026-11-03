@@ -813,7 +813,7 @@
 
                 <!-- PENCARIAN & FILTER KAS PENDING -->
                 @php
-                    $uniqueTahunPending = $laporanPending->map(fn($lp) => date('Y', strtotime($lp->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
+                    $uniqueTahunPending = $laporanPending->toBase()->map(fn($lp) => date('Y', strtotime($lp->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
                 @endphp
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
                     <div style="flex: 1; min-width: 200px;">
@@ -896,7 +896,7 @@
 
                 <!-- PENCARIAN & FILTER KAS APPROVED -->
                 @php
-                    $uniqueTahunApproved = $laporanApproved->map(fn($la) => date('Y', strtotime($la->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
+                    $uniqueTahunApproved = $laporanApproved->toBase()->map(fn($la) => date('Y', strtotime($la->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
                 @endphp
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
                     <div style="flex: 1; min-width: 200px;">
@@ -1067,7 +1067,7 @@
                     $totalDebit = $jurnals->where('posisi', 'debit')->sum('jumlah');
                     $totalKredit = $jurnals->where('posisi', 'kredit')->sum('jumlah');
                     $isBalanced = ($totalDebit == $totalKredit);
-                    $uniqueTahunJurnal = $jurnals->map(fn($j) => date('Y', strtotime($j->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
+                    $uniqueTahunJurnal = $jurnals->toBase()->map(fn($j) => date('Y', strtotime($j->tanggal)))->push((string)date('Y'))->unique()->sort()->values();
                 @endphp
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
@@ -1174,7 +1174,7 @@
 
                 <!-- PENCARIAN & FILTER AUDIT LOGS -->
                 @php
-                    $uniqueTahunAudit = $auditLogs->map(fn($l) => date('Y', strtotime($l->created_at)))->push((string)date('Y'))->unique()->sort()->values();
+                    $uniqueTahunAudit = $auditLogs->toBase()->map(fn($l) => date('Y', strtotime($l->created_at)))->push((string)date('Y'))->unique()->sort()->values();
                 @endphp
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
                     <div style="flex: 1; min-width: 200px;">
@@ -1406,34 +1406,53 @@
         }
 
         function openRejectModal(id, tellerNama, tanggal, selisih) {
-            document.getElementById('rejectLaporanForm').action = '/admin/laporan/' + id + '/reject';
-            document.getElementById('rejectTellerNama').innerText = tellerNama;
-            document.getElementById('rejectTanggal').innerText = tanggal;
-            document.getElementById('rejectSelisih').innerText = 'Rp ' + selisih;
-            document.getElementById('rejectCatatanInput').value = '';
-            document.getElementById('rejectLaporanModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('rejectCatatanInput').focus();
-            }, 100);
+            const form = document.getElementById('rejectLaporanForm');
+            if (form) form.action = '/admin/laporan/' + id + '/reject';
+            const elTeller = document.getElementById('rejectTellerNama');
+            if (elTeller) elTeller.innerText = tellerNama;
+            const elTanggal = document.getElementById('rejectTanggal');
+            if (elTanggal) elTanggal.innerText = tanggal;
+            const elSelisih = document.getElementById('rejectSelisih');
+            if (elSelisih) elSelisih.innerText = 'Rp ' + selisih;
+            const elInput = document.getElementById('rejectCatatanInput');
+            if (elInput) elInput.value = '';
+            const modal = document.getElementById('rejectLaporanModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('rejectCatatanInput')?.focus();
+                }, 100);
+            }
         }
 
         function closeRejectModal() {
-            document.getElementById('rejectLaporanModal').style.display = 'none';
+            const modal = document.getElementById('rejectLaporanModal');
+            if (modal) modal.style.display = 'none';
         }
 
         function openRejectPengajuanModal(id, tellerNama, nominal) {
-            document.getElementById('rejectPengajuanForm').action = '/admin/pengajuan-kas/' + id + '/reject';
-            document.getElementById('rejectPengajuanTeller').innerText = tellerNama;
-            document.getElementById('rejectPengajuanNominal').innerText = 'Rp ' + nominal;
-            document.getElementById('rejectPengajuanCatatanInput').value = '';
-            document.getElementById('rejectPengajuanModal').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('rejectPengajuanCatatanInput').focus();
-            }, 100);
+            const form = document.getElementById('rejectPengajuanForm');
+            if (form) form.action = '/admin/pengajuan-kas/' + id + '/reject';
+            const elTeller = document.getElementById('rejectPengajuanTeller');
+            if (elTeller) elTeller.innerText = tellerNama;
+            const elNominal = document.getElementById('rejectPengajuanNominal');
+            if (elNominal) elNominal.innerText = 'Rp ' + nominal;
+            const elInput = document.getElementById('rejectPengajuanCatatanInput');
+            if (elInput) elInput.value = '';
+            const modal = document.getElementById('rejectPengajuanModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('rejectPengajuanCatatanInput')?.focus();
+                }, 100);
+            }
         }
 
         function closeRejectPengajuanModal() {
-            document.getElementById('rejectPengajuanModal').style.display = 'none';
+            const modal = document.getElementById('rejectPengajuanModal');
+            if (modal) modal.style.display = 'none';
+            const elInput = document.getElementById('rejectPengajuanCatatanInput');
+            if (elInput) elInput.value = '';
         }
 
         // Live Search & Filter Functions
@@ -1766,7 +1785,7 @@
             </div>
 
             <div style="font-size: 0.85rem; color: #475569; margin-bottom: 1rem; line-height: 1.5;">
-                <span id="rejectTellerNama">-</span> &bull; Selisih: <strong id="rejectSelisih" style="color: #dc2626;">-</strong>
+                <span id="rejectTellerNama">-</span> &bull; Tanggal: <strong id="rejectTanggal">-</strong> &bull; Selisih: <strong id="rejectSelisih" style="color: #dc2626;">-</strong>
             </div>
 
             <form id="rejectLaporanForm" method="POST">

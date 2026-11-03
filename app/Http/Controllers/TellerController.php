@@ -599,12 +599,19 @@ class TellerController extends Controller
         ]);
 
         $user = auth()->user();
-        $tanggal = date('Y-m-d');
 
-        $laporanExisting = LaporanHarian::firstOrNew([
-            'user_id' => $user->id,
-            'tanggal' => $tanggal,
-        ]);
+        if ($request->filled('laporan_id')) {
+            $laporanExisting = LaporanHarian::where('user_id', $user->id)
+                ->where('id', $request->laporan_id)
+                ->first();
+            $tanggal = $laporanExisting ? $laporanExisting->tanggal : date('Y-m-d');
+        } else {
+            $tanggal = date('Y-m-d');
+            $laporanExisting = LaporanHarian::firstOrNew([
+                'user_id' => $user->id,
+                'tanggal' => $tanggal,
+            ]);
+        }
 
         // Cek jika sudah disetujui Admin
         if ($laporanExisting->exists && $laporanExisting->status_approval === 'approved') {

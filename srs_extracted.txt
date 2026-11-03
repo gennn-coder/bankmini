@@ -1,0 +1,618 @@
+
+Spesifikasi Kebutuhan Perangkat Lunak
+Untuk 
+Sistem Informasi E-Teller Bank Mini Sekolah
+Versi 1.1
+Disiapkan oleh Genta Nilam Prana
+SMK Negeri 1 Bantul
+31 Oktober 2026
+Daftar Isi
+ TOC \h \u \z \t &quot;Heading 1,1,Heading 2,2,&quot;No table of contents entries found.
+
+
+Riwayat Perubahan
+Nama
+Tanggal
+Alasan Perubahan
+Versi
+
+Genta Nilam Prana
+20 Oktober 2026
+Penyusunan SRS sesuai implementasi revisi proyek Bank Mini Sekolah.
+1.0
+
+Genta Nilam Prana
+31 Oktober 2026
+Pembaruan SRS versi 1.1: penambahan spesifikasi pemulihan/reset PIN rekening siswa (UC16, KF10.4, KF10.5), laporan transaksi harian/bulanan dan ekspor dokumen PDF/CSV (UC17, KF11, L4, L5, F14), pemulihan password untuk seluruh peran aktif terverifikasi (admin, teller, student), penambahan tabel pin_reset_codes pada model data, ERD 13 tabel, class diagram, activity diagram, sequence diagram, serta wireframe web dan mobile.
+1.1
+
+
+Pendahuluan
+Tujuan
+Dokumen ini menetapkan kebutuhan Sistem Informasi E-Teller Bank Mini Sekolah versi 1.1 untuk pengelolaan tabungan siswa di Bank Mini SMKN 1 Bantul. Cakupannya meliputi layanan web bagi Administrator dan Teller, aplikasi mobile bagi Siswa, serta REST API dan basis data bersama.
+
+Spesifikasi ini menjadi pedoman pengembangan, pemeliharaan, dan pengujian penerimaan. Acuan teknisnya adalah implementasi proyek yang ditelaah hingga 31 Oktober 2026 (termasuk migrasi tabel pin_reset_codes per 24 Oktober 2026). Pernyataan “harus” menyatakan kebutuhan yang perlu dipenuhi; target pengujian dan operasional tidak dimaksudkan sebagai klaim bahwa pengujian atau penerapan produksi telah dilaksanakan.
+
+Definisi dan Istilah
+Kebutuhan fungsional menggunakan kode KF, kebutuhan nonfungsional menggunakan kode KnF, dan kasus penggunaan menggunakan kode UC. Prioritas dinyatakan pada setiap kelompok fitur. Nilai uang menggunakan rupiah bulat; nama tabel, atribut, dan status teknis mengikuti kode sumber.
+
+Guna memberikan gambaran yang sama terhadap beberapa definisi, istilah dan singkatan yang digunakan di dokumen ini, perlu dijelaskan sebagaimana berikut:
+Istilah
+Definisi
+
+SRS / SKPL
+Software Requirements Specification / Spesifikasi Kebutuhan Perangkat Lunak.
+
+Administrator (admin)
+Petugas pengelola data dan pengawas laporan; pada revisi proyek juga menjalankan fungsi persetujuan yang sebelumnya disebut Supervisor.
+
+Teller (teller)
+Petugas loket yang membuka sesi kas, mengaktifkan rekening, mencatat transaksi, dan mengajukan laporan.
+
+Siswa / Nasabah (student)
+Pemilik data anggota yang mengakses informasi tabungan pribadi melalui aplikasi mobile.
+
+Anggota / Member
+Data siswa yang terdaftar; belum tentu telah mempunyai rekening aktif.
+
+Penabung / Saver
+Anggota yang mempunyai data rekening tabungan; layanan transaksi mengikuti status aktivasi rekening.
+
+Sesi kas
+Catatan operasional satu Teller pada satu tanggal, dengan status open, submitted, atau approved.
+
+Rekonsiliasi
+Pencocokan kas menurut sistem dengan uang fisik pada penutupan sesi.
+
+Double-entry
+Pencatatan jurnal debit dan kredit dengan jumlah yang sama untuk setiap kejadian keuangan.
+
+RBAC dan Sanctum
+Pembatasan layanan menurut peran dan autentikasi menggunakan token Laravel Sanctum.
+
+request_id / Idempotensi
+UUID identitas permintaan untuk mengenali pengiriman ulang dan mencegah pembukuan transaksi yang sama dua kali.
+
+QR Code
+Representasi token identitas rekening untuk pencarian oleh Teller; bukan pengganti PIN penarikan.
+
+Pemulihan PIN (PIN Recovery)
+Alur pemulihan PIN 6 digit bagi siswa aktif yang telah memiliki rekening dan email terverifikasi, menggunakan kode verifikasi 6 digit yang dikirim ke email dan validasi password login saat ini.
+
+Laporan Transaksi &amp; Ekspor
+Layanan rekapitulasi transaksi harian atau bulanan dengan filter teller serta ekspor dokumen berformat PDF (maksimal 5.000 data) dan CSV (streaming batch 500 baris dengan proteksi formula injection).
+
+
+Suggestions Pembaca yang disarankan membaca dokumen ini
+Dokumen ditujukan kepada peserta UKK, guru pembimbing atau penguji, pengembang, penguji perangkat lunak, Administrator, dan Teller. Pembaca disarankan memulai dari Pendahuluan dan Deskripsi Umum Sistem, kemudian membaca kebutuhan antarmuka, fitur, serta aturan bisnis sesuai tugasnya.
+
+Pembagian pemanfaatan dokumen adalah sebagai berikut:
+Analis sistem dan pembimbing
+Memeriksa kesesuaian ruang lingkup, pembagian hak akses, kebutuhan data, dan alur operasional Bank Mini Sekolah.
+Programmer
+Menggunakan kebutuhan fungsional, antarmuka, dan aturan bisnis sebagai acuan implementasi web, mobile, API, serta basis data.
+Tester dan penguji UKK
+Menurunkan skenario uji dari kode KF dan KnF, termasuk penolakan transaksi, isolasi data siswa, dan persetujuan laporan.
+Pengelola Bank Mini Sekolah
+Memahami batas kewenangan Administrator, prosedur Teller, dan informasi yang dapat diakses oleh Siswa.
+
+Ruang Lingkup Sistem
+Sistem membantu pencatatan tabungan siswa secara terpusat, mengurangi perhitungan manual, menyediakan bukti transaksi, dan mendukung pengawasan kas. Seluruh perubahan saldo dilakukan melalui transaksi loket dan dicatat bersama jurnal akuntansinya.
+
+Ruang lingkup mencakup autentikasi; pengelolaan petugas dan akses; pengelolaan anggota dan kredensial; impor siswa CSV/XLSX; sesi kas dan pencarian anggota; aktivasi rekening dan setoran pertama; transaksi setoran dan penarikan tunai beserta cetak struk; rekonsiliasi dan penutupan kas; jurnal double-entry dan log audit aktivitas; layanan mandiri siswa (saldo, QR, mutasi); verifikasi email akun; pemulihan password bagi seluruh peran aktif (admin, teller, student); pemulihan PIN rekening siswa mandiri via email dan password login; serta laporan transaksi harian/bulanan dengan ekspor PDF dan CSV. Transfer antarrekening, bunga, kredit, pinjaman, pembayaran eksternal, dan pengubahan PIN reguler saat sesi login aktif tidak termasuk layanan yang diekspos pada API revisi ini.
+
+Sistem Penomoran
+Ada beberapa hal/bagian dalam dokumen ini yang diberlakukan sistem penomoran. Maksud penomoran ini untuk mempermudah audience dalam pengidentifikasian. Adapun aturan penomorannya sebagaimana tabel berikut:
+ 
+Hal/Bagian
+Aturan Penomoran
+
+Use Case
+UC diikuti nomor urut, misalnya UC1, UC2, dan UC3.
+
+Kebutuhan Fungsional
+KF diikuti nomor fitur dan nomor kebutuhan, misalnya KF1.1 atau KF8.2.
+
+Kebutuhan Non Fungsional
+KnF diikuti nomor kelompok dan nomor kebutuhan, misalnya KnF1.1.
+
+Form
+F diikuti nomor urut, misalnya F1 dan F2.
+
+Laporan
+L diikuti nomor urut, misalnya L1 dan L2.
+
+Referensi
+Acuan utama adalah berkas proyek dan dokumen berikut. Sumber rancangan awal digunakan sebagai konteks; apabila terdapat perbedaan, deskripsi dalam SRS ini mengikuti implementasi revisi yang disebutkan secara eksplisit.
+
+Daftar referensi:
+[R1] Soal UKK_Bank Mini.docx, Uji Kompetensi Keahlian RPL Tahun Ajaran 2026/2027, “Sistem Informasi E-Teller Bank Mini Sekolah”, berkas pada direktori utama proyek.
+[R2] srs_template-ieee (Isi).docx, acuan struktur dan format Spesifikasi Kebutuhan Perangkat Lunak.
+[R3] Kode proyek backend dekstop/routes/api.php, controller (TransactionController, CashSessionController, ReconciliationController, TransactionReportController, PinRecoveryController, RecoveryController), service (BankingService, CashSessionService, AccessCodeService, PinRecoveryService, AuditService), migrasi database (2026_10_15_000001_revise_school_bank_schema.php, 2026_10_15_000002_add_student_email_recovery.php, 2026_10_23_000001_create_pin_reset_codes_table.php), web React dekstop/frontend/src/, dan mobile Flutter mobile/lib/ yang ditelaah per 31 Oktober 2026.
+[R4] SRS_ETeller_Bank_Mini.md dan Flowchart_PerRole.md pada direktori proyek, sebagai rancangan terdahulu.
+[R5] use case ukk.drawio dan ukk flowchart.drawio, diagram use case dan flowchart Sistem Informasi E-Teller Bank Mini Sekolah.
+Ikhtisar Dokumen
+Dokumen disusun mengikuti urutan bagian pada template:
+Pendahuluan
+Memuat tujuan, istilah, pembaca, ruang lingkup, penomoran, referensi, dan susunan dokumen.
+Deskripsi umum
+Memuat konteks produk, fungsi, peran pengguna, lingkungan operasi, batasan, dokumentasi, dan ketergantungan.
+Kebutuhan Antar Muka Eksternal
+Memuat kebutuhan antarmuka pengguna, perangkat keras, perangkat lunak, dan komunikasi.
+Fitur Sistem
+Memuat deskripsi, prioritas, urutan tindakan dan respons, serta kebutuhan fungsional yang teridentifikasi.
+Kebutuhan Non Fungsional Lainnya
+Memuat kebutuhan kinerja, keselamatan data, perlindungan akses, kualitas, dan aturan bisnis.
+Kebutuhan Lain
+Memuat kebutuhan data dan operasional; lampiran model analisis, desain antarmuka, serta daftar hal yang belum ditentukan.
+
+
+Deskripsi Umum Sistem
+Perspektif Perangkat Lunak
+Produk merupakan sistem client-server untuk operasional Bank Mini Sekolah. Backend Laravel menyediakan satu sumber data bagi aplikasi web React dan aplikasi mobile Flutter. Web dipakai Administrator dan Teller, sedangkan mobile dipakai Siswa; kedua klien tidak mengakses basis data secara langsung.
+
+Pada revisi skema dan arsitektur Oktober 2026 (termasuk pembaruan 24 Oktober 2026), peran Supervisor digabung ke admin, peran Nasabah menjadi student, saldo rupiah menggunakan bilangan bulat 64-bit (bigint), anggota terdaftar dan rekening tabungan dipisahkan menjadi dua entitas terpisah (Member dan Saver), transaksi dipayungi sesi kas loket ber-idempotensi (UUID request_id), jurnal double-entry otomatis, audit log menyeluruh, pemulihan password bagi seluruh peran aktif via email terverifikasi, pemulihan PIN rekening bagi siswa aktif via email dan password login, serta pelaporan transaksi harian/bulanan dengan ekspor PDF dan CSV.
+Fungsi Perangkat Lunak
+Fungsi utama dikelompokkan berdasarkan proses kerja dan aktor berikut. Perinciannya disampaikan pada bagian Fitur Sistem.
+
+Ringkasan fungsi Sistem Informasi E-Teller Bank Mini Sekolah:
+ 
+
+Fungsi
+Kode
+
+
+Login, logout, dan perubahan password
+KF1
+
+
+Pengelolaan petugas dan akses siswa
+KF2
+
+
+Pengelolaan anggota dan kredensial
+KF3
+
+
+Impor data siswa
+KF4
+
+
+Pembukaan sesi dan pencarian anggota
+KF5
+
+
+Aktivasi rekening dan setoran pertama
+KF6
+
+
+Setoran dan penarikan tunai; struk
+KF7
+
+
+Pengajuan dan peninjauan laporan kas
+KF8
+
+
+Jurnal akuntansi dan audit aktivitas
+KF9
+
+
+Saldo, QR, mutasi, verifikasi email, reset password, dan pemulihan PIN siswa
+KF10
+
+
+Laporan transaksi harian/bulanan dan ekspor PDF/CSV
+KF11
+
+
+Karakteristik dan Klasifikasi Pengguna
+Klasifikasi pengguna mengikuti tiga peran aktif pada middleware dan API revisi: admin, teller, serta student. Tingkat akses diterapkan di server dan tidak cukup hanya dengan menyembunyikan menu.
+
+Administrator dan Teller memakai aplikasi web pada jam pelayanan sekolah. Siswa memakai aplikasi mobile untuk membaca informasi rekening miliknya dan mengelola keamanan akun yang disediakan.
+
+Administrator memerlukan pemahaman data siswa, administrasi akun, rekonsiliasi, dan pembacaan jurnal. Ia dapat meninjau laporan, tetapi tidak memiliki layanan API untuk menjalankan transaksi loket sebagai admin.
+Teller memerlukan kemampuan mencocokkan identitas, slip, dan uang fisik. Siswa memerlukan kemampuan dasar menggunakan ponsel, menjaga password, serta memasukkan PIN sendiri ketika penarikan di loket.
+Matriks hak akses utama menggunakan kode ADM untuk Administrator, TLR untuk Teller, dan SIS untuk Siswa:
+Hak akses menurut peran aktif
+No
+Fungsi dan Batas Hak Akses
+Kode
+
+1
+Administrator: kelola petugas, anggota, impor, rekening penabung, peninjauan rekonsiliasi kas, transfer kas brankas, jurnal, audit log, serta laporan transaksi harian/bulanan semua/pilihan teller dan ekspor PDF/CSV. Berhak memulihkan password akun admin yang memiliki email terverifikasi. Tidak menjalankan endpoint transaksi loket Teller.
+ADM
+
+2
+Teller: buka sesi kas, cari anggota/rekening/QR, aktivasi rekening dengan setoran awal, setor/tarik tunai, baca struk sendiri, ajukan penutupan kas, serta laporan transaksi harian/bulanan khusus loket miliknya dan ekspor PDF/CSV. Berhak memulihkan password akun teller yang memiliki email terverifikasi. Tidak mengelola petugas, mengubah transaksi tersimpan, atau menyetujui laporan kas.
+TLR
+
+3
+Siswa: login mobile, baca profil, saldo total/mengendap/tersedia, QR rekening, dan riwayat mutasi pribadi; verifikasi email, pemulihan password akun mandiri, serta pemulihan PIN rekening aktif mandiri (dengan kode email + password login). Tidak mengakses rekening siswa lain, menu administrasi, atau input transaksi loket.
+SIS
+
+
+Lingkungan Operasi
+Lingkungan pengembangan proyek menggunakan Windows dengan Laragon. Backend membutuhkan PHP 8.3 atau lebih baru pada runtime 64-bit, Composer, Laravel sesuai composer.json, serta MySQL/InnoDB yang mendukung constraint dan transaksi. Frontend web dibangun menggunakan Node.js dan Vite; aplikasi mobile menggunakan Flutter/Dart.
+
+Manifest proyek menetapkan Laravel ^13.8 dan Sanctum ^4.3, React ^19.2.8 dan Vite ^8.2.0, serta Dart SDK ^3.10.4 untuk aplikasi Flutter. Versi pemasangan harus mengikuti berkas lock dan kompatibilitas paket proyek, bukan teknologi Delphi atau Visual Basic pada contoh template.
+Komputer petugas menggunakan peramban modern yang mendukung JavaScript, kamera, dan pencetakan. Perangkat Android menjalankan aplikasi Flutter dan harus dapat menjangkau alamat API. Alamat API mobile dapat dikonfigurasi melalui BANK_API_URL; alamat emulator tidak digunakan sebagai alamat perangkat fisik.
+
+Batasan Desain dan Implementasi
+Implementasi mengikuti arsitektur dan penamaan data pada revisi proyek. Validasi finansial dan pembatasan hak akses harus berada pada backend; tampilan klien hanya membantu masukan serta konfirmasi.
+
+Batasan desain dan implementasi:
+Nominal disimpan sebagai bilangan bulat rupiah menggunakan BIGINT; setoran, penarikan, saldo, dan kas tunduk pada batas konfigurasi bank.
+Setiap layanan dilindungi token dan peran. Klien web hanya untuk admin/teller; klien mobile untuk student. Akun tidak aktif harus ditolak.
+Transaksi membutuhkan sesi kas terbuka. Perubahan saldo, pencatatan transaksi, jurnal, dan audit yang terkait dilakukan dalam transaksi database.
+
+Dokumentasi bagi Pengguna
+Dokumentasi pengguna harus memuat panduan login dan perubahan password awal; pengelolaan anggota serta impor; aktivasi dan transaksi Teller; penanganan permintaan belum pasti; pencetakan struk; penutupan dan peninjauan kas; serta akses saldo dan mutasi mobile. Panduan teknis mencakup konfigurasi API, migrasi, backup, pemulihan, SMTP, dan queue worker.
+Asumsi dan Ketergantungan
+Sistem bergantung pada basis data yang tersedia, jaringan antara klien dan API, jam server yang konsisten, serta data siswa yang sah. Kamera dan printer merupakan perangkat pendukung; pencarian manual tetap tersedia ketika pemindaian QR tidak dapat digunakan.
+
+Asumsi operasional:
+Sekolah menyediakan identitas siswa yang unik, menetapkan petugas berwenang, serta menyiapkan prosedur pemeriksaan slip dan uang fisik. Tahun kelulusan harus dilengkapi sebelum rekening dapat diaktifkan.
+Pemulihan password siswa melalui email memerlukan email terverifikasi, pengaturan pengiriman email, dan worker antrean yang berfungsi. Kemampuan mengirim email pada lingkungan operasional harus diuji tersendiri; keberadaan kode layanan tidak membuktikan bahwa email telah terkirim.
+
+Kebutuhan Antarmuka Eksternal
+Antarmuka Pengguna
+Antarmuka menggunakan Bahasa Indonesia, label yang jelas, format rupiah tanpa pecahan, dan pesan kesalahan yang dapat ditindaklanjuti. Input wajib, status proses, konfirmasi transaksi, dan larangan pengiriman ganda harus terlihat pada alur yang terkait.
+
+Antarmuka dibedakan menjadi web petugas dan mobile siswa sesuai hak akses:
+Form dan laporan utama
+Daftar berikut mengidentifikasi form antarmuka utama pada sistem:
+
+No
+Form Antarmuka
+Nomor Form
+
+1
+Login sesuai jenis klien
+F1
+
+2
+Ganti password wajib atau mandiri
+F2
+
+3
+Kelola petugas dan status akses
+F3
+
+4
+Daftar, tambah, dan ubah anggota
+F4
+
+5
+Pratinjau dan konfirmasi impor siswa
+F5
+
+6
+Buka sesi kas dan cari anggota/QR
+F6
+
+7
+Aktivasi, setoran, penarikan, dan konfirmasi PIN
+F7
+
+8
+Struk dan penelusuran hasil permintaan
+F8
+
+9
+Penutupan sesi dan laporan Teller
+F9
+
+10
+Peninjauan laporan oleh Administrator
+F10
+
+11
+Jurnal akuntansi dan audit aktivitas
+F11
+
+12
+Profil, saldo, QR, dan mutasi mobile
+F12
+
+13
+Verifikasi email dan pemulihan password (Web &amp; Mobile)
+F13
+
+14
+Laporan transaksi dan filter periode/teller serta ekspor dokumen (Web)
+F14
+
+15
+Pemulihan/reset PIN rekening siswa (Mobile)
+F15
+
+
+Antarmuka Perangkat Keras
+Perangkat keras menyediakan sarana input data, pemrosesan API, penyimpanan, penampilan hasil, pemindaian QR, dan pencetakan. Sistem tidak mengendalikan mesin penghitung uang atau brankas elektronik.
+
+Jenis perangkat keras yang diperlukan adalah sebagai berikut:
+Komputer server
+Menjalankan layanan API dan basis data. Kapasitas disesuaikan jumlah pengguna dan volume data; acuan workstation UKK adalah prosesor setara Core i3, RAM minimal 4 GB, dengan 8 GB direkomendasikan.
+Komputer klien dan ponsel
+Komputer petugas menjalankan peramban untuk web. Ponsel Android menjalankan aplikasi siswa dan mengakses API melalui jaringan yang telah dikonfigurasi.
+
+Perangkat pendukung mencakup:
+Alat input
+Keyboard dan mouse untuk entri; kamera atau webcam dengan izin peramban untuk pemindaian QR rekening.
+Alat pemroses
+CPU dan memori komputer menjalankan web/server; pemrosesan aturan finansial dilakukan server, sedangkan ponsel menampilkan data dari API.
+Alat output
+Monitor atau layar ponsel menampilkan informasi. Printer yang tersedia melalui dialog cetak peramban mencetak struk atau laporan sesuai fitur cetak yang disediakan.
+Perangkat keras komunikasi data
+Router, switch, atau akses Wi-Fi menghubungkan klien dengan server. USB dan pemetaan port dapat dipakai untuk pengujian Android pada komputer pengembangan.
+
+
+
+ 
+
+Antarmuka Perangkat Lunak
+Backend berkomunikasi dengan MySQL melalui koneksi database Laravel dan dengan klien melalui REST API JSON. Autentikasi menggunakan Sanctum. PhpSpreadsheet mendukung impor XLSX; html5-qrcode mendukung pembacaan QR pada web; komponen QR pada mobile menampilkan token rekening.
+
+Web React dan mobile Flutter bertukar identitas sesi, profil, rekening, nominal, request_id, status kas, laporan, dan riwayat melalui endpoint yang diizinkan. Password dan PIN dikirim untuk verifikasi melalui kanal yang terlindungi dan tidak ditampilkan kembali. Ponsel menyimpan token menggunakan fasilitas penyimpanan aman yang digunakan aplikasi. Layanan SMTP dan queue dipakai untuk pengiriman kode email, terpisah dari pencatatan transaksi.
+
+
+Antarmuka Komunikasi
+Komunikasi klien dan server menggunakan HTTP/HTTPS dengan payload JSON dan token Bearer. HTTP dibatasi pada pengembangan lokal; penerapan melalui jaringan publik harus memakai HTTPS. Unggahan impor menggunakan multipart/form-data. Pembaruan saldo dibaca melalui permintaan API dan pemuatan ulang, bukan melalui janji sinkronisasi offline atau push real-time.
+
+Basis URL mengikuti konfigurasi lingkungan dan awalan /api. Respons harus membedakan keberhasilan, kredensial salah, token tidak sah, akses dilarang, data tidak ditemukan, konflik status, validasi gagal, dan pembatasan percobaan. Gangguan jaringan setelah pengiriman transaksi harus ditangani dengan pengecekan request_id sebelum membuat permintaan baru.
+
+
+Fitur Sistem
+Fitur berikut mengikuti endpoint dan layanan aktif pada revisi proyek. Setiap kebutuhan memiliki kode yang dapat dirujuk saat pengujian. Seluruh fitur inti berprioritas Tinggi; layanan pemulihan email berprioritas Sedang karena bergantung pada konfigurasi pengiriman.
+
+Kebutuhan dikelompokkan menurut proses operasional berikut:
+Autentikasi dan Pengelolaan Sesi
+4.1.1Description and Priority
+Tinggi. Menjamin pengguna aktif mengakses klien dan layanan sesuai perannya. UC1.
+4.1.2Stimulus/Response Sequences
+Pengguna memasukkan username, password, dan jenis klien. Sistem memvalidasi identitas, menerbitkan token, meminta perubahan password awal bila diwajibkan, lalu membuka dashboard sesuai peran. Kredensial, akun, atau klien yang tidak sesuai ditolak.
+4.1.3Functional Requirements
+KF1.1 Sistem harus menerima login web hanya untuk admin/teller dan login mobile hanya untuk student; akun tidak aktif tidak boleh login.
+KF1.2 Sistem harus menerbitkan token sesi dengan masa berlaku 12 jam dan memeriksa token serta peran pada endpoint terlindungi.
+KF1.3 Password baru harus minimal 12 karakter, dikonfirmasi, dan berbeda dari password lama pada perubahan mandiri. Logout mencabut token sesi berjalan; perubahan password mencabut token lain sesuai layanan.
+Pengelolaan Petugas dan Akses Siswa
+4.2.1Description and Priority
+Tinggi. Mengatur akun petugas dan akses layanan siswa tanpa memberi kewenangan transaksi kepada admin. UC2.
+4.2.2Stimulus/Response Sequences
+Administrator membuka daftar petugas, menambah atau memperbarui akun, atau mengubah akses siswa. Sistem memvalidasi identitas, peran, dan status, kemudian menyimpan perubahan yang sah serta mencatat aktivitas.
+4.2.3Functional Requirements
+KF2.1 Administrator harus dapat membaca, menambah, dan memperbarui akun petugas melalui layanan users, dengan username unik dan peran yang diizinkan.
+KF2.2 Administrator harus dapat mengatur akses siswa melalui layanan student-access. Permintaan dari Teller atau Siswa ke layanan administrasi harus ditolak.
+KF2.3 Pengelolaan akun harus menjaga keterkaitan data keuangan; penghapusan petugas tidak dinyatakan sebagai fitur karena API aktif tidak menyediakan endpoint DELETE users.
+Pengelolaan Anggota dan Kredensial
+4.3.1Description and Priority
+Tinggi. Memisahkan data siswa terdaftar dari rekening aktif. UC3 dan UC14.
+4.3.2Stimulus/Response Sequences
+Administrator mengisi nomor siswa, nama, dan tahun kelulusan. Sistem membuat user student serta member berstatus inactive. Administrator dapat memperbarui data atau menerbitkan kredensial sementara untuk disampaikan melalui prosedur sekolah.
+4.3.3Functional Requirements
+KF3.1 Sistem harus membuat username siswa berdasarkan prefiks s dan nomor siswa yang unik, serta menyimpan identitas anggota terpisah dari rekening tabungan.
+KF3.2 Sistem harus menyediakan pembaruan data anggota dan penolakan penghapusan anggota yang memiliki rekening atau aktivitas terlindungi.
+KF3.3 Penerbitan ulang kredensial harus menghasilkan password sementara, mewajibkan penggantian password, mencabut token lama, dan menghapus kode akses terkait. Password sementara tidak boleh diperlakukan sebagai password tetap.
+Impor Data Siswa
+4.4.1Description and Priority
+Tinggi. Membantu pendaftaran anggota secara massal dengan validasi sebelum penyimpanan. UC4.
+4.4.2Stimulus/Response Sequences
+Administrator mengunduh template, mengunggah CSV/XLSX, memeriksa pratinjau dan kesalahan per baris, lalu mengonfirmasi impor. Sistem memproses hanya sesuai hasil validasi dan identitas pratinjau yang diizinkan.
+4.4.3Functional Requirements
+KF4.1 Header impor harus berurutan student_number, full_name, graduation_year. Batas data adalah 2.000 siswa per berkas sesuai konfigurasi proyek.
+KF4.2 Nomor siswa harus berupa digit dan unik; nama wajib; tahun kelulusan berada pada rentang 2000–2200. Formula XLSX dan struktur berkas tidak sah harus ditolak.
+KF4.3 Sistem harus memisahkan tahap preview dan commit, menampilkan hasil pemrosesan, serta mencegah konfirmasi yang tidak sah atau pengulangan impor yang sama sebagai batch baru.
+Sesi Kas dan Pencarian Anggota
+4.5.1Description and Priority
+Tinggi. Menyiapkan kendali kas harian dan memastikan identitas pemilik rekening. UC5 dan UC6.
+4.5.2Stimulus/Response Sequences
+Teller menetapkan saldo awal dan membuka sesi tanggal berjalan. Setelah itu Teller mencari anggota melalui nomor siswa, nomor rekening, atau token QR. Sistem menampilkan identitas serta rekening jika aktif, atau pesan data tidak ditemukan.
+4.5.3Functional Requirements
+KF5.1 Sistem harus membatasi satu sesi per Teller per tanggal. Saldo awal tidak boleh negatif; pengulangan pembukaan dengan saldo awal berbeda harus ditolak.
+KF5.2 Teller tidak boleh membuka sesi hari baru jika sesi sebelumnya belum approved. Transaksi baru hanya boleh dijalankan pada sesi berstatus open.
+KF5.3 Pencarian harus mendukung student_number, account_number, dan qr_code_token. QR berfungsi untuk identifikasi, sedangkan penarikan tetap memerlukan PIN.
+Aktivasi Rekening dan Setoran Pertama
+4.6.1Description and Priority
+Tinggi. Membentuk rekening aktif melalui transaksi awal yang dapat ditelusuri. UC7.
+4.6.2Stimulus/Response Sequences
+Teller menemukan anggota inactive, memeriksa identitas dan uang fisik, lalu memasukkan setoran pertama serta PIN enam digit. Sistem memeriksa data, mengaktifkan rekening, dan membukukan setoran awal beserta jurnal secara atomik.
+4.6.3Functional Requirements
+KF6.1 Aktivasi harus membutuhkan anggota yang dapat dilayani, tahun kelulusan terisi, sesi kas open, PIN enam digit, dan setoran pertama minimal Rp10.000.
+KF6.2 Sistem harus membuat atau menggunakan reservasi rekening yang memenuhi syarat, dengan nomor rekening unik BMS-YYYY-XXXX dan token QR unik. Aktivasi ulang atas rekening yang telah aktif harus ditolak.
+KF6.3 Aktivasi, perubahan status anggota, saldo, transaksi awal, dan dua jurnal harus berhasil bersama atau dibatalkan bersama bila terjadi kegagalan.
+Transaksi Tunai dan Bukti Transaksi
+4.7.1Description and Priority
+Tinggi. Menjaga konsistensi saldo, kas loket, dan jurnal. UC8 serta UC9.
+4.7.2Stimulus/Response Sequences
+Teller memeriksa slip dan uang fisik, mencari rekening, memasukkan nominal, dan meninjau konfirmasi. Untuk penarikan, Nasabah memasukkan PIN sendiri. Sistem memvalidasi, menyimpan transaksi, lalu menampilkan struk. Jika hasil pengiriman belum pasti, Teller mengecek request_id sebelum mengulang.
+4.7.3Functional Requirements
+KF7.1 Nominal harus berupa rupiah bulat positif, paling banyak Rp1.000.000.000.000 per transaksi, dengan saldo/kas hasil paling banyak Rp9.000.000.000.000 sesuai konfigurasi.
+KF7.2 Setoran menambah saldo dan menghasilkan Debit 101/Kredit 201. Penarikan mengurangi saldo dan menghasilkan Debit 201/Kredit 101 dengan jumlah jurnal seimbang.
+KF7.3 Penarikan harus memverifikasi PIN hash, menyisakan saldo minimal Rp10.000, dan tidak melebihi kas loket. PIN salah, rekening tidak aktif, atau sesi tertutup harus ditolak.
+KF7.4 Sistem harus mengunci baris yang terkait dan menggunakan transaksi database. UUID request_id yang sama dan data transaksi yang sama mengembalikan hasil sebelumnya; penggunaan UUID yang sama untuk transaksi berbeda harus ditolak.
+KF7.5 Struk harus memuat identitas transaksi, rekening, nasabah, nominal, jenis, dan saldo setelah transaksi yang tersedia. Teller hanya dapat mengambil struk miliknya. Transaksi tersimpan tidak dapat diedit atau dihapus melalui layanan Teller.
+Rekonsiliasi dan Persetujuan Kas
+4.8.1Description and Priority
+Tinggi. Memastikan kas fisik sesuai pembukuan sebelum penutupan resmi. UC10 dan UC11.
+4.8.2Stimulus/Response Sequences
+Teller menghitung uang fisik dan mengajukan laporan sesi. Sistem menghitung kas akhir dan selisih, lalu mengunci transaksi sesi. Administrator memeriksa slip dan uang; ia menolak dengan alasan untuk diperbaiki atau menyetujui laporan tanpa selisih.
+4.8.3Functional Requirements
+KF8.1 Kas akhir sistem harus dihitung sebagai saldo awal + total setoran − total penarikan pada sesi yang sama. Selisih adalah uang fisik − kas akhir sistem.
+KF8.2 Pengajuan harus mengubah sesi menjadi submitted. Laporan berselisih nol berstatus pending; selain itu disputed. Laporan disputed tidak boleh disetujui.
+KF8.3 Penolakan Administrator harus menyimpan alasan, petugas, dan waktu, mengubah laporan menjadi rejected, serta membuka sesi kembali agar dapat diperiksa dan diajukan ulang.
+KF8.4 Persetujuan harus mengunci laporan/sesi, menandainya approved, mencatat cash_transfer satu kali, dan membuat Debit 102/Kredit 101 bila kas yang dipindahkan lebih dari nol. Persetujuan ulang harus ditolak.
+KF8.5 Teller tidak boleh menyetujui laporannya sendiri. Laporan sebelum revisi tanpa cash_session_id diperlakukan sebagai arsip baca dan tidak diproses sebagai laporan sesi baru.
+Jurnal Akuntansi dan Audit Aktivitas
+4.9.1Description and Priority
+Tinggi. Menyediakan penelusuran pembukuan dan tindakan pengguna yang berwenang. UC12.
+4.9.2Stimulus/Response Sequences
+Administrator membuka jurnal atau audit, memilih data yang ingin ditinjau, lalu sistem menampilkan catatan sesuai layanan. Pencatatan terjadi ketika kejadian bisnis berhasil disimpan.
+4.9.3Functional Requirements
+KF9.1 Sistem harus menyediakan pembacaan jurnal bagi admin. Kode akun 101 mewakili kas loket, 102 brankas, dan 201 tabungan nasabah.
+KF9.2 Pembukaan kas bernilai positif menghasilkan Debit 101/Kredit 102. Jurnal harus memiliki tepat satu sumber: transaksi, sesi kas, atau transfer kas.
+KF9.3 Audit harus menghubungkan aktor, jenis tindakan, objek, dan waktu serta detail yang diperlukan. Data audit tidak boleh digunakan untuk menyimpan password atau PIN dalam bentuk terbuka.
+Layanan Mandiri dan Pemulihan Akun Siswa
+4.10.1Description and Priority
+Tinggi untuk profil, saldo, QR, mutasi, dan pemulihan PIN rekening; Sedang untuk verifikasi email dan reset password. UC1, UC13, UC15, dan UC16.
+4.10.2Stimulus/Response Sequences
+Siswa login mobile dan membuka tabungan atau mutasi. Sistem mengambil data milik token; rekening inactive menampilkan petunjuk aktivasi. Untuk verifikasi email, pengguna memasukkan password saat ini dan kode 6 digit. Untuk reset password, pengguna mengirim email terverifikasi, kode 6 digit, dan password baru minimal 12 karakter. Untuk pemulihan PIN rekening, siswa aktif dengan rekening aktif mengirim email terverifikasi untuk meminta kode 6 digit, lalu memasukkan kode 6 digit, password login saat ini, dan PIN baru 6 digit beserta konfirmasi. Pengubahan PIN biasa saat login aktif tidak disediakan dalam aplikasi mobile; perubahan PIN dilayani secara eksklusif melalui alur pemulihan PIN mandiri ini.
+4.10.3Functional Requirements
+KF10.1 Profil dan mutasi harus dibatasi pada member serta saver milik pengguna aktif. Mutasi disajikan berhalaman, 25 transaksi per halaman, dengan urutan terbaru.
+KF10.2 Sistem harus menampilkan saldo total, saldo mengendap min(saldo, Rp10.000), saldo tersedia max(saldo − Rp10.000, 0), serta QR identitas jika rekening aktif.
+KF10.3 Verifikasi email dan pemulihan password harus menggunakan kode enam digit, disimpan sebagai hash pada tabel access_codes, berlaku 10 menit, sekali pakai, dan dibatasi maksimal lima percobaan verifikasi per kode. Pemulihan password berlaku bagi admin, teller, dan student aktif yang email-nya telah terverifikasi; password baru minimal 12 karakter dan seluruh token sesi lama dicabut setelah berhasil.
+KF10.4 Siswa aktif yang telah memiliki rekening aktif (saver) dan email terverifikasi dapat mengajukan kode pemulihan PIN melalui POST /auth/forgot-pin. Sistem memeriksa eligibility siswa dan status rekening secara atomik dengan lockForUpdate, menyimpan hash kode 6 digit pada tabel pin_reset_codes dengan masa berlaku 10 menit, membatasi frekuensi permintaan (1 kali per menit dan 3 kali per 15 menit), serta mendistribusikan kode melalui job antrean SendPinResetCode.
+KF10.5 Siswa menyelesaikan pemulihan PIN melalui POST /auth/reset-pin dengan mengirimkan email, kode 6 digit, password login saat ini (login_password), dan PIN baru 6 digit beserta konfirmasi (pin, pin_confirmation). Sistem memvalidasi kode dan password login dalam satu transaksi database: jika kode atau password salah, percobaan (attempts) ditambah 1 (maksimal 5 percobaan); jika valid, PIN saver diperbarui (hash), kode ditandai consumed_at, seluruh token sesi lama dicabut ($user-&gt;tokens()-&gt;delete()), dan audit log student.pin_reset dicatat.
+KF10.6 Aplikasi mobile tidak menyediakan antarmuka pengubahan PIN biasa saat sesi login aktif untuk mencegah eskalasi lokal bila perangkat dipinjam; pemulihan PIN wajib melewati verifikasi email terdaftar dan pembuktian password login.
+Laporan Transaksi dan Ekspor Dokumen
+4.11.1Description and Priority
+Tinggi. Menyediakan transparansi dan rekapitulasi data transaksi per loket maupun menyeluruh, disertai ekspor berkas audit resmi PDF dan CSV. UC17.
+4.11.2Stimulus/Response Sequences
+Pengguna (Administrator atau Teller) mengakses halaman laporan transaksi pada web. Pengguna menentukan parameter periode: harian (memilih tanggal spesifik) atau bulanan (memilih bulan dan tahun). Administrator dapat memilih lingkup teller (seluruh teller atau salah satu teller), sedangkan Teller otomatis dibatasi hanya pada loketnya sendiri. Sistem menghitung rekapitulasi transaksi (jumlah transaksi, total setoran, total penarikan, arus kas bersih) dan menyajikan tabel data transaksi terbaru berhalaman (25 transaksi per halaman). Pengguna dapat mengunduh dokumen laporan resmi: (1) Unduh PDF: Sistem memvalidasi jumlah data transaksi tidak melebihi 5.000 data. Jika melebihi 5.000, sistem menolak HTTP 422 dan memberi petunjuk mempersempit periode atau menggunakan CSV. Jika valid, sistem merender dokumen PDF landscape A4 berisi logo Bank Mini, cap waktu pencetakan (WIB), ringkasan transaksi, tabel transaksi lengkap, daftar rekonsiliasi kas pada periode terkait, dan penomoran halaman otomatis. (2) Unduh CSV: Sistem melakukan streaming pengunduhan berkas CSV UTF-8 dengan BOM, diproses secara bertahap per batch 500 baris, mengonversi nomor rekening menjadi format teks berawalan apostrof, dan menerapkan proteksi formula injection terhadap karakter rentan (=, +, -, @).
+4.11.3Functional Requirements
+KF11.1 Sistem harus menyediakan endpoint laporan transaksi (GET /reports/transactions) dan ekspor (GET /reports/export) yang dapat diakses oleh peran admin dan teller.
+KF11.2 Sistem harus memfilter transaksi berdasarkan periode harian (period=daily dengan date format Y-m-d) atau bulanan (period=monthly dengan month format Y-m).
+KF11.3 Teller hanya boleh mengakses data transaksinya sendiri. Jika teller mengirim parameter teller_id milik orang lain, sistem wajib menolak dengan HTTP 403. Administrator berhak mengakses transaksi semua teller atau memilih teller tertentu.
+KF11.4 Sistem harus menyajikan ringkasan statistik mencakup total frekuensi transaksi, total nominal setoran, total nominal penarikan, dan selisih arus kas bersih (net_flow).
+KF11.5 Ekspor format PDF harus dibatasi maksimal 5.000 transaksi per unduhan untuk mencegah kehabisan memori server. Jika data melebihi 5.000 baris, sistem harus mengembalikan HTTP 422 dengan pesan edukatif.
+KF11.6 Ekspor format CSV harus disajikan secara streaming berurutan (batch 500 baris) dengan awalan UTF-8 BOM, penomoran referensi TRX-{id}, nomor rekening terformat teks, dan sanitasi formula spreadsheet terhadap karakter =, +, -, atau @ pada teks nama/catatan.
+
+Kebutuhan Non Fungsional Lainnya
+Kebutuhan Kinerja
+Target pada bagian ini merupakan kriteria pengujian penerimaan untuk lingkungan sekolah dan perlu dibuktikan melalui pengujian, bukan hasil pengukuran yang telah dijalankan dalam penyusunan dokumen ini.
+
+KnF1.1 Pada jaringan lokal yang stabil, target 95% permintaan baca profil, pencarian, dan mutasi selesai paling lama 3 detik, serta transaksi paling lama 5 detik, diukur pada skenario awal 10 klien aktif dengan data uji representatif. KnF1.2 Sistem harus tersedia selama jam layanan sekolah yang ditetapkan pengelola. Pengujian beban lebih besar dan target ketersediaan tahunan ditetapkan pada TBD-2.
+
+Kebutuhan Keamanan
+Keselamatan pada sistem ini berfokus pada pencegahan kerugian data serta kesalahan penyerahan uang, karena uang fisik tetap diperiksa dan diserahkan oleh petugas.
+
+KnF2.1 Sistem harus menolak nominal tidak valid, saldo di bawah batas, PIN salah, kas tidak cukup, atau status sesi yang tidak sesuai sebelum pembukuan berhasil. Kegagalan database harus membatalkan seluruh perubahan finansial dalam transaksi yang sama.
+KnF2.2 Konfirmasi identitas, jenis transaksi, dan nominal harus tersedia sebelum pengiriman. Jika respons jaringan tidak pasti, hasil diperiksa melalui request_id agar petugas tidak membukukan transaksi ganda. Struk keberhasilan hanya digunakan setelah hasil transaksi terkonfirmasi.
+
+Kebutuhan Perlindungan Keamanan
+Perlindungan keamanan meliputi pembatasan akses data, pengamanan kredensial, integritas finansial, dan ketersediaan informasi sesuai kewenangan.
+
+Confidentiality
+KnF3.1 Setiap endpoint terlindungi harus memverifikasi token, status akun, dan peran. Siswa hanya dapat membaca rekening miliknya. Password, PIN, token sesi, kode verifikasi email (access_codes), dan kode pemulihan PIN (pin_reset_codes) tidak boleh ditampilkan dalam daftar data atau dicatat terbuka pada audit log. Penggunaan jaringan publik harus melalui HTTPS.
+Integrity
+KnF3.2 Password, PIN, kode akses email, dan kode pemulihan PIN harus disimpan sebagai hash. Unique key, foreign key dengan pembatasan penghapusan (RESTRICT), check constraint, transaksi database ACID, serta penguncian baris (lockForUpdate) harus menjaga data yang berhubungan pada seluruh tabel sistem.
+KnF3.3 Percobaan login, perubahan password, penarikan, dan kode email harus dibatasi oleh rate limit. Sesi yang telah diajukan atau disetujui tidak menerima transaksi baru sampai status mengizinkan sesuai alur penolakan.
+Availability
+KnF3.4 Backup basis data harus dilakukan sebelum migrasi dan secara berkala sesuai kebijakan sekolah. Pemulihan harus diuji pada lingkungan terpisah sebelum dipakai sebagai prosedur pemulihan operasional. Jadwal dan masa simpan mengikuti TBD-3.
+Atribut Kualitas Perangkat Lunak
+Atribut kualitas berikut menjadi dasar penerimaan sistem serta pemeliharaan setelah pengembangan.
+
+Kehandalan atau Reliabilitas
+KnF4.1 Keberhasilan pembukuan harus selalu menghasilkan saldo dan pasangan jurnal yang konsisten. Uji kegagalan salah satu penulisan harus menunjukkan bahwa perubahan parsial tidak tersimpan.
+KnF4.2 Dua transaksi bersamaan pada rekening atau sesi yang sama tidak boleh menyebabkan saldo negatif, kas negatif, atau kehilangan pembaruan. Verifikasi dilakukan dengan skenario konkurensi dan pengiriman ulang request_id.
+KnF4.3 Data yang belum di-commit tidak boleh disajikan sebagai transaksi berhasil. Pesan kesalahan harus menjaga informasi penting tanpa membocorkan detail kredensial atau konfigurasi server.
+KnF4.4 Pemuatan ulang profil, mutasi, dan ringkasan sesi harus mengambil nilai terbaru yang tersimpan pada server. Sistem tidak menjanjikan transaksi offline.
+
+Portabilitas
+KnF4.5 Web harus dapat digunakan pada peramban desktop modern; mobile memakai konfigurasi basis URL API yang dapat disesuaikan dengan lingkungan.
+KnF4.6 Hasil saldo, nominal, dan status untuk data yang sama harus konsisten antara web, mobile, dan API; format tampilan menggunakan Bahasa Indonesia serta rupiah bulat.
+KnF4.7 Kode harus memisahkan controller, service bisnis, model, dan antarmuka sehingga validasi finansial dapat diuji tanpa bergantung pada tampilan.
+KnF4.8 Pengguna harus menerima label form, petunjuk input, status memuat, dan pesan penolakan yang jelas. Pengujian tugas utama mencakup pencarian, transaksi, penutupan kas, serta pembacaan saldo dan mutasi.
+
+Aturan Bisnis
+Aturan berikut merupakan batas operasional yang harus ditegakkan pada layanan yang terkait.
+
+Aturan bisnis Sistem Informasi E-Teller Bank Mini Sekolah:
+KnF5.1 Anggota terdaftar tidak otomatis menjadi rekening aktif. Aktivasi dilakukan Teller dengan setoran pertama minimal Rp10.000, PIN enam digit, serta tahun kelulusan yang telah dilengkapi. Satu siswa memiliki paling banyak satu rekening pada struktur revisi.
+KnF5.2 Penarikan wajib menyisakan Rp10.000 dan memenuhi kas loket. Seluruh nominal menggunakan rupiah bulat; uang fisik dan slip diperiksa Teller sebelum transaksi dikonfirmasi.
+KnF5.3 Petugas pelaksana transaksi adalah Teller; pemberi persetujuan laporan adalah Administrator. Pada implementasi revisi tidak ada role Supervisor terpisah.
+KnF5.4 Sesi berjalan melalui open → submitted → approved. Penolakan laporan mengubah laporan menjadi rejected dan sesi kembali open. Laporan berselisih berstatus disputed serta tidak boleh disetujui sebelum koreksi dan pengajuan ulang yang sah.
+KnF5.5 Transaksi finansial yang telah berhasil disimpan tidak dapat diubah atau dihapus melalui layanan Teller. Penyelesaian selisih menggunakan pemeriksaan bukti, penolakan laporan, dan prosedur sekolah, bukan pengeditan langsung ledger.
+KnF5.6 Persetujuan mencatat pemindahan tanggung jawab kas secara pembukuan; pemindahan uang ke brankas tetap merupakan tindakan fisik petugas berwenang. Laporan pending/disputed tidak dianggap laporan final yang telah disetujui.
+
+Kebutuhan Lain
+Kebutuhan data meliputi users, members, savers, cash_sessions, transactions, journal_entries, daily_reconciliations, cash_transfers, access_codes, pin_reset_codes, member_imports, account_sequences, dan audit_logs. Seluruh tabel keuangan menggunakan bilangan bulat 64-bit (bigint) tanpa pecahan rupiah.
+Laporan yang dikenali dalam dokumen ini adalah L1 Struk Transaksi, L2 Laporan Kas Teller, L3 Rekonsiliasi Kas Harian, L4 Laporan Transaksi Harian dan Bulanan (PDF landscape A4, kop, logo, ringkasan, daftar transaksi, rekonsiliasi kas, nomor halaman, cap waktu WIB, dibatasi maksimal 5.000 transaksi), dan L5 Ekspor Data Transaksi (CSV streamed UTF-8 BOM per batch 500 baris, sanitasi formula spreadsheet =+-@, penomoran referensi TRX-{id}, nomor rekening terformat teks).
+Tanggal operasional menggunakan zona waktu Asia/Jakarta yang konsisten antara server dan tampilan. Data impor CSV menggunakan UTF-8. Akun, token, konfigurasi koneksi, dan salinan basis data harus dikelola di luar dokumen SRS tanpa memasukkan rahasia operasional.
+Penerimaan harus memeriksa minimal: login lintas klien/role; akses data siswa lain; anggota dan impor tidak valid; aktivasi ganda; setoran dan penarikan; PIN salah; batas saldo dan kas; pengiriman ulang request_id; rollback; selisih kas; penolakan dan pengajuan ulang; persetujuan ganda; jurnal seimbang; serta kedaluwarsa kode email. Rangkaian ini adalah kebutuhan validasi, bukan laporan hasil uji.
+Perbedaan terhadap dokumen UKK awal yang perlu dicatat adalah penggabungan Supervisor ke admin dan pemisahan member/saver. SRS ini mendokumentasikan revisi proyek; kesesuaian perubahan peran dengan ketentuan penilaian akhir perlu ditetapkan pembimbing pada TBD-1.
+Appendix A: Model Analisa
+
+Usecase Diagram
+
+Gambar A.1 Use case Administrator
+
+Gambar A.2 Use case Teller
+
+Gambar A.3 Use case Siswa
+Usecase Description
+UC1 — Login dan kelola password. Aktor: Semua pengguna (Administrator, Teller, Siswa). Prakondisi: Akun aktif dan klien sesuai. Alur: Validasi kredensial, token sesi, pemulihan password akun via email terverifikasi, dan perubahan password awal. Hasil/alternatif: Sesi sah; kredensial salah atau klien tidak sesuai ditolak. Rujukan: KF1, KF10.
+UC2 — Kelola petugas dan akses. Aktor: Administrator. Prakondisi: Login admin. Alur: Tambah/ubah petugas atau status akses siswa. Hasil/alternatif: Data valid tersimpan dan tercatat; identitas tidak sah ditolak. Rujukan: KF2.
+UC3 — Kelola anggota. Aktor: Administrator. Prakondisi: Login admin. Alur: Isi atau perbarui identitas siswa. Hasil/alternatif: Anggota tersimpan; duplikasi atau penghapusan data terlindungi ditolak. Rujukan: KF3.
+UC4 — Impor siswa. Aktor: Administrator. Prakondisi: Berkas CSV/XLSX sesuai template. Alur: Unggah, periksa preview, konfirmasi commit. Hasil/alternatif: Hasil impor ditampilkan; baris/berkas tidak valid ditolak sesuai validasi. Rujukan: KF4.
+UC5 — Buka sesi kas. Aktor: Teller. Prakondisi: Laporan sebelumnya selesai. Alur: Tetapkan saldo awal hari berjalan. Hasil/alternatif: Sesi open; konflik saldo awal atau laporan lama ditolak. Rujukan: KF5.
+UC6 — Cari anggota/rekening. Aktor: Teller. Prakondisi: Login teller. Alur: Cari nomor siswa, rekening, atau QR. Hasil/alternatif: Identitas ditampilkan atau informasi tidak ditemukan. Rujukan: KF5.
+UC7 — Aktivasi rekening. Aktor: Teller. Prakondisi: Anggota inactive, tahun kelulusan terisi, sesi open. Alur: Terima setoran awal dan PIN; konfirmasi aktivasi. Hasil/alternatif: Rekening aktif beserta setoran awal dan jurnal, atau rollback. Rujukan: KF6.
+UC8 — Setoran tunai. Aktor: Teller. Prakondisi: Rekening aktif dan sesi open. Alur: Periksa slip/uang, isi nominal, konfirmasi. Hasil/alternatif: Saldo bertambah, jurnal seimbang, struk tersedia. Rujukan: KF7.
+UC9 — Penarikan tunai. Aktor: Teller dan Nasabah. Prakondisi: Rekening aktif, sesi open, kas cukup. Alur: Periksa nominal dan PIN Nasabah. Hasil/alternatif: Saldo berkurang dengan sisa minimal; PIN/saldo/kas tidak sah ditolak. Rujukan: KF7.
+UC10 — Ajukan laporan kas. Aktor: Teller. Prakondisi: Sesi sendiri berstatus open. Alur: Hitung uang fisik dan ajukan rekonsiliasi. Hasil/alternatif: Laporan pending/disputed dan sesi submitted. Rujukan: KF8.
+UC11 — Tinjau laporan dan kas brankas. Aktor: Administrator. Prakondisi: Laporan submitted dan dapat ditinjau. Alur: Verifikasi bukti lalu approve atau reject dengan alasan. Hasil/alternatif: Approve mencatat transfer kas; reject membuka sesi kembali. Rujukan: KF8.
+UC12 — Baca jurnal dan audit. Aktor: Administrator. Prakondisi: Login admin. Alur: Buka dan telusuri catatan. Hasil/alternatif: Catatan tampil sesuai data server; akses role lain ditolak. Rujukan: KF9.
+UC13 — Baca saldo, QR, dan mutasi. Aktor: Siswa. Prakondisi: Login mobile. Alur: Buka tabungan/mutasi dan muat ulang. Hasil/alternatif: Hanya data sendiri tampil; rekening belum aktif diberi petunjuk. Rujukan: KF10.
+UC14 — Terbitkan ulang kredensial. Aktor: Administrator. Prakondisi: Anggota terdaftar. Alur: Konfirmasi penerbitan password sementara. Hasil/alternatif: Kredensial baru wajib diganti dan token lama dicabut. Rujukan: KF3.
+UC15 — Verifikasi email dan reset password. Aktor: Siswa (dan peran aktif terverifikasi). Prakondisi: Akun aktif; email terverifikasi untuk reset. Alur: Masukkan email dan password saat ini, minta kode verifikasi, lalu masukkan kode 6 digit. Hasil/alternatif: Email terverifikasi dan siap digunakan untuk pemulihan mandiri; kode salah/kedaluwarsa ditolak. Rujukan: KF10.3.
+UC16 — Pemulihan PIN rekening siswa. Aktor: Siswa. Prakondisi: Siswa aktif, memiliki rekening aktif (saver), email terverifikasi, dan mengingat password login saat ini. Alur: Siswa meminta kode via email, lalu memasukkan kode 6 digit, password login saat ini, dan PIN baru 6 digit beserta konfirmasi. Hasil/alternatif: PIN baru diperbarui, seluruh sesi lama dicabut; kode/password salah atau attempts &gt;= 5 ditolak. Rujukan: KF10.4, KF10.5.
+UC17 — Laporan transaksi dan ekspor dokumen. Aktor: Administrator dan Teller. Prakondisi: Login admin atau teller. Alur: Pilih periode harian/bulanan dan lingkup teller; sistem menampilkan ringkasan statistik dan tabel transaksi berhalaman; pengguna mengunduh berkas laporan format PDF atau CSV. Hasil/alternatif: Dokumen terunduh; penolakan HTTP 422 bila transaksi PDF melebihi 5.000 baris; penolakan HTTP 403 bila teller mengakses teller lain. Rujukan: KF11.
+Activity Diagram
+
+Gambar A.4 Flowchart login dan pemeriksaan akses
+
+Gambar A.5 Flowchart pengelolaan anggota oleh Administrator
+
+Gambar A.6 Activity dan flowchart transaksi Teller
+
+Gambar A.7 Activity penutupan kas dan persetujuan laporan
+
+Gambar A.8 Activity akses rekening Siswa
+
+Gambar A.9 Flowchart pemulihan PIN rekening siswa
+
+Gambar A.10 Flowchart laporan transaksi dan ekspor dokumen
+Sequence Diagram
+
+Gambar A.11 Sequence penarikan tunai
+
+Gambar A.12 Sequence persetujuan laporan kas
+
+Gambar A.13 Sequence pemulihan PIN rekening siswa
+Class Diagram
+
+Gambar A.14 Class diagram model domain utama
+
+Gambar A.15 ERD kas, akun, transaksi, dan kode akses
+Appendix B: Desain Antarmuka Sistem
+Wireframe
+
+Gambar B.1 Wireframe web Login dan pemulihan akun
+
+Gambar B.2 Wireframe web Administrator (Pengelolaan Anggota)
+
+Gambar B.3 Wireframe web Teller (Pelayanan Transaksi Loket)
+
+Gambar B.4 Wireframe web Rekonsiliasi dan penutupan kas harian
+
+Gambar B.5 Wireframe web Laporan transaksi dan ekspor dokumen
+
+Gambar B.6 Wireframe mobile Siswa - Tabungan dan mutasi
+
+Gambar B.7 Wireframe mobile Siswa - Autentikasi dan pemulihan (Verifikasi Email, Lupa Password, &amp; Reset PIN)
+User Interface
+
+
+
+Gambar B.8 Contoh tampilan login aplikasi mobile Siswa
+
+34829750
+
+Gambar B.9 Contoh tampilan tabungan aplikasi mobile Siswa
+
+Appendix C: Daftar Yang Akan Ditentukan Kemudian
+TBD-1: Pengesahan pembimbing/penguji atas penyesuaian peran dari empat role UKK awal menjadi tiga role revisi, serta persetujuan isi SRS. Penanggung jawab: pengembang bersama pembimbing; sebelum penilaian akhir.
+TBD-2: Penetapan jumlah pengguna serentak, ukuran data, spesifikasi server, jam layanan, dan target ketersediaan final berdasarkan pengujian. Penanggung jawab: pengembang dan pengelola sekolah; sebelum operasional.
+TBD-3: Penetapan jadwal backup, masa simpan data, lokasi salinan, dan waktu pemulihan yang diterima sekolah. Penanggung jawab: Administrator dan pengelola sekolah; sebelum operasional.
+TBD-4: Verifikasi pengaturan SMTP, worker antrean, koneksi perangkat mobile, kamera, dan printer pada lingkungan penggunaan sebenarnya. Penanggung jawab: pengembang dan petugas; sebelum penerimaan operasional.

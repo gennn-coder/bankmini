@@ -340,6 +340,19 @@
             if (m) m.style.display = 'none';
         }
 
+        // Close on backdrop click & ESC key
+        document.addEventListener('click', (e) => {
+            const m = document.getElementById('qrModal');
+            if (m && e.target === m) {
+                closeQrModal();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeQrModal();
+            }
+        });
+
         // Auto-refresh status layanan teller
         setInterval(() => {
             fetch('{{ route("status-layanan") }}')

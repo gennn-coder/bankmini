@@ -685,6 +685,25 @@
             @endforeach
         @endif
 
+        @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
+            <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15); border-left: 5px solid #dc2626; background: #fef2f2; border-color: #fecaca; margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="background: #dc2626; color: #ffffff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;">✕</div>
+                    <div>
+                        <div style="font-weight: 800; color: #991b1b; font-size: 0.98rem;">
+                            Laporan Penutupan Kas Ditolak oleh Admin
+                        </div>
+                        <div style="font-size: 0.88rem; color: #b91c1c; margin-top: 3px;">
+                            Alasan: <strong>"{{ $laporanHariIni->catatan_penolakan ?? 'Periksa kembali perhitungan fisik kas di laci.' }}"</strong>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="switchTab('tab-laporan')" class="btn-primary" style="background: #dc2626; padding: 0.55rem 1.1rem; font-size: 0.85rem; border-radius: 8px; white-space: nowrap;">
+                    Perbaiki Laporan Kas
+                </button>
+            </div>
+        @endif
+
         <!-- 4 KARTU STATISTIK KAS UTAMA (TERINTEGRASI DI PALING ATAS & KONSISTEN) -->
         <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
             <!-- KARTU 1: MODAL AWAL KAS -->
@@ -819,7 +838,12 @@
             <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
             <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
             <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Lupa / Reset PIN Penabung</button>
-            <button class="tab-btn" onclick="switchTab('tab-laporan')">Penutupan Kas & Laporan</button>
+            <button class="tab-btn" onclick="switchTab('tab-laporan')">
+                Penutupan Kas & Laporan
+                @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
+                    <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
+                @endif
+            </button>
             <button class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
             <button class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
         </div>
@@ -1196,6 +1220,9 @@
                 @elseif(!$isLaporanSubmitted || $laporanHariIni->status_approval === 'rejected')
                     <form action="{{ route('teller.laporan-harian') }}" method="POST" class="prevent-double-submit">
                         @csrf
+                        @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
+                            <input type="hidden" name="laporan_id" value="{{ $laporanHariIni->id }}">
+                        @endif
                         <div class="form-group">
                             <label>Uang Fisik Kas di Laci (Rp)</label>
                             <input type="number" name="uang_fisik" class="form-control" required min="0" value="{{ $sisaKasLaci }}" placeholder="Nominal uang fisik...">

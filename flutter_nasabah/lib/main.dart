@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -488,12 +489,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<dynamic> _mutasiList = [];
   bool _isLoading = true;
   bool _isRefreshing = false;
+  Timer? _statusPollingTimer;
 
   @override
   void initState() {
     super.initState();
     _nasabahData = widget.nasabah;
     _fetchDashboardData();
+    // Auto sync status teller & saldo real-time setiap 4 detik (sama dengan web)
+    _statusPollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (mounted && !_isLoading && !_isRefreshing) {
+        _fetchStatusSilent();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _statusPollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchStatusSilent() async {
+    final nasabahId = _nasabahData['nasabah_id'] ?? _nasabahData['id'];
+    try {
+      final res = await http
+          .get(Uri.parse('${ApiConfig.baseUrl}/dashboard/$nasabahId'))
+          .timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200 && mounted) {
+        final dataDash = jsonDecode(res.body);
+        if (dataDash['success'] == true && dataDash['data'] != null) {
+          setState(() {
+            _nasabahData = dataDash['data'];
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchDashboardData() async {
