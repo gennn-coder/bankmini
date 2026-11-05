@@ -313,24 +313,44 @@
             background: #0f172a;
             border-radius: 14px;
             overflow: hidden;
-            min-height: 300px;
+            width: 100%;
+            height: 300px;
+            max-height: 300px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         #reader {
             width: 100% !important;
+            height: 100% !important;
+            max-height: 300px !important;
             border: none !important;
             background: #0f172a !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
         }
         #reader video {
             width: 100% !important;
-            height: auto !important;
+            height: 100% !important;
+            max-height: 300px !important;
             border-radius: 12px;
-            object-fit: cover;
+            object-fit: cover !important;
         }
         #reader__scan_region {
             background: transparent !important;
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        #reader__scan_region video {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 300px !important;
+            object-fit: cover !important;
         }
         #reader__dashboard {
             display: none !important;
@@ -348,13 +368,13 @@
         }
         .scanner-guide-corners {
             position: absolute;
-            width: 230px;
-            height: 230px;
+            width: 200px;
+            height: 200px;
             border: 2px dashed rgba(255, 255, 255, 0.6);
             border-radius: 16px;
             pointer-events: none;
             z-index: 9;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
         }
         .camera-mirrored video,
         .camera-mirrored canvas {
@@ -807,7 +827,7 @@
                 </div>
                 <div class="nasabah-info-grid">
                     <div>No Rekening: <strong id="infoNoRek">-</strong></div>
-                    <div>NIS / Kelas: <strong id="infoNisKelas">-</strong></div>
+                    <div>NIS / Jurusan: <strong id="infoNisKelas">-</strong></div>
                     <div>Saldo Real-Time: <strong style="color: #16a34a;" id="infoSaldo">-</strong></div>
                     <div>Status: <strong id="infoStatus">-</strong></div>
                 </div>
@@ -863,7 +883,7 @@
                     </div>
                     <div style="width: 160px;">
                         <select id="filterAktivasiKelas" class="form-control" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" onchange="filterAktivasiTable()">
-                            <option value="">Semua Kelas</option>
+                            <option value="">Semua Jurusan</option>
                             @foreach($uniqueAktivasiKelas as $uk)
                                 <option value="{{ strtolower($uk) }}">{{ $uk }}</option>
                             @endforeach
@@ -871,7 +891,7 @@
                     </div>
                     <div style="width: 160px;">
                         <select id="filterAktivasiAngkatan" class="form-control" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" onchange="filterAktivasiTable()">
-                            <option value="">Semua Angkatan</option>
+                            <option value="">Semua Tahun Kelulusan</option>
                             @foreach($uniqueAktivasiAngkatan as $ua)
                                 <option value="{{ strtolower($ua) }}">{{ $ua }}</option>
                             @endforeach
@@ -886,8 +906,8 @@
                                 <th style="width: 45px;">No</th>
                                 <th>Nama Siswa</th>
                                 <th>NIS</th>
-                                <th>Kelas</th>
-                                <th>Angkatan Keluar</th>
+                                <th>Jurusan</th>
+                                <th>Tahun Kelulusan</th>
                                 <th>Email / Gmail</th>
                                 <th style="width: 110px; text-align: center;">Aksi</th>
                             </tr>
@@ -2256,6 +2276,7 @@
         // ==========================================
         let html5QrScanner = null;
         let isScannerRunning = false;
+        let currentFacingMode = 'environment'; // Default Kamera Belakang
 
         async function openCameraModal() {
             const modal = document.getElementById('cameraModal');
@@ -2300,36 +2321,56 @@
                     console.warn("Gagal mendapatkan daftar kamera:", e);
                 }
 
-                if (!devices || devices.length === 0) {
-                    document.getElementById('scannerStatusMsg').innerHTML = '<span style="color: #ef4444;">Kamera tidak terdeteksi. Silakan gunakan opsi unggah foto barcode/QR atau tembakkan alat USB barcode scanner.</span>';
-                    const btn = document.getElementById('btnToggleCamera');
-                    if (btn) {
-                        btn.innerText = 'Coba Lagi';
-                        btn.style.background = 'var(--primary-gradient)';
-                    }
-                    return;
-                }
-
-                if (select.options.length <= 1) {
+                // Perbarui daftar opsi kamera dengan kamera belakang sebagai pilihan utama
+                if (select && select.dataset.loaded !== 'true') {
                     select.innerHTML = '';
-                    devices.forEach((dev, idx) => {
-                        const opt = document.createElement('option');
-                        opt.value = dev.id;
-                        opt.text = dev.label || `Kamera ${idx + 1}`;
-                        select.appendChild(opt);
-                    });
+
+                    const optEnv = document.createElement('option');
+                    optEnv.value = 'environment';
+                    optEnv.text = 'Kamera Belakang';
+                    select.appendChild(optEnv);
+
+                    const optUser = document.createElement('option');
+                    optUser.value = 'user';
+                    optUser.text = 'Kamera Depan';
+                    select.appendChild(optUser);
+
+                    if (devices && devices.length > 0) {
+                        devices.forEach((dev, idx) => {
+                            const opt = document.createElement('option');
+                            opt.value = dev.id;
+                            const lbl = (dev.label || '').toLowerCase();
+                            if (lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment')) {
+                                opt.text = `Kamera Belakang: ${dev.label}`;
+                            } else if (lbl.includes('front') || lbl.includes('user')) {
+                                opt.text = `Kamera Depan: ${dev.label}`;
+                            } else {
+                                opt.text = dev.label || `Kamera ${idx + 1}`;
+                            }
+                            select.appendChild(opt);
+                        });
+                    }
+                    select.dataset.loaded = 'true';
                 }
 
-                const selectedDevId = specificCameraId || (select.value || devices[0].id);
+                const chosenValue = specificCameraId || (select ? select.value : 'environment') || 'environment';
+                let cameraParam = chosenValue;
+                if (chosenValue === 'environment') {
+                    cameraParam = { facingMode: "environment" };
+                    currentFacingMode = 'environment';
+                } else if (chosenValue === 'user') {
+                    cameraParam = { facingMode: "user" };
+                    currentFacingMode = 'user';
+                }
 
                 const config = {
                     fps: 15,
-                    qrbox: { width: 240, height: 240 },
+                    qrbox: { width: 200, height: 200 },
                     aspectRatio: 1.0
                 };
 
                 await html5QrScanner.start(
-                    selectedDevId,
+                    cameraParam,
                     config,
                     (decodedText) => {
                         onScanSuccess(decodedText);
@@ -2348,6 +2389,10 @@
                     toggleBtn.innerText = 'Matikan Kamera';
                     toggleBtn.style.background = '#dc2626';
                 }
+                const btnSwitch = document.getElementById('btnSwitchCamera');
+                if (btnSwitch) {
+                    btnSwitch.innerText = currentFacingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang';
+                }
                 document.getElementById('scannerStatusMsg').innerText = 'Kamera aktif. Posisikan barcode atau QR siswa tepat di dalam kotak.';
             } catch (err) {
                 console.error("Gagal start kamera:", err);
@@ -2356,7 +2401,7 @@
                 const toggleBtn = document.getElementById('btnToggleCamera');
                 if (toggleBtn) {
                     toggleBtn.innerText = 'Nyalakan Kamera';
-                    toggleBtn.style.background = 'var(--primary-gradient)';
+                    toggleBtn.style.background = '#2563eb';
                 }
             }
         }
@@ -2373,7 +2418,7 @@
             const toggleBtn = document.getElementById('btnToggleCamera');
             if (toggleBtn) {
                 toggleBtn.innerText = 'Nyalakan Kamera';
-                toggleBtn.style.background = 'var(--primary-gradient)';
+                toggleBtn.style.background = '#2563eb';
             }
             const statusMsg = document.getElementById('scannerStatusMsg');
             if (statusMsg) {
@@ -2386,8 +2431,38 @@
                 await stopCameraScanner();
             } else {
                 const select = document.getElementById('cameraSelect');
-                await startCameraScanner(select ? select.value : null);
+                await startCameraScanner(select ? select.value : 'environment');
             }
+        }
+
+        function switchCameraFacing() {
+            const select = document.getElementById('cameraSelect');
+            if (currentFacingMode === 'environment') {
+                currentFacingMode = 'user';
+            } else {
+                currentFacingMode = 'environment';
+            }
+            if (select) {
+                select.value = currentFacingMode;
+            }
+            const btnSwitch = document.getElementById('btnSwitchCamera');
+            if (btnSwitch) {
+                btnSwitch.innerText = currentFacingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang';
+            }
+            if (isScannerRunning) {
+                startCameraScanner(currentFacingMode);
+            }
+        }
+
+        function handleCameraSelectChange(val) {
+            if (val === 'environment' || val === 'user') {
+                currentFacingMode = val;
+                const btnSwitch = document.getElementById('btnSwitchCamera');
+                if (btnSwitch) {
+                    btnSwitch.innerText = currentFacingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang';
+                }
+            }
+            startCameraScanner(val);
         }
 
         let isCameraMirrored = false;
@@ -2555,13 +2630,17 @@
             </div>
 
             <div style="padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
-                <!-- Camera Select & Action -->
+                <!-- Camera Select & Action (Tanpa Icon, Elegan & Simpel) -->
                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <select id="cameraSelect" class="form-control" style="flex: 1; min-width: 180px; padding: 0.55rem 0.75rem; font-size: 0.85rem;">
-                        <option value="">Memuat kamera perangkat...</option>
+                    <select id="cameraSelect" class="form-control" style="flex: 1; min-width: 170px; padding: 0.55rem 0.75rem; font-size: 0.85rem;" onchange="handleCameraSelectChange(this.value)">
+                        <option value="environment">Kamera Belakang</option>
+                        <option value="user">Kamera Depan</option>
                     </select>
-                    <button type="button" id="btnToggleCamera" onclick="toggleCameraScanner()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #dc2626;">
-                        Matikan Kamera
+                    <button type="button" id="btnToggleCamera" onclick="toggleCameraScanner()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #2563eb;">
+                        Nyalakan Kamera
+                    </button>
+                    <button type="button" id="btnSwitchCamera" onclick="switchCameraFacing()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #0284c7;">
+                        Kamera Belakang
                     </button>
                     <button type="button" id="btnMirrorCamera" onclick="toggleCameraMirror()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #475569;">
                         Mirror Kamera
@@ -2626,7 +2705,7 @@
                     <code id="modalAktNis" style="font-weight: 700;">-</code>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #64748b;">Kelas / Angkatan:</span>
+                    <span style="color: #64748b;">Jurusan / Tahun Lulus:</span>
                     <span id="modalAktKelasAngkatan" style="color: #0f172a; font-weight: 600;">-</span>
                 </div>
             </div>
@@ -2693,7 +2772,7 @@
                 @csrf
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Nominal Tambahan (Rp) <span style="color: #dc2626;">*</span></label>
-                    <input type="number" id="inputNominalKas" name="nominal" class="form-control" required min="1000" step="1000" placeholder="Contoh: 500000" style="font-weight: 700; font-size: 1.05rem;">
+                    <input type="number" id="inputNominalKas" name="nominal" class="form-control" required min="1000" step="1000" value="0" placeholder="0" style="font-weight: 700; font-size: 1.05rem;">
                     
                     <!-- Quick Amount Chips -->
                     <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;">
@@ -2726,13 +2805,27 @@
         function openAjukanKasModal() {
             const m = document.getElementById('ajukanKasModal');
             if (m) {
+                const inpNominal = document.getElementById('inputNominalKas');
+                if (inpNominal) inpNominal.value = '0';
+                const inpAlasan = document.getElementById('inputAlasanKas');
+                if (inpAlasan) inpAlasan.value = '';
                 m.style.display = 'flex';
-                setTimeout(() => document.getElementById('inputNominalKas')?.focus(), 100);
+                setTimeout(() => {
+                    const inp = document.getElementById('inputNominalKas');
+                    if (inp) {
+                        inp.focus();
+                        inp.select();
+                    }
+                }, 100);
             }
         }
         function closeAjukanKasModal() {
             const m = document.getElementById('ajukanKasModal');
             if (m) m.style.display = 'none';
+            const inpNominal = document.getElementById('inputNominalKas');
+            if (inpNominal) inpNominal.value = '0';
+            const inpAlasan = document.getElementById('inputAlasanKas');
+            if (inpAlasan) inpAlasan.value = '';
         }
         function setNominalKas(val) {
             const input = document.getElementById('inputNominalKas');

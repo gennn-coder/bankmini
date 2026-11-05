@@ -146,13 +146,13 @@ class AdminController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Anggota');
 
-        // Header Kolom Database (Tanpa PIN, karena PIN dibuat saat aktivasi rekening di teller)
+        // Header Kolom Database (Format Jurusan dan Tahun Kelulusan)
         $headers = [
             'A1' => 'nama_siswa',
             'B1' => 'nis',
             'C1' => 'email',
-            'D1' => 'kelas',
-            'E1' => 'angkatan_keluar',
+            'D1' => 'jurusan',
+            'E1' => 'tahun_kelulusan',
             'F1' => 'password',
         ];
 
@@ -165,7 +165,7 @@ class AdminController extends Controller
         $sheet->setCellValueExplicit('A2', 'Ahmad Fauzi', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('B2', '202611091', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('C2', 'ahmad.fauzi@gmail.com', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('D2', 'X RPL 1', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D2', 'RPL', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('E2', '2028', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('F2', '123456', DataType::TYPE_STRING);
 
@@ -173,7 +173,7 @@ class AdminController extends Controller
         $sheet->setCellValueExplicit('A3', 'Siti Nurhaliza', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('B3', '202611092', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('C3', 'siti.nurhaliza@gmail.com', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('D3', 'X RPL 2', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D3', 'AKL', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('E3', '2028', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('F3', '123456', DataType::TYPE_STRING);
 
@@ -296,8 +296,8 @@ class AdminController extends Controller
                     $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nis)) . '@gmail.com';
                 }
 
-                $kelas = isset($columnMap['kelas']) ? trim((string)($row[$columnMap['kelas']] ?? '')) : 'X RPL 1';
-                if ($kelas === '') $kelas = 'X RPL 1';
+                $kelas = isset($columnMap['kelas']) ? trim((string)($row[$columnMap['kelas']] ?? '')) : 'RPL';
+                if ($kelas === '') $kelas = 'RPL';
 
                 $angkatanKeluar = isset($columnMap['angkatan_keluar']) ? trim((string)($row[$columnMap['angkatan_keluar']] ?? '')) : (string)(date('Y') + 3);
                 if ($angkatanKeluar === '') $angkatanKeluar = (string)(date('Y') + 3);

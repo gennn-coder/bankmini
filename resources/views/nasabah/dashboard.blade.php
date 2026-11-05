@@ -204,7 +204,7 @@
                     {{ $nasabah->nama_siswa ?? $member->student_name ?? $user->nama_petugas }}
                 </div>
                 <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-                    {{ $nasabah->kelas ?? $member->class_grade ?? '-' }} &bull; NIS: {{ $nasabah->nis ?? $member->nis ?? $user->username }}
+                    Jurusan: {{ $nasabah->kelas ?? $member->class_grade ?? '-' }} &bull; NIS: {{ $nasabah->nis ?? $member->nis ?? $user->username }}
                 </div>
             </div>
             <div class="card" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
@@ -349,7 +349,7 @@
 
             <div style="font-size: 1.2rem; font-weight: 800; color: #2563eb; margin-bottom: 0.25rem;">No. Rek: {{ $nasabah->no_rekening }}</div>
             <div style="font-size: 1rem; font-weight: 800; color: #0f172a;">{{ $nasabah->nama_siswa ?? $user->nama_petugas }}</div>
-            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">{{ $nasabah->kelas ?? '-' }} (NIS: {{ $nasabah->nis ?? '-' }})</div>
+            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">Jurusan: {{ $nasabah->kelas ?? '-' }} (NIS: {{ $nasabah->nis ?? '-' }})</div>
 
             <button onclick="closeQrModal()" class="btn-logout" style="background: #2563eb; width: 100%; padding: 0.75rem; border-radius: 12px;">Tutup Kode QR</button>
         </div>

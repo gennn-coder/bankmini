@@ -734,7 +734,7 @@
                                 <span class="mock-status-pill">AKTIF</span>
                             </div>
                             <div class="mock-card-val">10001003</div>
-                            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Kelas: X AKL 1 (NIS: 8888)</div>
+                            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Jurusan: RPL (NIS: 8888) &bull; Lulus: 2028</div>
                         </div>
 
                         <div class="mock-card">

@@ -27,7 +27,7 @@ class DashboardController extends Controller
         // Tab Manajemen User (Daftar Pengguna Sistem):
         // Hanya menampilkan Petugas (Admin, Teller, Supervisor) dan Nasabah yang SUDAH AKTIF (rekening aktif / sudah pernah menabung).
         // Nasabah yang belum pernah ada transaksi menabung tetap berada di Data Anggota Siswa dengan status tidak aktif.
-        $users = User::where(function ($query) {
+        $users = User::with(['member', 'saver'])->where(function ($query) {
             $query->whereIn('role', ['administrator', 'teller', 'supervisor'])
                   ->orWhere(function ($q) {
                       $q->whereIn('role', ['nasabah', 'saver'])
@@ -59,7 +59,7 @@ class DashboardController extends Controller
         $filterMember = $request->query('filter_member', 'belum_aktif');
         $members = Member::orderBy('created_at', 'desc')->get();
 
-        $savers = Saver::with('rekening')->orderBy('created_at', 'desc')->get();
+        $savers = Saver::with(['rekening', 'member'])->orderBy('created_at', 'desc')->get();
 
         // Fitur Supervisor yang dipindah ke Admin
         $laporanPending = LaporanHarian::whereNotNull('submitted_at')

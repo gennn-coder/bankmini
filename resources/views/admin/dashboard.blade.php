@@ -509,9 +509,11 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Nama Petugas</th>
-                                    <th>Username</th>
+                                    <th>Nama Pengguna</th>
+                                    <th>Username (NIS)</th>
                                     <th>Email / Gmail</th>
+                                    <th>Jurusan</th>
+                                    <th>Tahun Kelulusan</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
@@ -519,11 +521,29 @@
                             </thead>
                             <tbody id="tableUserBody">
                                 @foreach($users as $index => $u)
+                                @php
+                                    $userJurusan = $u->member->class_grade ?? ($u->saver->class_grade ?? '-');
+                                    $userTahunLulus = $u->member->graduation_year ?? '-';
+                                @endphp
                                 <tr class="user-row" data-role="{{ strtolower($u->role) }}" data-status="{{ strtolower($u->status) }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $u->nama_petugas }}</td>
                                     <td><code>{{ $u->username }}</code></td>
                                     <td><small>{{ $u->email ?: '-' }}</small></td>
+                                    <td>
+                                        @if(in_array($u->role, ['nasabah', 'saver']))
+                                            <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700;">{{ $userJurusan }}</span>
+                                        @else
+                                            <span style="color: var(--text-muted);">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(in_array($u->role, ['nasabah', 'saver']))
+                                            <span style="font-weight: 600;">{{ $userTahunLulus }}</span>
+                                        @else
+                                            <span style="color: var(--text-muted);">-</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if($u->role === 'administrator')
                                             <span class="badge badge-role-admin">ADMINISTRATOR</span>
@@ -549,7 +569,7 @@
                                 </tr>
                                 @endforeach
                                 <tr id="userEmptySearch" style="display: none;">
-                                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada pengguna sistem yang sesuai dengan pencarian atau filter role.</td>
+                                    <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada pengguna sistem yang sesuai dengan pencarian atau filter role.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -581,11 +601,11 @@
                                 <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
                             </div>
                             <div class="form-group">
-                                <label>Kelas</label>
-                                <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: X RPL 1">
+                                <label>Jurusan</label>
+                                <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
                             </div>
                             <div class="form-group">
-                                <label>Angkatan Keluar (Tahun Kelulusan)</label>
+                                <label>Tahun Kelulusan</label>
                                 <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
                             </div>
                             <div class="form-group">
@@ -657,7 +677,7 @@
                         </div>
                         <div style="width: 150px;">
                             <select id="filterMemberKelas" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterMemberTable()">
-                                <option value="">Semua Kelas</option>
+                                <option value="">Semua Jurusan</option>
                                 @foreach($uniqueMemberKelas as $uk)
                                     <option value="{{ strtolower($uk) }}">{{ $uk }}</option>
                                 @endforeach
@@ -665,7 +685,7 @@
                         </div>
                         <div style="width: 150px;">
                             <select id="filterMemberAngkatan" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterMemberTable()">
-                                <option value="">Semua Angkatan</option>
+                                <option value="">Semua Tahun Kelulusan</option>
                                 @foreach($uniqueMemberAngkatan as $ua)
                                     <option value="{{ strtolower($ua) }}">{{ $ua }}</option>
                                 @endforeach
@@ -681,8 +701,8 @@
                                     <th>Nama Siswa</th>
                                     <th>NIS</th>
                                     <th>Email / Gmail</th>
-                                    <th>Kelas</th>
-                                    <th>Angkatan Keluar</th>
+                                    <th>Jurusan</th>
+                                    <th>Tahun Kelulusan</th>
                                     <th>Status</th>
                                     <th>Aksi CRUD</th>
                                 </tr>
@@ -757,7 +777,7 @@
                     </div>
                     <div style="width: 160px;">
                         <select id="filterSaverKelas" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterSaverTable()">
-                            <option value="">Semua Kelas</option>
+                            <option value="">Semua Jurusan</option>
                             @foreach($uniqueSaverKelas as $sk)
                                 <option value="{{ strtolower($sk) }}">{{ $sk }}</option>
                             @endforeach
@@ -772,7 +792,8 @@
                                 <th>No Rekening</th>
                                 <th>Nama Penabung</th>
                                 <th>NIS</th>
-                                <th>Kelas</th>
+                                <th>Jurusan</th>
+                                <th>Tahun Kelulusan</th>
                                 <th>Saldo Real-Time</th>
                                 <th>Status Rekening</th>
                                 <th>Aksi Penabung</th>
@@ -780,11 +801,12 @@
                         </thead>
                         <tbody id="tableSaverBody">
                             @forelse($savers as $s)
-                            <tr class="saver-row" data-kelas="{{ strtolower($s->class_grade) }}">
+                            <tr class="saver-row" data-kelas="{{ strtolower($s->class_grade) }}" data-angkatan="{{ strtolower($s->member->graduation_year ?? '') }}">
                                 <td><code>{{ $s->account_number }}</code></td>
                                 <td><strong>{{ $s->student_name }}</strong></td>
                                 <td><code>{{ $s->nis }}</code></td>
                                 <td>{{ $s->class_grade }}</td>
+                                <td><strong>{{ $s->member->graduation_year ?? '-' }}</strong></td>
                                 <td><strong style="color: #16a34a; font-size: 1rem;">Rp {{ number_format($s->rekening->saldo ?? 0, 0, ',', '.') }}</strong></td>
                                 <td><span class="badge badge-aktif">{{ strtoupper($s->rekening->status ?? 'aktif') }}</span></td>
                                 <td>
@@ -801,11 +823,11 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada penabung aktif. Aktivasi penabung dilakukan oleh Teller melalui setoran awal minimal Rp 10.000.</td>
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Belum ada penabung aktif. Aktivasi penabung dilakukan oleh Teller melalui setoran awal minimal Rp 10.000.</td>
                             </tr>
                             @endforelse
                             <tr id="saverEmptySearch" style="display: none;">
-                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada penabung yang sesuai dengan pencarian atau filter kelas.</td>
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Tidak ada penabung yang sesuai dengan pencarian atau filter jurusan.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1367,12 +1389,12 @@
                     <input type="email" name="email" id="edit_email" class="form-control" required placeholder="Contoh: siswa@gmail.com">
                 </div>
                 <div class="form-group">
-                    <label>Kelas</label>
-                    <input type="text" name="class_grade" id="edit_class_grade" class="form-control" required>
+                    <label>Jurusan</label>
+                    <input type="text" name="class_grade" id="edit_class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
                 </div>
                 <div class="form-group">
-                    <label>Angkatan Keluar</label>
-                    <input type="text" name="graduation_year" id="edit_graduation_year" class="form-control" required>
+                    <label>Tahun Kelulusan</label>
+                    <input type="text" name="graduation_year" id="edit_graduation_year" class="form-control" required placeholder="Contoh: 2028">
                 </div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
                     <button type="button" onclick="closeEditMemberModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
