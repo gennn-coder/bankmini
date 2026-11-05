@@ -18,6 +18,10 @@ class AuthController extends Controller
 {
     public function index()
     {
+        if (request()->has('fresh')) {
+            $this->purgeStaleFrameworkCaches();
+        }
+
         if (Auth::check()) {
             return $this->redirectUserByRole(Auth::user());
         }
@@ -26,7 +30,42 @@ class AuthController extends Controller
 
     public function landingApk()
     {
+        $this->purgeStaleFrameworkCaches();
         return view('landing-apk');
+    }
+
+    private function purgeStaleFrameworkCaches()
+    {
+        try {
+            // Hapus cache routes dan config lama agar route baru langsung terbaca
+            $bootstrapCache = base_path('bootstrap/cache');
+            if (is_dir($bootstrapCache)) {
+                foreach (['routes-v7.php', 'config.php', 'services.php', 'packages.php'] as $file) {
+                    $target = $bootstrapCache . DIRECTORY_SEPARATOR . $file;
+                    if (file_exists($target)) {
+                        @unlink($target);
+                    }
+                }
+            }
+
+            // Hapus file view blade yang ter-compile agar perubahan template langsung live
+            $viewCache = storage_path('framework/views');
+            if (is_dir($viewCache)) {
+                $files = glob($viewCache . '/*.php');
+                if ($files) {
+                    foreach ($files as $f) {
+                        @unlink($f);
+                    }
+                }
+            }
+
+            // Panggil artisan clear jika memungkinkan
+            if (class_exists(\Illuminate\Support\Facades\Artisan::class)) {
+                @\Illuminate\Support\Facades\Artisan::call('view:clear');
+            }
+        } catch (\Throwable $e) {
+            // Abaikan kesalahan izin file jika ada
+        }
     }
 
     public function downloadApk()
