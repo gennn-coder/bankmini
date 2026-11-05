@@ -359,11 +359,13 @@ class AuthController extends Controller
             'identifier' => $request->identifier,
         ], now()->addMinutes(15));
 
-        // Simpan ke Session
-        $request->session()->put('otp_reset_user_id', $user->id);
-        $request->session()->put('otp_reset_code', $otp);
-        $request->session()->put('otp_reset_email', $inputEmail);
-        $request->session()->put('otp_reset_expires', now()->addMinutes(15)->timestamp);
+        // Simpan ke Session jika request web
+        if ($request->hasSession()) {
+            $request->session()->put('otp_reset_user_id', $user->id);
+            $request->session()->put('otp_reset_code', $otp);
+            $request->session()->put('otp_reset_email', $inputEmail);
+            $request->session()->put('otp_reset_expires', now()->addMinutes(15)->timestamp);
+        }
 
         // Simpan ke DB password_reset_tokens
         DB::table('password_reset_tokens')->updateOrInsert(
@@ -442,7 +444,7 @@ class AuthController extends Controller
         }
 
         // 2. Cek Session
-        if (!$isValid) {
+        if (!$isValid && $request->hasSession()) {
             $sessCode = $request->session()->get('otp_reset_code');
             $sessUserId = $request->session()->get('otp_reset_user_id');
             $sessExp = $request->session()->get('otp_reset_expires');
@@ -472,8 +474,10 @@ class AuthController extends Controller
         // OTP Valid! Buat token reset sekali pakai
         $resetToken = bin2hex(random_bytes(24));
         Cache::put('verified_reset_' . $resetToken, $user->id, now()->addMinutes(15));
-        $request->session()->put('verified_reset_token', $resetToken);
-        $request->session()->put('verified_reset_user_id', $user->id);
+        if ($request->hasSession()) {
+            $request->session()->put('verified_reset_token', $resetToken);
+            $request->session()->put('verified_reset_user_id', $user->id);
+        }
 
         return response()->json([
             'success' => true,
@@ -496,7 +500,7 @@ class AuthController extends Controller
 
         $resetToken = $request->reset_token;
         $userId = Cache::get('verified_reset_' . $resetToken);
-        if (!$userId) {
+        if (!$userId && $request->hasSession()) {
             if ($request->session()->get('verified_reset_token') === $resetToken) {
                 $userId = $request->session()->get('verified_reset_user_id');
             }
@@ -523,14 +527,16 @@ class AuthController extends Controller
         // Bersihkan cache dan sesi
         Cache::forget('otp_reset_' . $user->id);
         Cache::forget('verified_reset_' . $resetToken);
-        $request->session()->forget([
-            'otp_reset_user_id',
-            'otp_reset_code',
-            'otp_reset_email',
-            'otp_reset_expires',
-            'verified_reset_token',
-            'verified_reset_user_id',
-        ]);
+        if ($request->hasSession()) {
+            $request->session()->forget([
+                'otp_reset_user_id',
+                'otp_reset_code',
+                'otp_reset_email',
+                'otp_reset_expires',
+                'verified_reset_token',
+                'verified_reset_user_id',
+            ]);
+        }
         DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
         return response()->json([
@@ -552,7 +558,7 @@ class AuthController extends Controller
 
         $resetToken = $request->reset_token;
         $userId = Cache::get('verified_reset_' . $resetToken);
-        if (!$userId) {
+        if (!$userId && $request->hasSession()) {
             if ($request->session()->get('verified_reset_token') === $resetToken) {
                 $userId = $request->session()->get('verified_reset_user_id');
             }

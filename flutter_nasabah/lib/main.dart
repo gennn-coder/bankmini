@@ -174,94 +174,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
   void _showLupaSandiDialog() {
-    final TextEditingController emailController = TextEditingController();
-    bool isSubmitting = false;
-
     showDialog(
       context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Pemulihan Lupa Sandi'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Masukkan alamat Gmail Nasabah Anda yang terdaftar pada sistem E-Teller Bank Mini.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Alamat Gmail Nasabah',
-                      hintText: 'ahmad.rizky@gmail.com',
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Tutup'),
-                ),
-                ElevatedButton(
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          final email = emailController.text.trim();
-                          if (email.isEmpty) return;
-
-                          setDialogState(() => isSubmitting = true);
-                          try {
-                            final res = await http.post(
-                              Uri.parse('${ApiConfig.baseUrl}/lupa-sandi'),
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                              },
-                              body: jsonEncode({'email': email}),
-                            );
-                            final data = jsonDecode(res.body);
-                            if (mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    data['message'] ?? 'Petunjuk pemulihan kata sandi telah dikirimkan.',
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Gagal mengirim: $e')),
-                              );
-                            }
-                          } finally {
-                            setDialogState(() => isSubmitting = false);
-                          }
-                        },
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Kirim ke Gmail'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      barrierDismissible: false,
+      builder: (ctx) => const _LupaSandiOtpDialog(),
     );
   }
 
@@ -840,10 +756,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               child: Text(
                 statusLayanan == 'buka'
-                    ? 'Buka'
+                    ? 'Teller = Buka'
                     : statusLayanan == 'istirahat'
-                        ? 'Istirahat'
-                        : 'Tutup',
+                        ? 'Teller = Istirahat'
+                        : 'Teller = Tutup',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -1274,6 +1190,571 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DIALOG PEMULIHAN SANDI AKUN VIA OTP GMAIL (STEP 1 & STEP 2)
+// ---------------------------------------------------------------------------
+class _LupaSandiOtpDialog extends StatefulWidget {
+  const _LupaSandiOtpDialog();
+
+  @override
+  State<_LupaSandiOtpDialog> createState() => _LupaSandiOtpDialogState();
+}
+
+class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
+  int _step = 1;
+  final TextEditingController _identifierController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  bool _isSendingOtp = false;
+  bool _isVerifyingOtp = false;
+  bool _isSavingPassword = false;
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
+
+  String? _alertMsg;
+  bool _isAlertSuccess = false;
+
+  String? _resetToken;
+  String? _verifiedNama;
+  String? _verifiedUsername;
+
+  @override
+  void dispose() {
+    _identifierController.dispose();
+    _emailController.dispose();
+    _otpController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleKirimOtp() async {
+    final identifier = _identifierController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (identifier.isEmpty) {
+      setState(() {
+        _alertMsg = 'Silakan masukkan NISN atau Username akun Anda.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() {
+        _alertMsg = 'Silakan masukkan alamat Gmail terdaftar yang valid.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSendingOtp = true;
+      _alertMsg = null;
+    });
+
+    try {
+      final res = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/lupa-sandi/kirim-otp'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'identifier': identifier,
+          'email': email,
+        }),
+      );
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && data['success'] == true) {
+        setState(() {
+          _isAlertSuccess = true;
+          _alertMsg = data['message'] ?? 'Kode OTP telah berhasil dikirim ke alamat Gmail Anda.';
+          if (data['otp_dev'] != null) {
+            _otpController.text = data['otp_dev'].toString();
+          }
+        });
+      } else {
+        setState(() {
+          _isAlertSuccess = false;
+          _alertMsg = data['message'] ?? 'Gagal mengirim kode OTP. Periksa data Anda.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isAlertSuccess = false;
+        _alertMsg = 'Terjadi kesalahan koneksi server: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingOtp = false);
+      }
+    }
+  }
+
+  Future<void> _handleVerifikasiOtp() async {
+    final identifier = _identifierController.text.trim();
+    final email = _emailController.text.trim();
+    final otp = _otpController.text.trim();
+
+    if (identifier.isEmpty || email.isEmpty) {
+      setState(() {
+        _alertMsg = 'Harap isi NISN/Username dan Gmail terlebih dahulu.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+
+    if (otp.length != 6) {
+      setState(() {
+        _alertMsg = 'Masukkan 6 digit kode OTP yang telah dikirimkan.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isVerifyingOtp = true;
+      _alertMsg = null;
+    });
+
+    try {
+      final res = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/lupa-sandi/verifikasi-otp'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'identifier': identifier,
+          'email': email,
+          'otp': otp,
+        }),
+      );
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && data['success'] == true) {
+        setState(() {
+          _resetToken = data['reset_token'];
+          _verifiedNama = data['nama'];
+          _verifiedUsername = data['username'];
+          _step = 2;
+          _alertMsg = null;
+        });
+      } else {
+        setState(() {
+          _isAlertSuccess = false;
+          _alertMsg = data['message'] ?? 'Kode OTP salah atau telah kadaluarsa.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isAlertSuccess = false;
+        _alertMsg = 'Terjadi kesalahan verifikasi: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifyingOtp = false);
+      }
+    }
+  }
+
+  Future<void> _handleSimpanSandi() async {
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (password.length < 6) {
+      setState(() {
+        _alertMsg = 'Kata sandi baru minimal terdiri dari 6 karakter.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+
+    if (password != confirmPassword) {
+      setState(() {
+        _alertMsg = 'Konfirmasi sandi tidak sesuai dengan sandi baru.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+
+    if (_resetToken == null) {
+      setState(() {
+        _alertMsg = 'Sesi verifikasi telah berakhir, silakan ulangi proses.';
+        _isAlertSuccess = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSavingPassword = true;
+      _alertMsg = null;
+    });
+
+    try {
+      final res = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/lupa-sandi/simpan-sandi'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'reset_token': _resetToken,
+          'password': password,
+          'password_confirmation': confirmPassword,
+        }),
+      );
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200 && data['success'] == true) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF16A34A),
+              content: Text(
+                data['message'] ?? 'Kata sandi berhasil diperbarui! Silakan masuk dengan sandi baru.',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isAlertSuccess = false;
+          _alertMsg = data['message'] ?? 'Gagal menyimpan kata sandi baru.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isAlertSuccess = false;
+        _alertMsg = 'Terjadi kesalahan: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingPassword = false);
+      }
+    }
+  }
+
+  InputDecoration _inputDeco({required String hint, Widget? suffix}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+      suffixIcon: suffix,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Pemulihan Sandi Akun',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Tutup',
+                        style: TextStyle(
+                          color: Color(0xFF475569),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Subtitle
+              Text(
+                _step == 1
+                    ? 'Masukkan NISN atau Username akun Anda dan alamat Gmail. Sistem akan mengirimkan kode OTP untuk proses verifikasi kata sandi baru.'
+                    : 'Kode OTP terverifikasi. Berikut nama pemilik akun Anda. Silakan tentukan kata sandi baru untuk akun ini di bawah.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Alert Banner
+              if (_alertMsg != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _isAlertSuccess ? const Color(0xFFDCFCE7) : const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _isAlertSuccess ? const Color(0xFF86EFAC) : const Color(0xFFFECACA),
+                    ),
+                  ),
+                  child: Text(
+                    _alertMsg!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _isAlertSuccess ? const Color(0xFF166534) : const Color(0xFF991B1B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              if (_step == 1) ...[
+                // STEP 1 UI
+                const Text(
+                  'NISN atau Username',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _identifierController,
+                  decoration: _inputDeco(hint: 'Contoh: 1029384756 atau username'),
+                ),
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Alamat Gmail Terdaftar',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _inputDeco(hint: 'Contoh: ahmad.rizky@gmail.com'),
+                ),
+                const SizedBox(height: 16),
+
+                // Button Kirim Kode OTP
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isSendingOtp ? null : _handleKirimOtp,
+                    child: _isSendingOtp
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text(
+                            'Kirim Kode OTP',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                const Text(
+                  'Masukkan Kode OTP',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _otpController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  maxLength: 6,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4.0,
+                    color: Color(0xFF0F172A),
+                  ),
+                  decoration: _inputDeco(
+                    hint: '6   D i g i t   O T P',
+                  ).copyWith(counterText: ''),
+                ),
+                const SizedBox(height: 16),
+
+                // Button Selanjutnya
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isVerifyingOtp ? null : _handleVerifikasiOtp,
+                    child: _isVerifyingOtp
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text(
+                            'Selanjutnya',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                  ),
+                ),
+              ] else ...[
+                // STEP 2 UI
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Nama Pemilik Akun',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _verifiedNama ?? '-',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Username / NISN: ${_verifiedUsername ?? '-'}',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                const Text(
+                  'Sandi Baru',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: !_showPassword,
+                  decoration: _inputDeco(
+                    hint: 'Masukkan kata sandi baru (min. 6 karakter)',
+                    suffix: IconButton(
+                      icon: Icon(
+                        _showPassword ? Icons.visibility_off : Icons.visibility,
+                        color: const Color(0xFF64748B),
+                        size: 20,
+                      ),
+                      onPressed: () => setState(() => _showPassword = !_showPassword),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Konfirmasi Sandi Baru',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: !_showConfirmPassword,
+                  decoration: _inputDeco(
+                    hint: 'Ulangi kata sandi baru',
+                    suffix: IconButton(
+                      icon: Icon(
+                        _showConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        color: const Color(0xFF64748B),
+                        size: 20,
+                      ),
+                      onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Button Simpan Sandi Baru
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isSavingPassword ? null : _handleSimpanSandi,
+                    child: _isSavingPassword
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text(
+                            'Simpan Sandi Baru',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
