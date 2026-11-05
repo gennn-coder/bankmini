@@ -21,7 +21,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: laravel_core/
+          server-dir: /laravel_core/
           exclude: |
             **/.git*
             **/.git*/**
@@ -41,7 +41,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: public/
-          server-dir: public_html/
+          server-dir: /public_html/
           exclude: |
             index.php
             .htaccess
