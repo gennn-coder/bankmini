@@ -2299,6 +2299,7 @@
         let html5QrScanner = null;
         let isScannerRunning = false;
         let currentFacingMode = 'environment'; // Default Kamera Belakang
+        let availableCameraDevices = [];
 
         async function openCameraModal() {
             if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -2326,7 +2327,7 @@
             const select = document.getElementById('cameraSelect');
             if (!select) return;
 
-            const prevVal = select.value || currentFacingMode;
+            const prevVal = select.value;
             select.innerHTML = '';
 
             const optBack = document.createElement('option');
@@ -2341,15 +2342,15 @@
 
             try {
                 if (typeof Html5Qrcode !== 'undefined') {
-                    const devices = await Html5Qrcode.getCameras();
-                    if (devices && devices.length > 0) {
-                        devices.forEach((dev, idx) => {
+                    availableCameraDevices = await Html5Qrcode.getCameras();
+                    if (availableCameraDevices && availableCameraDevices.length > 0) {
+                        availableCameraDevices.forEach((dev, idx) => {
                             const opt = document.createElement('option');
                             opt.value = dev.id;
                             const lbl = (dev.label || '').toLowerCase();
                             if (lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment')) {
                                 opt.text = `Kamera Belakang: ${dev.label}`;
-                            } else if (lbl.includes('front') || lbl.includes('user')) {
+                            } else if (lbl.includes('front') || lbl.includes('user') || lbl.includes('facing')) {
                                 opt.text = `Kamera Depan: ${dev.label}`;
                             } else {
                                 opt.text = dev.label || `Kamera ${idx + 1}`;
@@ -2362,7 +2363,7 @@
                 console.warn("Gagal mendapatkan daftar kamera:", e);
             }
 
-            if (select.querySelector(`option[value="${prevVal}"]`)) {
+            if (prevVal && select.querySelector(`option[value="${prevVal}"]`)) {
                 select.value = prevVal;
             } else {
                 select.value = 'environment';
@@ -2388,7 +2389,9 @@
                 }
 
                 if (html5QrScanner && isScannerRunning) {
-                    await html5QrScanner.stop();
+                    try {
+                        await html5QrScanner.stop();
+                    } catch (e) {}
                     isScannerRunning = false;
                 }
 
@@ -2397,17 +2400,18 @@
                 }
 
                 const select = document.getElementById('cameraSelect');
-                const chosenValue = specificCameraId || (select ? select.value : 'environment') || 'environment';
+                const chosen = specificCameraId || (select ? select.value : 'environment') || 'environment';
 
                 let cameraParam;
-                if (chosenValue === 'environment') {
-                    cameraParam = { facingMode: { ideal: "environment" } };
+                if (chosen === 'environment') {
+                    cameraParam = { facingMode: "environment" };
                     currentFacingMode = 'environment';
-                } else if (chosenValue === 'user') {
+                } else if (chosen === 'user') {
                     cameraParam = { facingMode: "user" };
                     currentFacingMode = 'user';
                 } else {
-                    cameraParam = { deviceId: { exact: chosenValue } };
+                    // ID perangkat fisik kamera harus berupa string murni ke library Html5Qrcode
+                    cameraParam = chosen;
                 }
 
                 const btnSwitch = document.getElementById('btnSwitchCamera');
@@ -2420,16 +2424,38 @@
                     qrbox: { width: 190, height: 190 }
                 };
 
-                await html5QrScanner.start(
-                    cameraParam,
-                    config,
-                    (decodedText) => {
-                        onScanSuccess(decodedText);
-                    },
-                    (errorMessage) => {
-                        // ignore unparsed frames
+                // Coba jalankan kamera terpilih, jika gagal (misal laptop tidak punya kamera belakang) fallback otomatis
+                try {
+                    await html5QrScanner.start(
+                        cameraParam,
+                        config,
+                        (decodedText) => onScanSuccess(decodedText),
+                        (errorMessage) => {}
+                    );
+                } catch (err1) {
+                    console.warn("Percobaan kamera pertama gagal, melakukan fallback:", err1);
+                    let fallbackParam;
+                    if (availableCameraDevices && availableCameraDevices.length > 0) {
+                        fallbackParam = availableCameraDevices[0].id;
+                        if (select) select.value = fallbackParam;
+                    } else if (chosen === 'environment') {
+                        fallbackParam = { facingMode: "user" };
+                        currentFacingMode = 'user';
+                        if (select) select.value = 'user';
+                        if (btnSwitch) btnSwitch.innerText = 'Ganti ke Belakang';
+                    } else {
+                        fallbackParam = { facingMode: "environment" };
+                        currentFacingMode = 'environment';
+                        if (select) select.value = 'environment';
                     }
-                );
+
+                    await html5QrScanner.start(
+                        fallbackParam,
+                        config,
+                        (decodedText) => onScanSuccess(decodedText),
+                        (errorMessage) => {}
+                    );
+                }
 
                 isScannerRunning = true;
                 if (isCameraMirrored) {
@@ -2452,9 +2478,10 @@
                     toggleBtn.innerText = 'Nyalakan Kamera';
                     toggleBtn.style.background = '#2563eb';
                 }
+                const errText = (typeof err === 'string' ? err : (err && err.message ? err.message : '')) || 'Izin kamera belum diberikan atau sedang digunakan aplikasi lain';
                 const statusMsg = document.getElementById('scannerStatusMsg');
                 if (statusMsg) {
-                    statusMsg.innerHTML = `<span style="color: #ef4444;">Kamera tidak aktif: ${err.message || 'Izin kamera ditolak atau pastikan akses menggunakan HTTPS'}. Silakan gunakan opsi unggah foto barcode/QR di bawah.</span>`;
+                    statusMsg.innerHTML = `<span style="color: #ef4444;">Kamera belum aktif: ${errText}. Silakan klik "Nyalakan Kamera" atau izinkan izin kamera browser.</span>`;
                 }
             }
         }
