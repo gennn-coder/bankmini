@@ -266,6 +266,29 @@
                     Kode QR Belum Tersedia (Rekening Belum Aktif)
                 </button>
             @endif
+
+            <!-- FILTER & PENCARIAN MUTASI TRANSAKSI (DESKTOP & MOBILE WEB) -->
+            @php
+                $countSetoran = $transaksi->where('jenis_trans', 'setoran')->count();
+                $countPenarikan = $transaksi->where('jenis_trans', 'penarikan')->count();
+                $countSemua = $transaksi->count();
+            @endphp
+            <div style="display: flex; gap: 0.75rem; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; margin-top: 0.5rem;">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                    <button type="button" id="btnFilterAll" onclick="setMutasiFilter('all')" class="filter-btn" style="padding: 0.45rem 0.95rem; font-size: 0.82rem; font-weight: 700; border-radius: 999px; border: 1px solid #cbd5e1; background: #0f172a; color: #ffffff; cursor: pointer;">
+                        Semua ({{ $countSemua }})
+                    </button>
+                    <button type="button" id="btnFilterSetoran" onclick="setMutasiFilter('setoran')" class="filter-btn" style="padding: 0.45rem 0.95rem; font-size: 0.82rem; font-weight: 700; border-radius: 999px; border: 1px solid #bbf7d0; background: #f0fdf4; color: #16a34a; cursor: pointer;">
+                        Setoran / Nabung ({{ $countSetoran }})
+                    </button>
+                    <button type="button" id="btnFilterPenarikan" onclick="setMutasiFilter('penarikan')" class="filter-btn" style="padding: 0.45rem 0.95rem; font-size: 0.82rem; font-weight: 700; border-radius: 999px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; cursor: pointer;">
+                        Penarikan ({{ $countPenarikan }})
+                    </button>
+                </div>
+                <div style="flex: 1; min-width: 220px; max-width: 360px;">
+                    <input type="text" id="searchMutasiInput" class="form-control" style="width: 100%; padding: 0.5rem 0.85rem; font-size: 0.85rem; border-radius: 10px; border: 1px solid var(--border-color);" placeholder="Cari No Transaksi, Tanggal, Nominal..." oninput="filterMutasiTable()">
+                </div>
+            </div>
             
             <div class="table-responsive">
                 <table>
@@ -278,14 +301,14 @@
                             <th>Keterangan</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tableMutasiBody">
                         @forelse($transaksi as $t)
-                        <tr>
+                        <tr class="transaksi-row" data-jenis="{{ strtolower($t->jenis_trans) }}" data-search="{{ strtolower($t->no_transaksi . ' ' . $t->tanggal . ' ' . ($t->keterangan ?? '') . ' ' . $t->nominal) }}">
                             <td>{{ $t->tanggal }}</td>
                             <td><code>{{ $t->no_transaksi }}</code></td>
                             <td>
                                 <strong style="text-transform: uppercase; color: {{ $t->jenis_trans === 'setoran' ? '#16a34a' : '#dc2626' }};">
-                                    {{ $t->jenis_trans }}
+                                    {{ $t->jenis_trans === 'setoran' ? 'Setoran' : 'Penarikan' }}
                                 </strong>
                             </td>
                             <td>
@@ -296,10 +319,13 @@
                             <td>{{ $t->keterangan }}</td>
                         </tr>
                         @empty
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-muted);">Belum ada riwayat transaksi mutasi pada rekening ini.</td>
+                        <tr id="emptyMutasiRow">
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem 1rem;">Belum ada riwayat transaksi mutasi pada rekening ini.</td>
                         </tr>
                         @endforelse
+                        <tr id="noMatchMutasiRow" style="display: none;">
+                            <td colspan="5" style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">Tidak ada transaksi yang sesuai dengan filter atau kata kunci pencarian.</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -352,6 +378,61 @@
                 closeQrModal();
             }
         });
+
+        // Filter & Pencarian Mutasi Rekening Nasabah
+        let activeMutasiFilter = 'all';
+
+        function setMutasiFilter(type) {
+            activeMutasiFilter = type;
+
+            const btnAll = document.getElementById('btnFilterAll');
+            const btnSetoran = document.getElementById('btnFilterSetoran');
+            const btnPenarikan = document.getElementById('btnFilterPenarikan');
+
+            if (btnAll) {
+                btnAll.style.background = type === 'all' ? '#0f172a' : '#f8fafc';
+                btnAll.style.color = type === 'all' ? '#ffffff' : '#475569';
+                btnAll.style.borderColor = type === 'all' ? '#0f172a' : '#cbd5e1';
+            }
+            if (btnSetoran) {
+                btnSetoran.style.background = type === 'setoran' ? '#16a34a' : '#f0fdf4';
+                btnSetoran.style.color = type === 'setoran' ? '#ffffff' : '#16a34a';
+                btnSetoran.style.borderColor = type === 'setoran' ? '#16a34a' : '#bbf7d0';
+            }
+            if (btnPenarikan) {
+                btnPenarikan.style.background = type === 'penarikan' ? '#dc2626' : '#fef2f2';
+                btnPenarikan.style.color = type === 'penarikan' ? '#ffffff' : '#dc2626';
+                btnPenarikan.style.borderColor = type === 'penarikan' ? '#dc2626' : '#fecaca';
+            }
+
+            filterMutasiTable();
+        }
+
+        function filterMutasiTable() {
+            const query = (document.getElementById('searchMutasiInput')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('.transaksi-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const jenis = row.getAttribute('data-jenis');
+                const searchData = row.getAttribute('data-search') || '';
+
+                const matchesType = (activeMutasiFilter === 'all') || (jenis === activeMutasiFilter);
+                const matchesQuery = !query || searchData.includes(query);
+
+                if (matchesType && matchesQuery) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const noMatchRow = document.getElementById('noMatchMutasiRow');
+            if (noMatchRow) {
+                noMatchRow.style.display = (rows.length > 0 && visibleCount === 0) ? '' : 'none';
+            }
+        }
 
         // Auto-refresh status layanan teller
         setInterval(() => {

@@ -9,6 +9,8 @@ use App\Http\Controllers\TellerController;
 // Auth Routes
 Route::get('/', [AuthController::class, 'index'])->name('home');
 Route::get('/login', [AuthController::class, 'index']);
+Route::get('/unduh-aplikasi', [AuthController::class, 'landingApk'])->name('landing.apk');
+Route::get('/download-apk', [AuthController::class, 'downloadApk'])->name('app.download');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/lupa-sandi', [AuthController::class, 'lupaSandi'])->name('lupa-sandi');
 Route::post('/lupa-sandi/kirim-otp', [AuthController::class, 'kirimOtp'])->name('lupa-sandi.kirim-otp');
@@ -26,8 +28,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
     Route::post('/admin/users/{id}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('admin.users.toggle-status');
     
-    // CRUD Anggota / Member
+    // CRUD & Impor Anggota / Member
     Route::post('/admin/members', [AdminController::class, 'storeMember'])->name('admin.members.store');
+    Route::get('/admin/members/template', [AdminController::class, 'downloadMemberTemplate'])->name('admin.members.template');
+    Route::post('/admin/members/import', [AdminController::class, 'importMembers'])->name('admin.members.import');
     Route::post('/admin/members/{user_id}/update', [AdminController::class, 'updateMember'])->name('admin.members.update');
     Route::post('/admin/members/{user_id}/delete', [AdminController::class, 'destroyMember'])->name('admin.members.destroy');
     

@@ -490,6 +490,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
   bool _isRefreshing = false;
   Timer? _statusPollingTimer;
+  String _filterMutasi = 'all'; // 'all', 'setoran', 'penarikan'
+  final TextEditingController _searchMutasiController = TextEditingController();
+  String _mutasiSearchQuery = '';
+
+  List<dynamic> get _filteredMutasiList {
+    return _mutasiList.where((item) {
+      final jenis = (item['jenis_trans'] ?? '').toString().toLowerCase();
+      final noTrans = (item['no_transaksi'] ?? '').toString().toLowerCase();
+      final tgl = (item['tanggal'] ?? '').toString().toLowerCase();
+      final ket = (item['keterangan'] ?? '').toString().toLowerCase();
+      final nominal = (item['nominal'] ?? '').toString();
+
+      final matchesType = _filterMutasi == 'all' || jenis == _filterMutasi;
+      final q = _mutasiSearchQuery.toLowerCase().trim();
+      final matchesSearch = q.isEmpty ||
+          noTrans.contains(q) ||
+          tgl.contains(q) ||
+          ket.contains(q) ||
+          nominal.contains(q);
+
+      return matchesType && matchesSearch;
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -507,6 +530,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _statusPollingTimer?.cancel();
+    _searchMutasiController.dispose();
     super.dispose();
   }
 
@@ -572,6 +596,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
         });
       }
     }
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool isSelected,
+    required Color selectedColor,
+    required VoidCallback onSelected,
+  }) {
+    return GestureDetector(
+      onTap: onSelected,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedColor : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? selectedColor : const Color(0xFFCBD5E1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : const Color(0xFF475569),
+          ),
+        ),
+      ),
+    );
   }
 
   String _formatRupiah(num number) {
@@ -979,13 +1033,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 12),
 
+                    // FILTER & PENCARIAN MUTASI
+                    if (_mutasiList.isNotEmpty) ...[
+                      // Filter Chips Row
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildFilterChip(
+                              label: 'Semua (${_mutasiList.length})',
+                              isSelected: _filterMutasi == 'all',
+                              selectedColor: const Color(0xFF0F172A),
+                              onSelected: () => setState(() => _filterMutasi = 'all'),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildFilterChip(
+                              label: 'Setoran (${_mutasiList.where((m) => m['jenis_trans'] == 'setoran').length})',
+                              isSelected: _filterMutasi == 'setoran',
+                              selectedColor: const Color(0xFF16A34A),
+                              onSelected: () => setState(() => _filterMutasi = 'setoran'),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildFilterChip(
+                              label: 'Penarikan (${_mutasiList.where((m) => m['jenis_trans'] == 'penarikan').length})',
+                              isSelected: _filterMutasi == 'penarikan',
+                              selectedColor: const Color(0xFFDC2626),
+                              onSelected: () => setState(() => _filterMutasi = 'penarikan'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Input Cari Transaksi
+                      TextField(
+                        controller: _searchMutasiController,
+                        onChanged: (val) {
+                          setState(() {
+                            _mutasiSearchQuery = val;
+                          });
+                        },
+                        style: const TextStyle(fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Cari no transaksi, tanggal, nominal...',
+                          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                          prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF64748B)),
+                          suffixIcon: _mutasiSearchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 16, color: Color(0xFF94A3B8)),
+                                  onPressed: () {
+                                    _searchMutasiController.clear();
+                                    setState(() {
+                                      _mutasiSearchQuery = '';
+                                    });
+                                  },
+                                )
+                              : null,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          fillColor: Colors.white,
+                          filled: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+
                     if (_mutasiList.isEmpty)
-                      Card(
+                      const Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(28),
+                          padding: EdgeInsets.all(28),
                           child: Center(
                             child: Column(
-                              children: const [
+                              children: [
                                 Icon(Icons.receipt_long_outlined,
                                     size: 40, color: Color(0xFF94A3B8)),
                                 SizedBox(height: 8),
@@ -1002,15 +1133,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                       )
+                    else if (_filteredMutasiList.isEmpty)
+                      const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(Icons.filter_alt_off_outlined,
+                                    size: 36, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Tidak ada transaksi yang cocok dengan filter atau kata kunci pencarian.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
                     else
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _mutasiList.length,
+                        itemCount: _filteredMutasiList.length,
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 8),
                         itemBuilder: (context, index) {
-                          final item = _mutasiList[index];
+                          final item = _filteredMutasiList[index];
                           final isSetoran = item['jenis_trans'] == 'setoran';
                           final nominal = item['nominal'] ?? 0;
                           final noTrans = item['no_transaksi'] ?? '-';

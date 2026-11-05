@@ -980,6 +980,91 @@ class BankMiniRevisionTest extends TestCase
         $resTellerDash = $this->get(route('teller.dashboard'));
         $this->assertEquals(0, $resTellerDash->viewData('sisaKasLaci'), 'Sisa kas teller harus 0 karena kas fisik sudah diserahkan ke admin');
     }
+
+    /**
+     * Test 21: Unduh Template Excel / CSV & Impor Data Anggota Massal
+     */
+    public function test_admin_can_download_member_templates_and_import_csv()
+    {
+        $admin = User::where('role', 'administrator')->first();
+        $this->actingAs($admin);
+
+        // 1. Download template Excel
+        $resTplXlsx = $this->get(route('admin.members.template', ['format' => 'xlsx']));
+        $resTplXlsx->assertStatus(200);
+
+        // 2. Download template CSV
+        $resTplCsv = $this->get(route('admin.members.template', ['format' => 'csv']));
+        $resTplCsv->assertStatus(200);
+
+        // 3. Impor data anggota melalui file CSV
+        $nis1 = '202699001';
+        $nis2 = '202699002';
+        
+        // Hapus jika sudah pernah ada
+        Member::whereIn('nis', [$nis1, $nis2])->forceDelete();
+        User::whereIn('username', [$nis1, $nis2])->forceDelete();
+
+        $csvContent = "nama_siswa,nis,email,kelas,angkatan_keluar,password\n"
+                    . "Budi Santoso,{$nis1},budi.santoso@gmail.com,X RPL 1,2028,123456\n"
+                    . "Dewi Lestari,{$nis2},dewi.lestari@gmail.com,X RPL 2,2028,123456\n";
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('anggota.csv', $csvContent);
+
+        $resImport = $this->post(route('admin.members.import'), [
+            'file' => $file,
+        ]);
+
+        $resImport->assertSessionHas('success');
+
+        // Pastikan kedua data masuk ke tabel users dan members (status rekening tidak aktif, pin null)
+        $this->assertDatabaseHas('users', ['username' => $nis1, 'nama_petugas' => 'Budi Santoso']);
+        $this->assertDatabaseHas('members', ['nis' => $nis1, 'student_name' => 'Budi Santoso', 'status' => 'rekening tidak aktif', 'pin' => null]);
+
+        $this->assertDatabaseHas('users', ['username' => $nis2, 'nama_petugas' => 'Dewi Lestari']);
+        $this->assertDatabaseHas('members', ['nis' => $nis2, 'student_name' => 'Dewi Lestari', 'status' => 'rekening tidak aktif', 'pin' => null]);
+
+        // 4. Impor ulang file yang sama -> Data harus dilewati (skip) karena duplikat
+        $resImportDup = $this->post(route('admin.members.import'), [
+            'file' => $file,
+        ]);
+        $resImportDup->assertSessionHas('success');
+    }
+
+    /**
+     * Test 22: Akses Halaman Landing Page APK Nasabah & Rute Unduh
+     */
+    public function test_guest_can_access_landing_page_and_download_apk()
+    {
+        // 1. Akses landing page publik
+        $response = $this->get(route('landing.apk'));
+        $response->assertStatus(200);
+        $response->assertSee('Tabungan Sekolah dalam Genggaman');
+        $response->assertSee('Pindai Kode QR untuk Mengunduh');
+
+        // 2. Akses halaman login memastikan tautan Unduh APK ada
+        $resLogin = $this->get(route('login'));
+        $resLogin->assertStatus(200);
+        $resLogin->assertSee(route('landing.apk'));
+        $resLogin->assertSee('Unduh Aplikasi Nasabah (APK)');
+
+        // 3. Tes rute download APK
+        $resDownload = $this->get(route('app.download'));
+        // Jika file belum di-copy, redirect ke landing page dengan info session
+        $resDownload->assertStatus(302);
+        $resDownload->assertRedirect(route('landing.apk'));
+
+        // Coba letakkan dummy file APK untuk memastikan download file berfungsi
+        $dummyPath = public_path('downloads/eteller-nasabah.apk');
+        file_put_contents($dummyPath, 'DUMMY_APK_DATA');
+        
+        $resDownloadOk = $this->get(route('app.download'));
+        $resDownloadOk->assertStatus(200);
+        $resDownloadOk->assertHeader('content-disposition');
+        
+        // Bersihkan dummy
+        @unlink($dummyPath);
+    }
 }
 
 

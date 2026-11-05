@@ -431,6 +431,30 @@
             text-align: center;
         }
 
+        .btn-download-app-link {
+            display: inline-block;
+            width: 100%;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            padding: 0.75rem 1.25rem;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.06);
+            letter-spacing: 0.2px;
+        }
+
+        .btn-download-app-link:hover {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        }
+
         .login-info-box p {
             font-size: 0.8rem;
             color: #64748b;
@@ -769,7 +793,9 @@
             </form>
 
             <div class="login-info-box">
-                <p>Nasabah terdaftar dapat login langsung menggunakan <span class="highlight">alamat Gmail</span> atau <span class="highlight">NISN</span>.</p>
+                <a href="{{ route('landing.apk') }}" class="btn-download-app-link">
+                    Unduh Aplikasi Nasabah (APK)
+                </a>
             </div>
         </div>
 

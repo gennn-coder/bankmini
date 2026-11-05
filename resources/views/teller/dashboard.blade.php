@@ -835,59 +835,88 @@
             <button class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
         </div>
 
-        <!-- TAB 1: SISTEM OTOMATIS: AKTIVASI REKENING ANGGOTA -->
+        <!-- TAB 1: AKTIVASI REKENING ANGGOTA SISWA -->
         <div id="tab-aktivasi" class="tab-content active">
-            <div class="card" style="max-width: 650px; margin: 0 auto;">
-                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
-                    <h3 style="margin:0; color: #2563eb; font-size: 1.25rem;">Sistem Otomatis Aktivasi Rekening Anggota</h3>
-                    <p style="margin: 0.35rem 0 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
-                        Jika siswa anggota menuju teller dan menabung minimal <strong>Rp 10.000</strong>, data otomatis berpindah/diklon ke tabel <strong>Penabung (Saver)</strong> dan rekening langsung aktif.
-                    </p>
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div>
+                        <h3 style="margin: 0; color: #1e293b; font-size: 1.2rem;">Daftar Siswa Menunggu Aktivasi Rekening</h3>
+                        <p style="margin: 0.35rem 0 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                            Data anggota siswa yang belum memiliki rekening tabungan. Klik tombol <strong>Aktivasi</strong> untuk memproses setoran awal (minimal Rp 10.000) dan membuat PIN transaksi.
+                        </p>
+                    </div>
+                    <div>
+                        <span style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 0.82rem; padding: 0.4rem 0.85rem; border-radius: 999px; font-weight: 700;">
+                            Belum Aktif ({{ $membersUnactivated->count() }})
+                        </span>
+                    </div>
                 </div>
 
-                <form action="{{ route('teller.aktivasi-anggota') }}" method="POST" class="prevent-double-submit">
-                    @csrf
-                    <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
-                    <div class="form-group">
-                        <label>Pilih Siswa Anggota (Status: Rekening Belum Aktif)</label>
-                        <select name="user_id" id="aktivasiMemberSelect" class="form-control" required onchange="onMemberSelectChange()">
-                            <option value="">-- Pilih Siswa Anggota --</option>
-                            @foreach($membersUnactivated as $mu)
-                                <option value="{{ $mu->user_id }}" data-name="{{ $mu->student_name }}" data-nis="{{ $mu->nis }}" data-email="{{ $mu->email ?? '' }}" data-class="{{ $mu->class_grade }}" data-year="{{ $mu->graduation_year }}">
-                                    {{ $mu->student_name }} (NIS: {{ $mu->nis }} &bull; {{ $mu->class_grade }} &bull; Angkatan: {{ $mu->graduation_year }})
-                                </option>
+                <!-- PENCARIAN & FILTER TABEL AKTIVASI -->
+                @php
+                    $uniqueAktivasiKelas = $membersUnactivated->pluck('class_grade')->filter()->unique()->sort()->values();
+                    $uniqueAktivasiAngkatan = $membersUnactivated->pluck('graduation_year')->filter()->unique()->sort()->values();
+                @endphp
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                    <div style="flex: 1; min-width: 220px;">
+                        <input type="text" id="searchAktivasiTable" class="form-control" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" placeholder="Cari Siswa (Nama, NIS, Email)..." oninput="filterAktivasiTable()">
+                    </div>
+                    <div style="width: 160px;">
+                        <select id="filterAktivasiKelas" class="form-control" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" onchange="filterAktivasiTable()">
+                            <option value="">Semua Kelas</option>
+                            @foreach($uniqueAktivasiKelas as $uk)
+                                <option value="{{ strtolower($uk) }}">{{ $uk }}</option>
                             @endforeach
                         </select>
-                        <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">Hanya menampilkan siswa anggota yang belum memiliki rekening tabungan.</small>
                     </div>
-
-                    <div id="memberDetailBox" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.5;">
-                        <div>Nama Siswa: <strong id="detNama">-</strong></div>
-                        <div>NIS / Kelas: <strong id="detNisKelas">-</strong></div>
-                        <div>Angkatan Keluar: <strong id="detAngkatan">-</strong></div>
+                    <div style="width: 160px;">
+                        <select id="filterAktivasiAngkatan" class="form-control" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;" onchange="filterAktivasiTable()">
+                            <option value="">Semua Angkatan</option>
+                            @foreach($uniqueAktivasiAngkatan as $ua)
+                                <option value="{{ strtolower($ua) }}">{{ $ua }}</option>
+                            @endforeach
+                        </select>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label>Nominal Setoran Awal (Minimal Rp 10.000)</label>
-                        <input type="number" name="nominal" class="form-control" required min="10000" step="1000" value="10000" placeholder="Minimal Rp 10.000">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Buat PIN 6-Digit Keamanan Penabung Baru</label>
-                        <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" placeholder="Contoh: 123456">
-                        <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">PIN 6 angka ini akan digunakan siswa setiap kali melakukan penarikan uang tabungan.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Alamat Gmail Siswa / Nasabah <span style="color: #dc2626;">*</span></label>
-                        <input type="email" name="email" id="daftarEmailInput" class="form-control" required placeholder="Contoh: siswa@gmail.com">
-                        <small style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.3rem;">Wajib diisi untuk keperluan pengiriman pemulihan kata sandi & PIN transaksi.</small>
-                    </div>
-
-                    <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #2563eb, #3b82f6); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
-                        Aktifkan Rekening & Kloning Data ke Penabung
-                    </button>
-                </form>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 45px;">No</th>
+                                <th>Nama Siswa</th>
+                                <th>NIS</th>
+                                <th>Kelas</th>
+                                <th>Angkatan Keluar</th>
+                                <th>Email / Gmail</th>
+                                <th style="width: 110px; text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableAktivasiBody">
+                            @forelse($membersUnactivated as $idx => $mu)
+                            <tr class="aktivasi-row" data-search="{{ strtolower($mu->student_name . ' ' . $mu->nis . ' ' . ($mu->email ?? '')) }}" data-kelas="{{ strtolower($mu->class_grade ?? '') }}" data-angkatan="{{ strtolower($mu->graduation_year ?? '') }}">
+                                <td>{{ $idx + 1 }}</td>
+                                <td><strong>{{ $mu->student_name }}</strong></td>
+                                <td><code>{{ $mu->nis }}</code></td>
+                                <td>{{ $mu->class_grade ?: '-' }}</td>
+                                <td>{{ $mu->graduation_year ?: '-' }}</td>
+                                <td><small>{{ $mu->email ?: '-' }}</small></td>
+                                <td style="text-align: center;">
+                                    <button type="button" class="btn-primary" style="padding: 0.42rem 0.9rem; font-size: 0.82rem; border-radius: 8px;" onclick="openModalAktivasi('{{ $mu->user_id }}', '{{ addslashes($mu->student_name) }}', '{{ $mu->nis }}', '{{ addslashes($mu->class_grade ?? '') }}', '{{ addslashes($mu->graduation_year ?? '') }}', '{{ addslashes($mu->email ?? '') }}')">
+                                        Aktivasi
+                                    </button>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr id="emptyAktivasiRow">
+                                <td colspan="7" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                                    Tidak ada siswa yang menunggu aktivasi rekening. Seluruh anggota telah aktif atau belum ada data baru yang diimpor.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1491,22 +1520,62 @@
             } catch (e) {}
         }
 
-        function onMemberSelectChange() {
-            const select = document.getElementById('aktivasiMemberSelect');
-            const selectedOption = select.options[select.selectedIndex];
-            const detailBox = document.getElementById('memberDetailBox');
+        function openModalAktivasi(userId, name, nis, kelas, angkatan, email) {
+            document.getElementById('modalAktUserId').value = userId;
+            document.getElementById('modalAktNama').innerText = name;
+            document.getElementById('modalAktNis').innerText = nis;
+            document.getElementById('modalAktKelasAngkatan').innerText = (kelas || '-') + ' / ' + (angkatan || '-');
+            document.getElementById('modalAktEmail').value = email || '';
+            document.getElementById('modalAktNominal').value = 10000;
+            document.getElementById('modalAktPin').value = '';
 
-            if (select.value) {
-                document.getElementById('detNama').innerText = selectedOption.getAttribute('data-name');
-                document.getElementById('detNisKelas').innerText = selectedOption.getAttribute('data-nis') + ' (' + selectedOption.getAttribute('data-class') + ')';
-                document.getElementById('detAngkatan').innerText = selectedOption.getAttribute('data-year');
-                const emailInput = document.getElementById('daftarEmailInput');
-                if (emailInput) {
-                    emailInput.value = selectedOption.getAttribute('data-email') || '';
+            const modal = document.getElementById('modalAktivasiAnggota');
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('modalAktNominal')?.focus();
+                }, 100);
+            }
+        }
+
+        function closeModalAktivasi() {
+            const modal = document.getElementById('modalAktivasiAnggota');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function setModalAktNominal(val) {
+            const input = document.getElementById('modalAktNominal');
+            if (input) input.value = val;
+        }
+
+        function filterAktivasiTable() {
+            const search = (document.getElementById('searchAktivasiTable')?.value || '').toLowerCase().trim();
+            const kelas = (document.getElementById('filterAktivasiKelas')?.value || '').toLowerCase().trim();
+            const angkatan = (document.getElementById('filterAktivasiAngkatan')?.value || '').toLowerCase().trim();
+
+            const rows = document.querySelectorAll('.aktivasi-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.getAttribute('data-search') || '';
+                const rowKelas = row.getAttribute('data-kelas') || '';
+                const rowAngkatan = row.getAttribute('data-angkatan') || '';
+
+                const matchSearch = !search || text.includes(search);
+                const matchKelas = !kelas || rowKelas === kelas;
+                const matchAngkatan = !angkatan || rowAngkatan === angkatan;
+
+                if (matchSearch && matchKelas && matchAngkatan) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
                 }
-                detailBox.style.display = 'block';
-            } else {
-                detailBox.style.display = 'none';
+            });
+
+            const emptyRow = document.getElementById('emptyAktivasiRow');
+            if (emptyRow) {
+                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
             }
         }
 
@@ -2535,6 +2604,75 @@
             document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
         }
     </script>
+    <!-- MODAL AKTIVASI REKENING ANGGOTA (TANPA ICON) -->
+    <div id="modalAktivasiAnggota" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="max-width: 480px; width: 100%; background: #ffffff; border-radius: 20px; padding: 1.75rem; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1px solid rgba(226, 232, 240, 0.8);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0;">Aktivasi Rekening Siswa</h3>
+                    <p style="margin: 3px 0 0; font-size: 0.82rem; color: #64748b;">Setoran awal minimal Rp 10.000 & pembuatan PIN transaksi</p>
+                </div>
+                <button type="button" onclick="closeModalAktivasi()" style="background: none; border: none; font-size: 1.5rem; color: #64748b; cursor: pointer; font-weight: 700; line-height: 1;">&times;</button>
+            </div>
+
+            <!-- Detail Siswa Terpilih -->
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.6;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Nama Siswa:</span>
+                    <strong id="modalAktNama" style="color: #0f172a;">-</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">NIS:</span>
+                    <code id="modalAktNis" style="font-weight: 700;">-</code>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #64748b;">Kelas / Angkatan:</span>
+                    <span id="modalAktKelasAngkatan" style="color: #0f172a; font-weight: 600;">-</span>
+                </div>
+            </div>
+
+            <form action="{{ route('teller.aktivasi-anggota') }}" method="POST" class="prevent-double-submit">
+                @csrf
+                <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
+                <input type="hidden" name="user_id" id="modalAktUserId" required>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
+                        Nominal Setoran Awal (Minimal Rp 10.000)
+                    </label>
+                    <input type="number" name="nominal" id="modalAktNominal" class="form-control" required min="10000" step="1000" value="10000" placeholder="Minimal Rp 10.000" style="font-weight: 700; font-size: 1.05rem;">
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" onclick="setModalAktNominal(10000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">Rp 10.000</button>
+                        <button type="button" onclick="setModalAktNominal(20000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">Rp 20.000</button>
+                        <button type="button" onclick="setModalAktNominal(50000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">Rp 50.000</button>
+                        <button type="button" onclick="setModalAktNominal(100000)" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.55rem; font-size: 0.75rem; font-weight: 700; color: #334155; cursor: pointer;">Rp 100.000</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
+                        Buat PIN 6-Digit Keamanan Penabung Baru
+                    </label>
+                    <input type="password" name="pin" id="modalAktPin" class="form-control" required maxlength="6" minlength="6" placeholder="Contoh: 123456" pattern="[0-9]{6}" inputmode="numeric">
+                    <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">PIN 6 angka ini digunakan nasabah saat verifikasi penarikan uang tabungan.</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
+                        Alamat Email Siswa / Nasabah <span style="color: #dc2626;">*</span>
+                    </label>
+                    <input type="email" name="email" id="modalAktEmail" class="form-control" required placeholder="Contoh: siswa@gmail.com">
+                    <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Digunakan untuk pengiriman informasi dan pemulihan PIN nasabah.</small>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" onclick="closeModalAktivasi()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1; padding: 0.7rem; font-size: 0.88rem; border-radius: 10px;">Batal</button>
+                    <button type="submit" class="btn-primary" style="flex: 2; padding: 0.7rem; font-size: 0.88rem; border-radius: 10px;">Aktifkan Rekening</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL PENGAJUAN TAMBAHAN KAS (DESAIN ELEGAN FINTECH DENGAN QUICK CHIPS) -->
     <div id="ajukanKasModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
         <div class="card" style="max-width: 460px; width: 100%; background: #ffffff; border-radius: 20px; padding: 1.75rem; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1px solid rgba(226, 232, 240, 0.8);">

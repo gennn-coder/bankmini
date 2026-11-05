@@ -24,6 +24,24 @@ class AuthController extends Controller
         return view('welcome');
     }
 
+    public function landingApk()
+    {
+        return view('landing-apk');
+    }
+
+    public function downloadApk()
+    {
+        $apkPath = public_path('downloads/eteller-nasabah.apk');
+        if (file_exists($apkPath)) {
+            return response()->download($apkPath, 'eteller-nasabah.apk', [
+                'Content-Type' => 'application/vnd.android.package-archive',
+            ]);
+        }
+
+        // Jika APK belum diletakkan di public/downloads, beri file rilis dummy atau pesan informatif
+        return redirect()->route('landing.apk')->with('info', 'File APK versi rilis terbaru sedang disiapkan oleh administrator.');
+    }
+
     public function login(Request $request)
     {
         $credentials = $request->validate([

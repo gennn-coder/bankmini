@@ -12,8 +12,16 @@ use App\Models\LaporanHarian;
 use App\Models\AuditLog;
 use App\Models\JurnalAkuntansi;
 use App\Models\PengajuanKas;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
+use PhpOffice\PhpSpreadsheet\Writer\Csv as CsvWriter;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use PhpOffice\PhpSpreadsheet\Reader\Xls as XlsReader;
+use PhpOffice\PhpSpreadsheet\Reader\Csv as CsvReader;
 
 class AdminController extends Controller
 {
@@ -125,6 +133,222 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Anggota ' . $member->student_name . ' (' . $member->email . ') berhasil didaftarkan dengan status Rekening Tidak Aktif. Akun dapat login dan akan otomatis aktif masuk ke Manajemen User setelah menabung pertama kali.');
+    }
+
+    /**
+     * Unduh Template Excel / CSV untuk Impor Anggota
+     */
+    public function downloadMemberTemplate(Request $request)
+    {
+        $format = strtolower($request->query('format', 'xlsx'));
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Anggota');
+
+        // Header Kolom Database (Tanpa PIN, karena PIN dibuat saat aktivasi rekening di teller)
+        $headers = [
+            'A1' => 'nama_siswa',
+            'B1' => 'nis',
+            'C1' => 'email',
+            'D1' => 'kelas',
+            'E1' => 'angkatan_keluar',
+            'F1' => 'password',
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        // Contoh Data 1
+        $sheet->setCellValueExplicit('A2', 'Ahmad Fauzi', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B2', '202611091', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('C2', 'ahmad.fauzi@gmail.com', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D2', 'X RPL 1', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('E2', '2028', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('F2', '123456', DataType::TYPE_STRING);
+
+        // Contoh Data 2
+        $sheet->setCellValueExplicit('A3', 'Siti Nurhaliza', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B3', '202611092', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('C3', 'siti.nurhaliza@gmail.com', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D3', 'X RPL 2', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('E3', '2028', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('F3', '123456', DataType::TYPE_STRING);
+
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        if ($format === 'csv') {
+            $filename = 'template_impor_anggota.csv';
+            return response()->streamDownload(function () use ($spreadsheet) {
+                $writer = new CsvWriter($spreadsheet);
+                $writer->setDelimiter(',');
+                $writer->setEnclosure('"');
+                $writer->setLineEnding("\r\n");
+                $writer->setSheetIndex(0);
+                $writer->save('php://output');
+            }, $filename, [
+                'Content-Type' => 'text/csv',
+            ]);
+        }
+
+        $filename = 'template_impor_anggota.xlsx';
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new XlsxWriter($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Impor Data Anggota Massal dari File CSV / Excel
+     */
+    public function importMembers(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:5120',
+        ], [
+            'file.required' => 'Pilih berkas CSV atau Excel terlebih dahulu.',
+            'file.mimes' => 'Format berkas harus berupa .csv, .xlsx, atau .xls.',
+            'file.max' => 'Ukuran berkas maksimal 5 MB.',
+        ]);
+
+        $file = $request->file('file');
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        try {
+            if ($extension === 'csv' || $extension === 'txt') {
+                $reader = new CsvReader();
+            } elseif ($extension === 'xls') {
+                $reader = new XlsReader();
+            } else {
+                $reader = new XlsxReader();
+            }
+
+            $spreadsheet = $reader->load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray(null, true, true, true);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal membaca berkas: ' . $e->getMessage());
+        }
+
+        if (empty($rows) || count($rows) < 2) {
+            return back()->with('error', 'Berkas kosong atau tidak berisi baris data anggota.');
+        }
+
+        // Ambil header baris 1
+        $headerRow = array_shift($rows);
+        $columnMap = [];
+        foreach ($headerRow as $colLetter => $headerName) {
+            $norm = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace([' ', '-'], '_', (string)$headerName))));
+            if (in_array($norm, ['nama_siswa', 'namasiswa', 'student_name', 'nama'])) {
+                $columnMap['nama_siswa'] = $colLetter;
+            } elseif (in_array($norm, ['nis', 'nomor_induk', 'nomorinduk', 'no_induk'])) {
+                $columnMap['nis'] = $colLetter;
+            } elseif (in_array($norm, ['email', 'alamat_email', 'gmail'])) {
+                $columnMap['email'] = $colLetter;
+            } elseif (in_array($norm, ['kelas', 'class_grade', 'class', 'tingkat'])) {
+                $columnMap['kelas'] = $colLetter;
+            } elseif (in_array($norm, ['angkatan_keluar', 'angkatankeluar', 'graduation_year', 'tahun_lulus', 'tahun_kelulusan'])) {
+                $columnMap['angkatan_keluar'] = $colLetter;
+            } elseif (in_array($norm, ['password', 'sandi', 'kata_sandi'])) {
+                $columnMap['password'] = $colLetter;
+            }
+        }
+
+        if (!isset($columnMap['nama_siswa']) || !isset($columnMap['nis'])) {
+            return back()->with('error', 'Format template salah. Kolom nama_siswa dan nis wajib ada di baris pertama template.');
+        }
+
+        $importedCount = 0;
+        $skippedCount = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($rows as $rowIndex => $row) {
+                $namaSiswa = trim((string)($row[$columnMap['nama_siswa']] ?? ''));
+                $nis = trim((string)($row[$columnMap['nis']] ?? ''));
+
+                // Lewati baris kosong
+                if ($namaSiswa === '' && $nis === '') {
+                    continue;
+                }
+
+                if ($namaSiswa === '' || $nis === '') {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Cek apakah NIS sudah terdaftar di Member atau User
+                $existingMember = Member::where('nis', $nis)->first();
+                $existingUser = User::where('username', $nis)->first();
+                if ($existingMember || $existingUser) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $email = isset($columnMap['email']) ? trim((string)($row[$columnMap['email']] ?? '')) : '';
+                if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nis)) . '@gmail.com';
+                }
+
+                $kelas = isset($columnMap['kelas']) ? trim((string)($row[$columnMap['kelas']] ?? '')) : 'X RPL 1';
+                if ($kelas === '') $kelas = 'X RPL 1';
+
+                $angkatanKeluar = isset($columnMap['angkatan_keluar']) ? trim((string)($row[$columnMap['angkatan_keluar']] ?? '')) : (string)(date('Y') + 3);
+                if ($angkatanKeluar === '') $angkatanKeluar = (string)(date('Y') + 3);
+
+                $passwordRaw = isset($columnMap['password']) ? trim((string)($row[$columnMap['password']] ?? '')) : '123456';
+                if (strlen($passwordRaw) < 6) $passwordRaw = '123456';
+
+                // 1. Buat User Nasabah
+                $user = User::create([
+                    'username' => $nis,
+                    'nama_petugas' => $namaSiswa,
+                    'email' => $email,
+                    'role' => 'nasabah',
+                    'password' => Hash::make($passwordRaw),
+                    'status' => 'aktif',
+                ]);
+
+                // 2. Buat Member (Status rekening tidak aktif, PIN belum diset karena belum aktivasi & setor minimal Rp 10.000 di teller)
+                Member::create([
+                    'user_id' => $user->id,
+                    'student_name' => $namaSiswa,
+                    'nis' => $nis,
+                    'class_grade' => $kelas,
+                    'email' => $email,
+                    'pin' => null,
+                    'graduation_year' => $angkatanKeluar,
+                    'status' => 'rekening tidak aktif',
+                ]);
+
+                $importedCount++;
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memproses impor: ' . $e->getMessage());
+        }
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Impor Data Anggota',
+            'detail' => "Berhasil mengimpor {$importedCount} data anggota baru ({$skippedCount} data dilewati)",
+            'ip_address' => $request->ip(),
+        ]);
+
+        $message = "Berhasil mengimpor {$importedCount} data anggota siswa baru.";
+        if ($skippedCount > 0) {
+            $message .= " Sebanyak {$skippedCount} data dilewati karena NIS sudah terdaftar atau baris tidak lengkap.";
+        }
+
+        return back()->with('success', $message);
     }
 
     public function updateMember(Request $request, $userId)

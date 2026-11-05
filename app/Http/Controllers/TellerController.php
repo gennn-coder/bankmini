@@ -40,7 +40,7 @@ class TellerController extends Controller
             if ($unactivatedMember && $unactivatedMember->status === 'rekening tidak aktif') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anggota ' . $unactivatedMember->student_name . ' (NIS: ' . $unactivatedMember->nis . ') belum diaktifkan! Silakan lakukan aktivasi terlebih dahulu pada tab "Aktivasi Anggota (Otomatis)" agar dapat menabung.',
+                    'message' => 'Anggota ' . $unactivatedMember->student_name . ' (NIS: ' . $unactivatedMember->nis . ') belum diaktifkan! Silakan lakukan aktivasi terlebih dahulu pada tab "Aktivasi Anggota" agar dapat menabung.',
                 ]);
             }
 

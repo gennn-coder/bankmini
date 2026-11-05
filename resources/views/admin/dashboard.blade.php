@@ -561,43 +561,74 @@
         <!-- TAB 2: DATA ANGGOTA SISWA (MEMBERS) - CRUD -->
         <div id="tab-members" class="tab-content">
             <div class="grid-split">
-                <div class="card">
-                    <h3 style="margin-top:0; margin-bottom: 0.5rem; color: #2563eb;">Tambah Anggota Siswa Baru</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Tabel Anggota digunakan untuk menambah anggota</p>
-                    
-                    <form action="{{ route('admin.members.store') }}" method="POST">
-                        @csrf
-                        <div class="form-group">
-                            <label>Nama Siswa</label>
-                            <input type="text" name="student_name" class="form-control" required placeholder="Contoh: Budi Pratama">
+                <div>
+                    <div class="card">
+                        <h3 style="margin-top:0; margin-bottom: 0.5rem; color: #2563eb;">Tambah Anggota Siswa Baru</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Tabel Anggota digunakan untuk menambah anggota</p>
+                        
+                        <form action="{{ route('admin.members.store') }}" method="POST">
+                            @csrf
+                            <div class="form-group">
+                                <label>Nama Siswa</label>
+                                <input type="text" name="student_name" class="form-control" required placeholder="Contoh: Budi Pratama">
+                            </div>
+                            <div class="form-group">
+                                <label>NIS (Nomor Induk Siswa)</label>
+                                <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
+                            </div>
+                            <div class="form-group">
+                                <label>Alamat Gmail Siswa</label>
+                                <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Kelas</label>
+                                <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: X RPL 1">
+                            </div>
+                            <div class="form-group">
+                                <label>Angkatan Keluar (Tahun Kelulusan)</label>
+                                <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
+                            </div>
+                            <div class="form-group">
+                                <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
+                                <input type="password" name="password" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)">
+                            </div>
+                            <div class="form-group">
+                                <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
+                                <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)">
+                            </div>
+                            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Data Anggota</button>
+                        </form>
+                    </div>
+
+                    <!-- KARTU IMPOR ANGGOTA (CSV / EXCEL) -->
+                    <div class="card" style="margin-top: 1.5rem;">
+                        <h3 style="margin-top:0; margin-bottom: 1.15rem; color: #1e293b;">Impor Data Anggota</h3>
+
+                        <div style="margin-bottom: 1.15rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.82rem; margin-bottom: 0.45rem; color: #1e293b;">
+                                Unduh Template Format Database:
+                            </label>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <a href="{{ route('admin.members.template', ['format' => 'xlsx']) }}" class="btn-success" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 9px; text-decoration: none;">
+                                    Template Excel (.xlsx)
+                                </a>
+                                <a href="{{ route('admin.members.template', ['format' => 'csv']) }}" class="btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 9px; background: #475569; text-decoration: none;">
+                                    Template CSV
+                                </a>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>NIS (Nomor Induk Siswa)</label>
-                            <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
-                        </div>
-                        <div class="form-group">
-                            <label>Alamat Gmail Siswa</label>
-                            <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Kelas</label>
-                            <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: X RPL 1">
-                        </div>
-                        <div class="form-group">
-                            <label>Angkatan Keluar (Tahun Kelulusan)</label>
-                            <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
-                        </div>
-                        <div class="form-group">
-                            <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
-                            <input type="password" name="password" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)">
-                           
-                        </div>
-                        <div class="form-group">
-                            <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
-                            <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)">
-                        </div>
-                        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Data Anggota</button>
-                    </form>
+
+                        <form action="{{ route('admin.members.import') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label>Pilih Berkas CSV / XLSX</label>
+                                <input type="file" name="file" class="form-control" accept=".csv, .xlsx, .xls" required style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
+                            </div>
+                            <button type="submit" class="btn-primary" style="width: 100%; padding: 0.7rem; font-size: 0.9rem;">
+                                Unggah &amp; Impor Anggota
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="card">
