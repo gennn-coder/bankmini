@@ -82,8 +82,8 @@ class BankMiniApp extends StatelessWidget {
 
 // Global App Config (IP Server Laravel)
 class ApiConfig {
-  // Bekerja langsung via USB dengan adb reverse, atau ganti ke IP Wi-Fi via tombol pengaturan di login
-  static String baseUrl = 'http://127.0.0.1:8000/api/nasabah';
+  // Default URL Server Live Production (DomaiNesia HTTPS)
+  static String baseUrl = 'https://skansabaewallet.web.id/api/nasabah';
 }
 
 // ---------------------------------------------------------------------------

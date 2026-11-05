@@ -770,16 +770,25 @@
                 <!-- PENCARIAN & FILTER PENABUNG -->
                 @php
                     $uniqueSaverKelas = \App\Models\Saver::whereNotNull('class_grade')->where('class_grade', '!=', '')->distinct()->pluck('class_grade')->sort()->values();
+                    $uniqueSaverAngkatan = \App\Models\Member::whereNotNull('graduation_year')->where('graduation_year', '!=', '')->distinct()->pluck('graduation_year')->sort()->values();
                 @endphp
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
                     <div style="flex: 1; min-width: 200px;">
-                        <input type="text" id="searchSaver" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Penabung (Nama, No Rekening, NIS)..." oninput="filterSaverTable()">
+                        <input type="text" id="searchSaver" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" placeholder="Cari Penabung (Nama, No Rekening, NIS, Tahun Kelulusan)..." oninput="filterSaverTable()">
                     </div>
-                    <div style="width: 160px;">
+                    <div style="width: 150px;">
                         <select id="filterSaverKelas" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterSaverTable()">
                             <option value="">Semua Jurusan</option>
                             @foreach($uniqueSaverKelas as $sk)
                                 <option value="{{ strtolower($sk) }}">{{ $sk }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div style="width: 170px;">
+                        <select id="filterSaverAngkatan" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;" onchange="filterSaverTable()">
+                            <option value="">Semua Tahun Lulus</option>
+                            @foreach($uniqueSaverAngkatan as $sa)
+                                <option value="{{ strtolower($sa) }}">{{ $sa }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -801,12 +810,12 @@
                         </thead>
                         <tbody id="tableSaverBody">
                             @forelse($savers as $s)
-                            <tr class="saver-row" data-kelas="{{ strtolower($s->class_grade) }}" data-angkatan="{{ strtolower($s->member->graduation_year ?? '') }}">
+                            <tr class="saver-row" data-kelas="{{ strtolower($s->class_grade) }}" data-angkatan="{{ strtolower($s->graduation_year ?? '') }}">
                                 <td><code>{{ $s->account_number }}</code></td>
                                 <td><strong>{{ $s->student_name }}</strong></td>
                                 <td><code>{{ $s->nis }}</code></td>
                                 <td>{{ $s->class_grade }}</td>
-                                <td><strong>{{ $s->member->graduation_year ?? '-' }}</strong></td>
+                                <td><strong>{{ $s->graduation_year ?? '-' }}</strong></td>
                                 <td><strong style="color: #16a34a; font-size: 1rem;">Rp {{ number_format($s->rekening->saldo ?? 0, 0, ',', '.') }}</strong></td>
                                 <td><span class="badge badge-aktif">{{ strtoupper($s->rekening->status ?? 'aktif') }}</span></td>
                                 <td>
@@ -1723,17 +1732,20 @@
         function filterSaverTable() {
             const query = (document.getElementById('searchSaver')?.value || '').toLowerCase().trim();
             const kelas = (document.getElementById('filterSaverKelas')?.value || '').toLowerCase();
+            const angkatan = (document.getElementById('filterSaverAngkatan')?.value || '').toLowerCase();
             const rows = document.querySelectorAll('#tableSaverBody tr.saver-row');
             let visibleCount = 0;
 
             rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
                 const rKelas = row.getAttribute('data-kelas') || '';
+                const rAngkatan = row.getAttribute('data-angkatan') || '';
 
                 const matchQuery = !query || text.includes(query);
                 const matchKelas = !kelas || rKelas === kelas;
+                const matchAngkatan = !angkatan || rAngkatan === angkatan;
 
-                if (matchQuery && matchKelas) {
+                if (matchQuery && matchKelas && matchAngkatan) {
                     row.style.display = '';
                     visibleCount++;
                 } else {

@@ -54,6 +54,24 @@ class Saver extends Model
     }
 
     // Indonesian attribute backward compatibility
+    public function getGraduationYearAttribute()
+    {
+        if ($this->relationLoaded('member') && $this->member) {
+            return $this->member->graduation_year ?: '-';
+        }
+        $rel = $this->member;
+        if ($rel && $rel->graduation_year) {
+            return $rel->graduation_year;
+        }
+        $byNis = Member::where('nis', $this->nis)->first();
+        return $byNis?->graduation_year ?? '-';
+    }
+
+    public function getAngkatanKeluarAttribute()
+    {
+        return $this->graduation_year;
+    }
+
     public function getNoRekeningAttribute()
     {
         return $this->account_number;

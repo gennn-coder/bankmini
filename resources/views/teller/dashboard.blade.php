@@ -309,48 +309,70 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .scanner-viewport-box {
-            position: relative;
-            background: #0f172a;
-            border-radius: 14px;
-            overflow: hidden;
-            width: 100%;
-            height: 300px;
-            max-height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: relative !important;
+            background: #0f172a !important;
+            border-radius: 14px !important;
+            overflow: hidden !important;
+            width: 100% !important;
+            height: 270px !important;
+            min-height: 270px !important;
+            max-height: 270px !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
         }
         #reader {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            max-height: 300px !important;
+            min-height: 270px !important;
+            max-height: 270px !important;
             border: none !important;
             background: #0f172a !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             overflow: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
         }
         #reader video {
             width: 100% !important;
             height: 100% !important;
-            max-height: 300px !important;
-            border-radius: 12px;
+            min-height: 270px !important;
+            max-height: 270px !important;
+            border-radius: 14px !important;
             object-fit: cover !important;
+            display: block !important;
         }
         #reader__scan_region {
-            background: transparent !important;
             width: 100% !important;
             height: 100% !important;
+            min-height: 270px !important;
+            max-height: 270px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            background: transparent !important;
+            border: none !important;
         }
         #reader__scan_region video {
             width: 100% !important;
             height: 100% !important;
-            max-height: 300px !important;
+            min-height: 270px !important;
+            max-height: 270px !important;
             object-fit: cover !important;
+        }
+        #reader img {
+            display: none !important;
+        }
+        #reader__header_message {
+            display: none !important;
         }
         #reader__dashboard {
             display: none !important;
@@ -2279,62 +2301,47 @@
         let currentFacingMode = 'environment'; // Default Kamera Belakang
 
         async function openCameraModal() {
-            const modal = document.getElementById('cameraModal');
-            modal.classList.add('active');
-            modal.style.display = 'flex';
-            document.getElementById('scannerLaser').style.display = 'block';
-            document.getElementById('scannerCorners').style.display = 'block';
-            document.getElementById('scannerStatusMsg').innerText = 'Menghubungkan ke kamera...';
+            if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                window.location.protocol = 'https:';
+                return;
+            }
 
+            const modal = document.getElementById('cameraModal');
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+            }
+            const laser = document.getElementById('scannerLaser');
+            if (laser) laser.style.display = 'block';
+            const corners = document.getElementById('scannerCorners');
+            if (corners) corners.style.display = 'block';
+            const statusMsg = document.getElementById('scannerStatusMsg');
+            if (statusMsg) statusMsg.innerText = 'Menghubungkan ke kamera...';
+
+            await populateCameraDevices();
             await startCameraScanner();
         }
 
-        async function closeCameraModal() {
-            const modal = document.getElementById('cameraModal');
-            modal.classList.remove('active');
-            modal.style.display = 'none';
-            await stopCameraScanner();
-        }
+        async function populateCameraDevices() {
+            const select = document.getElementById('cameraSelect');
+            if (!select) return;
 
-        async function startCameraScanner(specificCameraId = null) {
+            const prevVal = select.value || currentFacingMode;
+            select.innerHTML = '';
+
+            const optBack = document.createElement('option');
+            optBack.value = 'environment';
+            optBack.text = 'Kamera Belakang (Utama)';
+            select.appendChild(optBack);
+
+            const optFront = document.createElement('option');
+            optFront.value = 'user';
+            optFront.text = 'Kamera Depan';
+            select.appendChild(optFront);
+
             try {
-                if (typeof Html5Qrcode === 'undefined') {
-                    document.getElementById('scannerStatusMsg').innerText = 'Library pemindai sedang dimuat, mohon tunggu...';
-                    setTimeout(() => startCameraScanner(specificCameraId), 400);
-                    return;
-                }
-
-                if (html5QrScanner && isScannerRunning) {
-                    await html5QrScanner.stop();
-                    isScannerRunning = false;
-                }
-
-                if (!html5QrScanner) {
-                    html5QrScanner = new Html5Qrcode("reader");
-                }
-
-                const select = document.getElementById('cameraSelect');
-                let devices = [];
-                try {
-                    devices = await Html5Qrcode.getCameras();
-                } catch (e) {
-                    console.warn("Gagal mendapatkan daftar kamera:", e);
-                }
-
-                // Perbarui daftar opsi kamera dengan kamera belakang sebagai pilihan utama
-                if (select && select.dataset.loaded !== 'true') {
-                    select.innerHTML = '';
-
-                    const optEnv = document.createElement('option');
-                    optEnv.value = 'environment';
-                    optEnv.text = 'Kamera Belakang';
-                    select.appendChild(optEnv);
-
-                    const optUser = document.createElement('option');
-                    optUser.value = 'user';
-                    optUser.text = 'Kamera Depan';
-                    select.appendChild(optUser);
-
+                if (typeof Html5Qrcode !== 'undefined') {
+                    const devices = await Html5Qrcode.getCameras();
                     if (devices && devices.length > 0) {
                         devices.forEach((dev, idx) => {
                             const opt = document.createElement('option');
@@ -2350,23 +2357,67 @@
                             select.appendChild(opt);
                         });
                     }
-                    select.dataset.loaded = 'true';
+                }
+            } catch (e) {
+                console.warn("Gagal mendapatkan daftar kamera:", e);
+            }
+
+            if (select.querySelector(`option[value="${prevVal}"]`)) {
+                select.value = prevVal;
+            } else {
+                select.value = 'environment';
+            }
+        }
+
+        async function closeCameraModal() {
+            const modal = document.getElementById('cameraModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+            await stopCameraScanner();
+        }
+
+        async function startCameraScanner(specificCameraId = null) {
+            try {
+                if (typeof Html5Qrcode === 'undefined') {
+                    const statusMsg = document.getElementById('scannerStatusMsg');
+                    if (statusMsg) statusMsg.innerText = 'Library pemindai sedang dimuat, mohon tunggu...';
+                    setTimeout(() => startCameraScanner(specificCameraId), 400);
+                    return;
                 }
 
+                if (html5QrScanner && isScannerRunning) {
+                    await html5QrScanner.stop();
+                    isScannerRunning = false;
+                }
+
+                if (!html5QrScanner) {
+                    html5QrScanner = new Html5Qrcode("reader");
+                }
+
+                const select = document.getElementById('cameraSelect');
                 const chosenValue = specificCameraId || (select ? select.value : 'environment') || 'environment';
-                let cameraParam = chosenValue;
+
+                let cameraParam;
                 if (chosenValue === 'environment') {
-                    cameraParam = { facingMode: "environment" };
+                    cameraParam = { facingMode: { ideal: "environment" } };
                     currentFacingMode = 'environment';
                 } else if (chosenValue === 'user') {
                     cameraParam = { facingMode: "user" };
                     currentFacingMode = 'user';
+                } else {
+                    cameraParam = { deviceId: { exact: chosenValue } };
+                }
+
+                const btnSwitch = document.getElementById('btnSwitchCamera');
+                if (btnSwitch) {
+                    btnSwitch.innerText = currentFacingMode === 'environment' ? 'Ganti ke Depan' : 'Ganti ke Belakang';
                 }
 
                 const config = {
-                    fps: 15,
-                    qrbox: { width: 200, height: 200 },
-                    aspectRatio: 1.0
+                    fps: 20,
+                    qrbox: { width: 190, height: 190 }
                 };
 
                 await html5QrScanner.start(
@@ -2389,19 +2440,21 @@
                     toggleBtn.innerText = 'Matikan Kamera';
                     toggleBtn.style.background = '#dc2626';
                 }
-                const btnSwitch = document.getElementById('btnSwitchCamera');
-                if (btnSwitch) {
-                    btnSwitch.innerText = currentFacingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang';
+                const statusMsg = document.getElementById('scannerStatusMsg');
+                if (statusMsg) {
+                    statusMsg.innerText = 'Kamera aktif. Posisikan barcode atau QR siswa tepat di dalam kotak.';
                 }
-                document.getElementById('scannerStatusMsg').innerText = 'Kamera aktif. Posisikan barcode atau QR siswa tepat di dalam kotak.';
             } catch (err) {
                 console.error("Gagal start kamera:", err);
                 isScannerRunning = false;
-                document.getElementById('scannerStatusMsg').innerHTML = `<span style="color: #ef4444;">Gagal mengakses kamera: ${err.message || 'Izin kamera ditolak atau sedang digunakan aplikasi lain'}.</span>`;
                 const toggleBtn = document.getElementById('btnToggleCamera');
                 if (toggleBtn) {
                     toggleBtn.innerText = 'Nyalakan Kamera';
                     toggleBtn.style.background = '#2563eb';
+                }
+                const statusMsg = document.getElementById('scannerStatusMsg');
+                if (statusMsg) {
+                    statusMsg.innerHTML = `<span style="color: #ef4444;">Kamera tidak aktif: ${err.message || 'Izin kamera ditolak atau pastikan akses menggunakan HTTPS'}. Silakan gunakan opsi unggah foto barcode/QR di bawah.</span>`;
                 }
             }
         }
@@ -2447,7 +2500,7 @@
             }
             const btnSwitch = document.getElementById('btnSwitchCamera');
             if (btnSwitch) {
-                btnSwitch.innerText = currentFacingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang';
+                btnSwitch.innerText = currentFacingMode === 'environment' ? 'Ganti ke Depan' : 'Ganti ke Belakang';
             }
             if (isScannerRunning) {
                 startCameraScanner(currentFacingMode);
@@ -2457,12 +2510,14 @@
         function handleCameraSelectChange(val) {
             if (val === 'environment' || val === 'user') {
                 currentFacingMode = val;
-                const btnSwitch = document.getElementById('btnSwitchCamera');
-                if (btnSwitch) {
-                    btnSwitch.innerText = currentFacingMode === 'environment' ? 'Kamera Depan' : 'Kamera Belakang';
-                }
             }
-            startCameraScanner(val);
+            const btnSwitch = document.getElementById('btnSwitchCamera');
+            if (btnSwitch) {
+                btnSwitch.innerText = currentFacingMode === 'environment' ? 'Ganti ke Depan' : 'Ganti ke Belakang';
+            }
+            if (isScannerRunning) {
+                startCameraScanner(val);
+            }
         }
 
         let isCameraMirrored = false;
@@ -2636,13 +2691,13 @@
                         <option value="environment">Kamera Belakang</option>
                         <option value="user">Kamera Depan</option>
                     </select>
-                    <button type="button" id="btnToggleCamera" onclick="toggleCameraScanner()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #2563eb;">
+                    <button type="button" id="btnSwitchCamera" onclick="switchCameraFacing()" class="btn-primary" style="padding: 0.55rem 0.85rem; font-size: 0.82rem; background: #0284c7; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                        Ganti ke Depan
+                    </button>
+                    <button type="button" id="btnToggleCamera" onclick="toggleCameraScanner()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.82rem; background: #2563eb; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap;">
                         Nyalakan Kamera
                     </button>
-                    <button type="button" id="btnSwitchCamera" onclick="switchCameraFacing()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #0284c7;">
-                        Kamera Belakang
-                    </button>
-                    <button type="button" id="btnMirrorCamera" onclick="toggleCameraMirror()" class="btn-primary" style="padding: 0.55rem 0.95rem; font-size: 0.85rem; background: #475569;">
+                    <button type="button" id="btnMirrorCamera" onclick="toggleCameraMirror()" class="btn-primary" style="padding: 0.55rem 0.85rem; font-size: 0.82rem; background: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">
                         Mirror Kamera
                     </button>
                 </div>
@@ -2768,7 +2823,7 @@
                 <strong style="color: #0f172a; font-size: 1rem; font-variant-numeric: tabular-nums;">Rp {{ number_format($sisaKasLaci, 0, ',', '.') }}</strong>
             </div>
 
-            <form action="{{ route('teller.ajukan-kas') }}" method="POST" class="prevent-double-submit" autocomplete="off">
+            <form action="{{ route('teller.ajukan-kas') }}" method="POST" id="formAjukanKas" class="prevent-double-submit" autocomplete="off">
                 @csrf
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Nominal Tambahan (Rp) <span style="color: #dc2626;">*</span></label>
@@ -2794,8 +2849,8 @@
                 </div>
 
                 <div style="display: flex; gap: 0.75rem;">
-                    <button type="button" onclick="closeAjukanKasModal()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1; padding: 0.7rem;">Batal</button>
-                    <button type="submit" class="btn-primary" style="flex: 2; padding: 0.7rem; font-size: 0.92rem;">Kirim Pengajuan Kas</button>
+                    <button type="button" onclick="closeAjukanKasModal()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1; padding: 0.7rem; border-radius: 10px; font-weight: 700; border: none; cursor: pointer;">Batal</button>
+                    <button type="submit" class="btn-primary" style="flex: 2; padding: 0.7rem; font-size: 0.92rem; border-radius: 10px;">Kirim Pengajuan Kas</button>
                 </div>
             </form>
         </div>
@@ -2803,12 +2858,20 @@
 
     <script>
         function openAjukanKasModal() {
+            const form = document.getElementById('formAjukanKas');
+            if (form) form.reset();
+            const inpNominal = document.getElementById('inputNominalKas');
+            if (inpNominal) {
+                inpNominal.value = '0';
+                inpNominal.defaultValue = '0';
+            }
+            const inpAlasan = document.getElementById('inputAlasanKas');
+            if (inpAlasan) {
+                inpAlasan.value = '';
+                inpAlasan.defaultValue = '';
+            }
             const m = document.getElementById('ajukanKasModal');
             if (m) {
-                const inpNominal = document.getElementById('inputNominalKas');
-                if (inpNominal) inpNominal.value = '0';
-                const inpAlasan = document.getElementById('inputAlasanKas');
-                if (inpAlasan) inpAlasan.value = '';
                 m.style.display = 'flex';
                 setTimeout(() => {
                     const inp = document.getElementById('inputNominalKas');
@@ -2822,10 +2885,18 @@
         function closeAjukanKasModal() {
             const m = document.getElementById('ajukanKasModal');
             if (m) m.style.display = 'none';
+            const form = document.getElementById('formAjukanKas');
+            if (form) form.reset();
             const inpNominal = document.getElementById('inputNominalKas');
-            if (inpNominal) inpNominal.value = '0';
+            if (inpNominal) {
+                inpNominal.value = '0';
+                inpNominal.defaultValue = '0';
+            }
             const inpAlasan = document.getElementById('inputAlasanKas');
-            if (inpAlasan) inpAlasan.value = '';
+            if (inpAlasan) {
+                inpAlasan.value = '';
+                inpAlasan.defaultValue = '';
+            }
         }
         function setNominalKas(val) {
             const input = document.getElementById('inputNominalKas');
