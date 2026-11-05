@@ -723,9 +723,15 @@
                 <div class="phone-frame">
                     <div class="phone-notch"></div>
                     <div class="phone-screen">
-                        <div class="mock-app-header">
-                            <h5>Portal Nasabah Siswa</h5>
-                            <p>E-Teller Bank Mini Sekolah</p>
+                        <div class="mock-app-header" style="display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                            <div>
+                                <h5 style="margin: 0; font-size: 0.88rem; font-weight: 800;">Portal Nasabah Siswa</h5>
+                                <p style="margin: 2px 0 0; font-size: 0.72rem; color: #dbeafe;">E-Teller Bank Mini Sekolah</p>
+                            </div>
+                            <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: #ffffff;">Teller =</span>
+                                <span style="background: #dcfce7; color: #15803d; font-size: 0.62rem; font-weight: 800; padding: 2px 7px; border-radius: 999px;">Buka</span>
+                            </div>
                         </div>
 
                         <div class="mock-card">
