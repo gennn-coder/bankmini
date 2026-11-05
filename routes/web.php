@@ -66,3 +66,23 @@ Route::middleware(['auth'])->group(function () {
     // Nasabah / Saver
     Route::get('/nasabah/dashboard', [DashboardController::class, 'nasabah'])->name('nasabah.dashboard');
 });
+
+// Endpoint Pembersihan Cache Otomatis (CI/CD Deployment & Maintenance)
+Route::get('/clear-system-cache-deploy-trigger', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cache view, route, dan config server berhasil dibersihkan!',
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+});

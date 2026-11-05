@@ -2753,7 +2753,7 @@
     </div>
 
     <!-- MODAL PENGAJUAN TAMBAHAN KAS (DESAIN ELEGAN FINTECH DENGAN QUICK CHIPS) -->
-    <div id="ajukanKasModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+    <div id="ajukanKasModal" onclick="if(event.target === this) closeAjukanKasModal()" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
         <div class="card" style="max-width: 460px; width: 100%; background: #ffffff; border-radius: 20px; padding: 1.75rem; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); border: 1px solid rgba(226, 232, 240, 0.8);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
                 <div>
@@ -2768,11 +2768,11 @@
                 <strong style="color: #0f172a; font-size: 1rem; font-variant-numeric: tabular-nums;">Rp {{ number_format($sisaKasLaci, 0, ',', '.') }}</strong>
             </div>
 
-            <form action="{{ route('teller.ajukan-kas') }}" method="POST" class="prevent-double-submit">
+            <form action="{{ route('teller.ajukan-kas') }}" method="POST" class="prevent-double-submit" autocomplete="off">
                 @csrf
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Nominal Tambahan (Rp) <span style="color: #dc2626;">*</span></label>
-                    <input type="number" id="inputNominalKas" name="nominal" class="form-control" required min="1000" step="1000" value="0" placeholder="0" style="font-weight: 700; font-size: 1.05rem;">
+                    <input type="number" id="inputNominalKas" name="nominal" class="form-control" required min="1000" step="1000" value="0" placeholder="0" autocomplete="off" style="font-weight: 700; font-size: 1.05rem;">
                     
                     <!-- Quick Amount Chips -->
                     <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;">
@@ -2784,7 +2784,7 @@
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Alasan / Keterangan Kebutuhan Kas <span style="color: #dc2626;">*</span></label>
-                    <input type="text" id="inputAlasanKas" name="alasan" class="form-control" required placeholder="Contoh: Antrean penarikan siswa tinggi...">
+                    <input type="text" id="inputAlasanKas" name="alasan" class="form-control" required placeholder="Contoh: Antrean penarikan siswa tinggi..." autocomplete="off">
                     
                     <!-- Quick Reason Chips -->
                     <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap;">

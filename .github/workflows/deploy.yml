@@ -13,7 +13,7 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: 🚀 Sync Laravel Core to cPanel (laravel_core)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -21,7 +21,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /laravel_core/
+          server-dir: ./laravel_core/
           exclude: |
             **/.git*
             **/.git*/**
@@ -41,8 +41,12 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: public/
-          server-dir: /public_html/
+          server-dir: ./public_html/
           exclude: |
             index.php
-            .htaccess
+
+      - name: 🔄 Clear Remote View & Route Cache
+        run: |
+          sleep 3
+          curl -s -k "https://skansabaewallet.web.id/clear-system-cache-deploy-trigger" || true
 
