@@ -744,32 +744,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         actions: [
           Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusLayanan == 'buka'
-                    ? const Color(0xFFDCFCE7)
-                    : statusLayanan == 'istirahat'
-                        ? const Color(0xFFFEF3C7)
-                        : const Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                statusLayanan == 'buka'
-                    ? 'Teller = Buka'
-                    : statusLayanan == 'istirahat'
-                        ? 'Teller = Istirahat'
-                        : 'Teller = Tutup',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: statusLayanan == 'buka'
-                      ? const Color(0xFF15803D)
-                      : statusLayanan == 'istirahat'
-                          ? const Color(0xFFB45309)
-                          : const Color(0xFFB91C1C),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Teller = ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusLayanan == 'buka'
+                        ? const Color(0xFFDCFCE7)
+                        : statusLayanan == 'istirahat'
+                            ? const Color(0xFFFEF3C7)
+                            : const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    statusLayanan == 'buka'
+                        ? 'Buka'
+                        : statusLayanan == 'istirahat'
+                            ? 'Istirahat'
+                            : 'Tutup',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: statusLayanan == 'buka'
+                          ? const Color(0xFF15803D)
+                          : statusLayanan == 'istirahat'
+                              ? const Color(0xFFB45309)
+                              : const Color(0xFFB91C1C),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 4),

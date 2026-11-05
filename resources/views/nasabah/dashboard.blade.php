@@ -180,9 +180,12 @@
             <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Nasabah</h2>
             <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <div id="badgeStatusContainer" class="status-badge-{{ $statusLayanan }}">
-                <span id="labelStatusLayanan">{{ ucfirst($statusLayanan) }}</span>
+        <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+            <div style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                <span style="font-weight: 700; color: #475569; font-size: 0.85rem;">Teller =</span>
+                <div id="badgeStatusContainer" class="status-badge-{{ $statusLayanan }}">
+                    <span id="labelStatusLayanan">{{ ucfirst($statusLayanan) }}</span>
+                </div>
             </div>
             <span>Halo, <strong>{{ $nasabah->nama_siswa ?? $user->nama_petugas }}</strong></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
