@@ -685,7 +685,7 @@
             </a>
             <div class="nav-actions">
                 <a href="{{ route('login') }}" class="btn-nav-portal">Masuk Web Portal</a>
-                <a href="{{ route('app.download') }}" class="btn-nav-download">Unduh APK</a>
+                <a href="{{ asset('downloads/eteller-nasabah.apk') }}" download="eteller-nasabah.apk" class="btn-nav-download">Unduh APK</a>
             </div>
         </div>
     </header>
@@ -706,7 +706,7 @@
                     Layanan perbankan digital untuk siswa penabung E-Teller Bank Mini Sekolah. Cek saldo real-time, tampilkan kode QR kartu digital, dan pantau seluruh mutasi tabungan secara mandiri dari ponsel Android Anda.
                 </p>
                 <div class="hero-btn-group">
-                    <a href="{{ route('app.download') }}" class="btn-hero-primary">
+                    <a href="{{ asset('downloads/eteller-nasabah.apk') }}" download="eteller-nasabah.apk" class="btn-hero-primary">
                         Unduh File APK
                     </a>
                     <a href="#qr-download" class="btn-hero-secondary">
@@ -792,7 +792,7 @@
 
         <div class="qr-card-container">
             <div class="qr-img-box">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data={{ urlencode(route('app.download')) }}" alt="Kode QR Unduh APK">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data={{ urlencode(url('downloads/eteller-nasabah.apk')) }}" alt="Kode QR Unduh APK">
                 <div class="qr-caption">Pindai dengan Kamera Ponsel</div>
             </div>
 
@@ -802,7 +802,7 @@
                     Aplikasi ini dirancang khusus untuk siswa penabung E-Teller Bank Mini Sekolah. Tanpa perlu kabel data atau flashdisk, Anda dapat mengunduh berkas instalasi APK langsung ke ponsel Android melalui QR Code ini.
                 </p>
                 <div class="qr-btn-row">
-                    <a href="{{ route('app.download') }}" class="btn-qr-download">
+                    <a href="{{ asset('downloads/eteller-nasabah.apk') }}" download="eteller-nasabah.apk" class="btn-qr-download">
                         Unduh Berkas APK Langsung
                     </a>
                     <a href="{{ route('login') }}" class="btn-qr-secondary">
@@ -908,7 +908,7 @@
         <div>E-Teller Bank Mini Sekolah &bull; UKK RPL 2026/2027</div>
         <div class="footer-links">
             <a href="{{ route('login') }}">Masuk ke Web Portal</a>
-            <a href="{{ route('app.download') }}">Unduh Berkas APK</a>
+            <a href="{{ asset('downloads/eteller-nasabah.apk') }}" download="eteller-nasabah.apk">Unduh Berkas APK</a>
             <a href="#">Kembali ke Atas</a>
         </div>
     </footer>

@@ -70,15 +70,27 @@ class AuthController extends Controller
 
     public function downloadApk()
     {
-        $apkPath = public_path('downloads/eteller-nasabah.apk');
-        if (file_exists($apkPath)) {
-            return response()->download($apkPath, 'eteller-nasabah.apk', [
-                'Content-Type' => 'application/vnd.android.package-archive',
-            ]);
+        $possiblePaths = [
+            public_path('downloads/eteller-nasabah.apk'),
+            base_path('../public_html/downloads/eteller-nasabah.apk'),
+            base_path('public_html/downloads/eteller-nasabah.apk'),
+            dirname(base_path()) . '/public_html/downloads/eteller-nasabah.apk',
+            $_SERVER['DOCUMENT_ROOT'] . '/downloads/eteller-nasabah.apk',
+            public_path('downloads/eteller-nasabah-arm64.apk'),
+            base_path('../public_html/downloads/eteller-nasabah-arm64.apk'),
+        ];
+
+        foreach ($possiblePaths as $path) {
+            if (!empty($path) && file_exists($path)) {
+                return response()->download($path, 'eteller-nasabah.apk', [
+                    'Content-Type' => 'application/vnd.android.package-archive',
+                    'Content-Disposition' => 'attachment; filename="eteller-nasabah.apk"',
+                ]);
+            }
         }
 
-        // Jika APK belum diletakkan di public/downloads, beri file rilis dummy atau pesan informatif
-        return redirect()->route('landing.apk')->with('info', 'File APK versi rilis terbaru sedang disiapkan oleh administrator.');
+        // Direct static download fallback yang dilayani langsung oleh web server
+        return redirect('/downloads/eteller-nasabah.apk');
     }
 
     public function login(Request $request)
