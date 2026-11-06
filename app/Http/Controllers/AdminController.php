@@ -261,6 +261,10 @@ class AdminController extends Controller
         $importedCount = 0;
         $skippedCount = 0;
 
+        $existingMembers = array_fill_keys(Member::pluck('nis')->all(), true);
+        $existingUsernames = array_fill_keys(User::pluck('username')->all(), true);
+        $defaultPasswordHash = Hash::make('123456');
+
         DB::beginTransaction();
         try {
             foreach ($rows as $rowIndex => $row) {
@@ -278,12 +282,13 @@ class AdminController extends Controller
                 }
 
                 // Cek apakah NIS sudah terdaftar di Member atau User
-                $existingMember = Member::where('nis', $nis)->first();
-                $existingUser = User::where('username', $nis)->first();
-                if ($existingMember || $existingUser) {
+                if (isset($existingMembers[$nis]) || isset($existingUsernames[$nis])) {
                     $skippedCount++;
                     continue;
                 }
+
+                $existingMembers[$nis] = true;
+                $existingUsernames[$nis] = true;
 
                 $email = isset($columnMap['email']) ? trim((string)($row[$columnMap['email']] ?? '')) : null;
                 if ($email === '' || ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL))) {
@@ -297,7 +302,7 @@ class AdminController extends Controller
                 if ($angkatanKeluar === '') $angkatanKeluar = (string)(date('Y') + 3);
 
                 $passwordRaw = isset($columnMap['password']) ? trim((string)($row[$columnMap['password']] ?? '')) : '123456';
-                if (strlen($passwordRaw) < 6) $passwordRaw = '123456';
+                $passwordHashed = ($passwordRaw === '123456' || strlen($passwordRaw) < 6) ? $defaultPasswordHash : Hash::make($passwordRaw);
 
                 // 1. Buat User Nasabah (Email akan diisi dan diverifikasi saat aktivasi di loket Teller)
                 $user = User::create([
@@ -305,7 +310,7 @@ class AdminController extends Controller
                     'nama_petugas' => $namaSiswa,
                     'email' => $email,
                     'role' => 'nasabah',
-                    'password' => Hash::make($passwordRaw),
+                    'password' => $passwordHashed,
                     'status' => 'aktif',
                 ]);
 
