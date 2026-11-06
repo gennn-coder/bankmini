@@ -59,6 +59,27 @@ class TellerController extends Controller
                     'email' => $saver->member->email ?? $saver->email,
                 ]);
             }
+
+            // Self-healing: jika status member aktif tetapi status rekening terpengaruh nonaktif, pulihkan otomatis ke aktif
+            if ($saver->member->status === 'rekening aktif') {
+                if ($saver->rekening) {
+                    if ($saver->rekening->status === 'nonaktif') {
+                        $saver->rekening->update(['status' => 'aktif']);
+                        $saver->rekening->refresh();
+                    }
+                } else {
+                    $accountNumber = $saver->account_number ?: Saver::generateNomorRekening();
+                    $rekeningBaru = Rekening::create([
+                        'saver_id' => $saver->id,
+                        'id_nasabah' => $saver->id,
+                        'account_number' => $accountNumber,
+                        'no_rekening' => $accountNumber,
+                        'saldo' => 0,
+                        'status' => 'aktif',
+                    ]);
+                    $saver->setRelation('rekening', $rekeningBaru);
+                }
+            }
         }
 
         if (($saver->member && $saver->member->status === 'rekening tidak aktif') || ($saver->rekening && $saver->rekening->status === 'nonaktif')) {

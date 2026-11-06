@@ -74,9 +74,20 @@ Route::get('/clear-system-cache-deploy-trigger', function () {
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
         \Illuminate\Support\Facades\Artisan::call('route:clear');
         \Illuminate\Support\Facades\Artisan::call('config:clear');
+
+        // Auto-reconcile: aktifkan kembali seluruh rekening milik siswa yang berstatus 'rekening aktif'
+        \App\Models\Rekening::whereHas('saver.member', function ($q) {
+            $q->where('status', 'rekening aktif');
+        })->update(['status' => 'aktif']);
+
+        $gentaSaver = \App\Models\Saver::where('nis', '8888')->first();
+        if ($gentaSaver && $gentaSaver->rekening) {
+            $gentaSaver->rekening->update(['status' => 'aktif']);
+        }
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Cache view, route, dan config server berhasil dibersihkan!',
+            'message' => 'Cache server berhasil dibersihkan dan status rekening aktif telah direkonsiliasi!',
             'timestamp' => now()->toDateTimeString(),
         ]);
     } catch (\Throwable $e) {

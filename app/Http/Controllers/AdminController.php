@@ -442,8 +442,8 @@ class AdminController extends Controller
                     ]);
                 }
             }
-        } else {
-            // Jika status rekening tidak aktif, ubah status rekening menjadi nonaktif
+        } elseif ($request->filled('status') && $request->status === 'rekening tidak aktif') {
+            // Hanya nonaktifkan rekening jika admin secara eksplisit memilih status rekening tidak aktif
             if ($member->saver && $member->saver->rekening) {
                 $member->saver->rekening->update(['status' => 'nonaktif']);
             }

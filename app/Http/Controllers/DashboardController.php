@@ -221,6 +221,9 @@ class DashboardController extends Controller
                 $saver->email = $member->email;
                 $changed = true;
             }
+            if ($member->status === 'rekening aktif' && $saver->rekening && $saver->rekening->status === 'nonaktif') {
+                $saver->rekening->update(['status' => 'aktif']);
+            }
             if ($changed) {
                 $saver->save();
             }
