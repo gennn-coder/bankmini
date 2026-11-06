@@ -87,34 +87,7 @@ Route::get('/clear-system-cache-deploy-trigger', function () {
     }
 });
 
-// Endpoint Sementara Impor Data Siswa Remote Massal
-Route::get('/trigger-remote-mass-import-students-2026', function (\Illuminate\Http\Request $request) {
-    if ($request->query('key') !== 'skansaba-import-2026-secret') {
-        abort(403, 'Unauthorized');
-    }
 
-    @ini_set('max_execution_time', '300');
-    @set_time_limit(300);
-
-    try {
-        $exitCode = \Illuminate\Support\Facades\Artisan::call('app:import-students');
-        $output = \Illuminate\Support\Facades\Artisan::output();
-
-        return response()->json([
-            'status' => 'success',
-            'exit_code' => $exitCode,
-            'output' => $output,
-            'total_users' => \App\Models\User::count(),
-            'total_members' => \App\Models\Member::count(),
-            'timestamp' => now()->toDateTimeString(),
-        ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-        ], 500);
-    }
-});
 
 
 
