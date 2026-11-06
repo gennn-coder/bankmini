@@ -827,7 +827,41 @@
             </div>
         </div>
 
-        <!-- SISTEM ANTREAN BANK MINI (TELLER) -->
+        <!-- SEARCH BOX: PENCARIAN PENABUNG (DI ATAS) -->
+        <div class="search-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-600); font-weight: 800;">
+                    Pencarian Rekening Penabung
+                </h3>
+            </div>
+            <div class="search-flex">
+                <input type="text" id="searchKeyword" class="form-control" placeholder="Scan Barcode / QR / Ketik No Rekening / NIS / Nama Siswa (Tekan Enter)" autofocus autocomplete="off" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); doSearchNasabah(); }">
+                <button type="button" class="btn-primary" onclick="doSearchNasabah()">Cari Penabung</button>
+                <button type="button" class="btn-primary" onclick="openCameraModal()" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); display: inline-flex; align-items: center; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                    Buka Kamera Scan Barcode / QR
+                </button>
+            </div>
+
+            <div id="nasabahInfoCard" class="nasabah-info-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h4 style="margin: 0; color: var(--primary-600); font-size: 1.05rem;" id="infoNamaSiswa">Nama Penabung</h4>
+                    <span style="background: #dcfce7; color: #15803d; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px;">Data Ditemukan</span>
+                </div>
+                <div class="nasabah-info-grid">
+                    <div>No Rekening: <strong id="infoNoRek">-</strong></div>
+                    <div>NIS / Jurusan: <strong id="infoNisKelas">-</strong></div>
+                    <div>Saldo Real-Time: <strong style="color: #16a34a;" id="infoSaldo">-</strong></div>
+                    <div>Status: <strong id="infoStatus">-</strong></div>
+                </div>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    <button type="button" onclick="selectForSetoran()" class="btn-success" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">Pilih untuk Setoran</button>
+                    <button type="button" onclick="selectForPenarikan()" class="btn-primary" style="background: #dc2626; padding: 0.45rem 0.9rem; font-size: 0.85rem;">Pilih untuk Penarikan</button>
+                    <button type="button" onclick="selectForResetPin()" class="btn-primary" style="background: #f59e0b; padding: 0.45rem 0.9rem; font-size: 0.85rem;">Reset PIN Siswa</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SISTEM ANTREAN BANK MINI (TELLER) (DI BAWAH) -->
         <div class="card" style="border-left: 5px solid var(--primary-600); margin-bottom: 1.75rem; background: #ffffff;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
@@ -904,40 +938,6 @@
                     </div>
                 </details>
             @endif
-        </div>
-
-        <!-- SEARCH BOX: PENCARIAN PENABUNG -->
-        <div class="search-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">
-                <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-600); font-weight: 800;">
-                    Pencarian Rekening Penabung
-                </h3>
-            </div>
-            <div class="search-flex">
-                <input type="text" id="searchKeyword" class="form-control" placeholder="Scan Barcode / QR / Ketik No Rekening / NIS / Nama Siswa (Tekan Enter)" autofocus autocomplete="off" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); doSearchNasabah(); }">
-                <button type="button" class="btn-primary" onclick="doSearchNasabah()">Cari Penabung</button>
-                <button type="button" class="btn-primary" onclick="openCameraModal()" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); display: inline-flex; align-items: center; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
-                    Buka Kamera Scan Barcode / QR
-                </button>
-            </div>
-
-            <div id="nasabahInfoCard" class="nasabah-info-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <h4 style="margin: 0; color: var(--primary-600); font-size: 1.05rem;" id="infoNamaSiswa">Nama Penabung</h4>
-                    <span style="background: #dcfce7; color: #15803d; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px;">Data Ditemukan</span>
-                </div>
-                <div class="nasabah-info-grid">
-                    <div>No Rekening: <strong id="infoNoRek">-</strong></div>
-                    <div>NIS / Jurusan: <strong id="infoNisKelas">-</strong></div>
-                    <div>Saldo Real-Time: <strong style="color: #16a34a;" id="infoSaldo">-</strong></div>
-                    <div>Status: <strong id="infoStatus">-</strong></div>
-                </div>
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <button type="button" onclick="selectForSetoran()" class="btn-success" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">Pilih untuk Setoran</button>
-                    <button type="button" onclick="selectForPenarikan()" class="btn-primary" style="background: #dc2626; padding: 0.45rem 0.9rem; font-size: 0.85rem;">Pilih untuk Penarikan</button>
-                    <button type="button" onclick="selectForResetPin()" class="btn-primary" style="background: #f59e0b; padding: 0.45rem 0.9rem; font-size: 0.85rem;">Reset PIN Siswa</button>
-                </div>
-            </div>
         </div>
 
         <!-- NAVIGATION TABS -->
@@ -1037,6 +1037,28 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+
+                <!-- PAGINASI DAFTAR SISWA MENUNGGU AKTIVASI (20 PER HALAMAN) -->
+                <div id="aktivasiPaginationWrapper" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Menampilkan <strong id="aktivasiPageInfo">0 - 0 dari 0</strong> data siswa
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <button type="button" id="btnAktivasiPrev" onclick="prevAktivasiPage()" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            Sebelumnya
+                        </button>
+                        
+                        <div style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #475569;">
+                            <span>Halaman</span>
+                            <input type="number" id="aktivasiPageInput" min="1" value="1" onchange="jumpAktivasiPage(this.value)" style="width: 58px; text-align: center; padding: 0.3rem 0.4rem; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">
+                            <span>dari <strong id="aktivasiTotalPages">1</strong></span>
+                        </div>
+
+                        <button type="button" id="btnAktivasiNext" onclick="nextAktivasiPage()" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            Selanjutnya
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1726,13 +1748,19 @@
             if (input) input.value = val;
         }
 
-        function filterAktivasiTable() {
+        let currentAktivasiPage = 1;
+        const AKTIVASI_PER_PAGE = 20;
+
+        function filterAktivasiTable(resetPage = true) {
+            if (resetPage) {
+                currentAktivasiPage = 1;
+            }
             const search = (document.getElementById('searchAktivasiTable')?.value || '').toLowerCase().trim();
             const kelas = (document.getElementById('filterAktivasiKelas')?.value || '').toLowerCase().trim();
             const angkatan = (document.getElementById('filterAktivasiAngkatan')?.value || '').toLowerCase().trim();
 
             const rows = document.querySelectorAll('.aktivasi-row');
-            let visibleCount = 0;
+            const matchingRows = [];
 
             rows.forEach(row => {
                 const text = row.getAttribute('data-search') || '';
@@ -1744,16 +1772,82 @@
                 const matchAngkatan = !angkatan || rowAngkatan === angkatan;
 
                 if (matchSearch && matchKelas && matchAngkatan) {
-                    row.style.display = '';
-                    visibleCount++;
+                    matchingRows.push(row);
                 } else {
                     row.style.display = 'none';
                 }
             });
 
+            const totalMatches = matchingRows.length;
+            const totalPages = Math.ceil(totalMatches / AKTIVASI_PER_PAGE) || 1;
+
+            if (currentAktivasiPage > totalPages) currentAktivasiPage = totalPages;
+            if (currentAktivasiPage < 1) currentAktivasiPage = 1;
+
+            const startIndex = (currentAktivasiPage - 1) * AKTIVASI_PER_PAGE;
+            const endIndex = Math.min(startIndex + AKTIVASI_PER_PAGE, totalMatches);
+
+            matchingRows.forEach((row, idx) => {
+                if (idx >= startIndex && idx < endIndex) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update UI Pagination Controls
+            const pageInfo = document.getElementById('aktivasiPageInfo');
+            const pageInput = document.getElementById('aktivasiPageInput');
+            const totalPagesEl = document.getElementById('aktivasiTotalPages');
+            const btnPrev = document.getElementById('btnAktivasiPrev');
+            const btnNext = document.getElementById('btnAktivasiNext');
+
+            if (pageInfo) {
+                pageInfo.innerText = totalMatches > 0 
+                    ? `${startIndex + 1} - ${endIndex} dari ${totalMatches}` 
+                    : `0 dari 0`;
+            }
+            if (pageInput) {
+                pageInput.value = currentAktivasiPage;
+                pageInput.max = totalPages;
+            }
+            if (totalPagesEl) {
+                totalPagesEl.innerText = totalPages;
+            }
+            if (btnPrev) {
+                btnPrev.disabled = (currentAktivasiPage <= 1);
+                btnPrev.style.opacity = (currentAktivasiPage <= 1) ? '0.4' : '1';
+                btnPrev.style.cursor = (currentAktivasiPage <= 1) ? 'not-allowed' : 'pointer';
+            }
+            if (btnNext) {
+                btnNext.disabled = (currentAktivasiPage >= totalPages);
+                btnNext.style.opacity = (currentAktivasiPage >= totalPages) ? '0.4' : '1';
+                btnNext.style.cursor = (currentAktivasiPage >= totalPages) ? 'not-allowed' : 'pointer';
+            }
+
             const emptyRow = document.getElementById('emptyAktivasiRow');
             if (emptyRow) {
-                emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+                emptyRow.style.display = totalMatches === 0 ? '' : 'none';
+            }
+        }
+
+        function prevAktivasiPage() {
+            if (currentAktivasiPage > 1) {
+                currentAktivasiPage--;
+                filterAktivasiTable(false);
+            }
+        }
+
+        function nextAktivasiPage() {
+            currentAktivasiPage++;
+            filterAktivasiTable(false);
+        }
+
+        function jumpAktivasiPage(val) {
+            const pageNum = parseInt(val, 10);
+            if (!isNaN(pageNum)) {
+                currentAktivasiPage = pageNum;
+                filterAktivasiTable(false);
             }
         }
 
@@ -2819,6 +2913,7 @@
         // Restore tab saat refresh / navigasi & daftarkan listener form submit
         window.addEventListener('DOMContentLoaded', () => {
             restoreTellerActiveTab();
+            filterAktivasiTable(true);
 
             // Pastikan setiap form teller (setoran, penarikan, aktivasi, reset pin, laporan)
             // selalu mencatat tab aktif sebelum form dikirimkan
