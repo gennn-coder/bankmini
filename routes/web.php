@@ -83,6 +83,7 @@ Route::get('/clear-system-cache-deploy-trigger', function () {
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
         \Illuminate\Support\Facades\Artisan::call('route:clear');
         \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
         // Auto-reconcile: aktifkan kembali seluruh rekening milik siswa yang berstatus 'rekening aktif'
         \App\Models\Rekening::whereHas('saver.member', function ($q) {
