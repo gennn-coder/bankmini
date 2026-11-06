@@ -693,4 +693,28 @@ class AdminController extends Controller
 
         return back()->with('success', 'Pengajuan tambahan kas berhasil ditolak dengan alasan: "' . $request->catatan_admin . '".');
     }
+
+    public function tanggapiPengaduan(Request $request, $id)
+    {
+        $request->validate([
+            'tanggapan_admin' => 'required|string',
+            'status' => 'required|in:diproses,selesai',
+        ]);
+
+        $pengaduan = \App\Models\Pengaduan::findOrFail($id);
+        $pengaduan->update([
+            'tanggapan_admin' => $request->tanggapan_admin,
+            'status' => $request->status,
+            'ditanggapi_pada' => now(),
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Tanggapi Pengaduan Nasabah',
+            'detail' => 'Menanggapi pengaduan dari ' . $pengaduan->nama_pengadu . ' (NIS: ' . $pengaduan->nis . ') - Status: ' . $request->status,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return back()->with('success', 'Tanggapan pengaduan berhasil disimpan.');
+    }
 }

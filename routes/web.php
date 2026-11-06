@@ -46,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/laporan-bulanan/pdf', [AdminController::class, 'downloadLaporanBulananPdf'])->name('admin.laporan-bulanan.pdf');
     Route::post('/admin/pengajuan-kas/{id}/approve', [AdminController::class, 'approvePengajuanKas'])->name('admin.pengajuan-kas.approve');
     Route::post('/admin/pengajuan-kas/{id}/reject', [AdminController::class, 'rejectPengajuanKas'])->name('admin.pengajuan-kas.reject');
+    Route::post('/admin/pengaduan/{id}/tanggapi', [AdminController::class, 'tanggapiPengaduan'])->name('admin.pengaduan.tanggapi');
 
     // Teller
     Route::get('/teller/dashboard', [DashboardController::class, 'teller'])->name('teller.dashboard');
@@ -59,12 +60,20 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/teller/reset-pin', [TellerController::class, 'resetPin'])->name('teller.reset-pin');
     Route::post('/teller/laporan-harian', [TellerController::class, 'submitLaporanHarian'])->name('teller.laporan-harian');
     Route::post('/teller/status-layanan', [TellerController::class, 'updateStatusLayanan'])->name('teller.status-layanan');
+    Route::post('/teller/antrean/panggil', [TellerController::class, 'panggilAntreanSelanjutnya'])->name('teller.antrean.panggil');
+    Route::post('/teller/antrean/{id}/selesai', [TellerController::class, 'selesaikanAntrean'])->name('teller.antrean.selesai');
     Route::get('/status-layanan', function() {
         return response()->json(['status' => \App\Models\Pengaturan::getStatusLayanan()]);
     })->name('status-layanan');
 
     // Nasabah / Saver
     Route::get('/nasabah/dashboard', [DashboardController::class, 'nasabah'])->name('nasabah.dashboard');
+    Route::post('/nasabah/target-tabungan', [DashboardController::class, 'simpanTargetTabungan'])->name('nasabah.target-tabungan.store');
+    Route::post('/nasabah/target-tabungan/{id}/delete', [DashboardController::class, 'hapusTargetTabungan'])->name('nasabah.target-tabungan.delete');
+    Route::post('/nasabah/ambil-antrean', [DashboardController::class, 'ambilAntrean'])->name('nasabah.ambil-antrean');
+    Route::get('/nasabah/status-antrean', [DashboardController::class, 'statusAntrean'])->name('nasabah.status-antrean');
+    Route::post('/nasabah/pengaduan', [DashboardController::class, 'kirimPengaduan'])->name('nasabah.pengaduan.store');
+    Route::post('/nasabah/ganti-password', [DashboardController::class, 'gantiPassword'])->name('nasabah.ganti-password');
 });
 
 // Endpoint Pembersihan Cache Otomatis (CI/CD Deployment & Maintenance)

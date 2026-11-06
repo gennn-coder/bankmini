@@ -440,6 +440,13 @@
             <button class="tab-btn" onclick="switchTab('tab-laporan-bulanan')">Laporan Bulanan & PDF</button>
             <button class="tab-btn" onclick="switchTab('tab-jurnal')">Jurnal Akuntansi</button>
             <button class="tab-btn" onclick="switchTab('tab-audit')">Audit Logs</button>
+            <button class="tab-btn" onclick="switchTab('tab-pengaduan')">
+                Pengaduan Nasabah
+                @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
+                @if($pendingPengaduanCount > 0)
+                    <span style="background: #d97706; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{{ $pendingPengaduanCount }}</span>
+                @endif
+            </button>
         </div>
 
         <!-- TAB 1: MANAJEMEN USER -->
@@ -750,6 +757,28 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- PAGINASI DATA ANGGOTA SISWA (MAKSIMAL 20 PER HALAMAN AGAR TIDAK LAG) -->
+                    <div id="memberPaginationWrapper" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-color);">
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            Menampilkan <strong id="memberPageInfo">0 - 0 dari 0</strong> data anggota siswa
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button type="button" id="btnMemberPrev" onclick="prevMemberPage()" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                Sebelumnya
+                            </button>
+                            
+                            <div style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #475569;">
+                                <span>Halaman</span>
+                                <input type="number" id="memberPageInput" min="1" value="1" onchange="jumpMemberPage(this.value)" style="width: 58px; text-align: center; padding: 0.3rem 0.4rem; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">
+                                <span>dari <strong id="memberTotalPages">1</strong></span>
+                            </div>
+
+                            <button type="button" id="btnMemberNext" onclick="nextMemberPage()" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px;">
+                                Selanjutnya
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1376,6 +1405,99 @@
                 </div>
             </div>
         </div>
+
+        <!-- TAB 8: PENGADUAN NASABAH -->
+        <div id="tab-pengaduan" class="tab-content">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <h3 style="margin:0; font-size: 1.25rem; font-weight: 800; color: #1e293b;">Pusat Layanan & Pengaduan Nasabah</h3>
+                        <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                            Daftar pertanyaan, kendala transaksi, dan masukan yang diajukan oleh siswa penabung.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="btnPengaduanAll" onclick="filterPengaduanStatus('semua')" class="badge badge-role-teller" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                            Semua ({{ isset($pengaduanList) ? $pengaduanList->count() : 0 }})
+                        </button>
+                        <button type="button" id="btnPengaduanMenunggu" onclick="filterPengaduanStatus('menunggu')" class="badge badge-tidak-aktif" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                            Menunggu ({{ isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0 }})
+                        </button>
+                        <button type="button" id="btnPengaduanDiproses" onclick="filterPengaduanStatus('diproses')" class="badge badge-tidak-aktif" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                            Diproses ({{ isset($pengaduanList) ? $pengaduanList->where('status', 'diproses')->count() : 0 }})
+                        </button>
+                        <button type="button" id="btnPengaduanSelesai" onclick="filterPengaduanStatus('selesai')" class="badge badge-tidak-aktif" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
+                            Selesai ({{ isset($pengaduanList) ? $pengaduanList->where('status', 'selesai')->count() : 0 }})
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PENCARIAN PENGADUAN -->
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="searchPengaduan" class="form-control" placeholder="Cari berdasarkan nama siswa, NIS, atau subjek pengaduan..." oninput="filterPengaduanTable()">
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Waktu Pengaduan</th>
+                                <th>Siswa Pengadu</th>
+                                <th>NIS</th>
+                                <th>Subjek</th>
+                                <th>Pesan Siswa</th>
+                                <th>Status</th>
+                                <th>Tanggapan Admin</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablePengaduanBody">
+                            @forelse($pengaduanList ?? [] as $index => $p)
+                            <tr class="pengaduan-row" data-status="{{ $p->status }}">
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ date('d/m/Y H:i', strtotime($p->created_at)) }} WIB</td>
+                                <td><strong>{{ $p->nama_pengadu }}</strong></td>
+                                <td><code>{{ $p->nis }}</code></td>
+                                <td><strong>{{ $p->subjek }}</strong></td>
+                                <td style="max-width: 280px; white-space: normal; line-height: 1.4; font-size: 0.85rem;">
+                                    {{ $p->pesan }}
+                                </td>
+                                <td>
+                                    @if($p->status === 'selesai')
+                                        <span class="badge badge-aktif">SELESAI</span>
+                                    @elseif($p->status === 'diproses')
+                                        <span class="badge badge-role-teller">DIPROSES</span>
+                                    @else
+                                        <span class="badge badge-tidak-aktif">MENUNGGU</span>
+                                    @endif
+                                </td>
+                                <td style="max-width: 250px; white-space: normal; line-height: 1.4; font-size: 0.85rem; color: #475569;">
+                                    {{ $p->tanggapan_admin ?: 'Belum ditanggapi' }}
+                                </td>
+                                <td>
+                                    <button type="button" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; border-radius: 6px;" onclick="openTanggapiModal({{ $p->id }}, '{{ addslashes($p->nama_pengadu) }}', '{{ $p->nis }}', '{{ addslashes($p->subjek) }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $p->pesan)) }}', '{{ $p->status }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $p->tanggapan_admin ?? '')) }}')">
+                                        Tanggapi
+                                    </button>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    Belum ada pengaduan dari siswa nasabah.
+                                </td>
+                            </tr>
+                            @endforelse
+                            <tr id="pengaduanEmptySearch" style="display: none;">
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    Tidak ada pengaduan yang sesuai dengan filter atau kata kunci.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL EDIT MEMBER -->
@@ -1675,6 +1797,8 @@
         }
 
         let currentMemberStatusFilter = 'belum_aktif';
+        let currentMemberPage = 1;
+        const MEMBER_PER_PAGE = 20;
 
         function setMemberStatusFilter(status) {
             currentMemberStatusFilter = status;
@@ -1689,15 +1813,19 @@
                     btnSemua.className = 'badge badge-role-teller';
                 }
             }
-            filterMemberTable();
+            filterMemberTable(true);
         }
 
-        function filterMemberTable() {
+        function filterMemberTable(resetPage = true) {
+            if (resetPage) {
+                currentMemberPage = 1;
+            }
             const query = (document.getElementById('searchMember')?.value || '').toLowerCase().trim();
             const kelas = (document.getElementById('filterMemberKelas')?.value || '').toLowerCase();
             const angkatan = (document.getElementById('filterMemberAngkatan')?.value || '').toLowerCase();
             const rows = document.querySelectorAll('#tableMemberBody tr.member-row');
-            let visibleCount = 0;
+            
+            const matchingRows = [];
 
             rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
@@ -1711,17 +1839,63 @@
                 const matchAngkatan = !angkatan || rAngkatan === angkatan;
 
                 if (matchStatus && matchQuery && matchKelas && matchAngkatan) {
-                    row.style.display = '';
-                    visibleCount++;
+                    matchingRows.push(row);
                 } else {
                     row.style.display = 'none';
                 }
             });
 
+            const totalMatches = matchingRows.length;
+            const totalPages = Math.ceil(totalMatches / MEMBER_PER_PAGE) || 1;
+
+            if (currentMemberPage > totalPages) currentMemberPage = totalPages;
+            if (currentMemberPage < 1) currentMemberPage = 1;
+
+            const startIndex = (currentMemberPage - 1) * MEMBER_PER_PAGE;
+            const endIndex = Math.min(startIndex + MEMBER_PER_PAGE, totalMatches);
+
+            matchingRows.forEach((row, idx) => {
+                if (idx >= startIndex && idx < endIndex) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update UI Pagination Controls
+            const pageInfo = document.getElementById('memberPageInfo');
+            const pageInput = document.getElementById('memberPageInput');
+            const totalPagesEl = document.getElementById('memberTotalPages');
+            const btnPrev = document.getElementById('btnMemberPrev');
+            const btnNext = document.getElementById('btnMemberNext');
+
+            if (pageInfo) {
+                pageInfo.innerText = totalMatches > 0 
+                    ? `${startIndex + 1} - ${endIndex} dari ${totalMatches}` 
+                    : `0 dari 0`;
+            }
+            if (pageInput) {
+                pageInput.value = currentMemberPage;
+                pageInput.max = totalPages;
+            }
+            if (totalPagesEl) {
+                totalPagesEl.innerText = totalPages;
+            }
+            if (btnPrev) {
+                btnPrev.disabled = (currentMemberPage <= 1);
+                btnPrev.style.opacity = (currentMemberPage <= 1) ? '0.4' : '1';
+                btnPrev.style.cursor = (currentMemberPage <= 1) ? 'not-allowed' : 'pointer';
+            }
+            if (btnNext) {
+                btnNext.disabled = (currentMemberPage >= totalPages);
+                btnNext.style.opacity = (currentMemberPage >= totalPages) ? '0.4' : '1';
+                btnNext.style.cursor = (currentMemberPage >= totalPages) ? 'not-allowed' : 'pointer';
+            }
+
             const emptyRow = document.getElementById('memberEmptySearch');
             const emptyText = document.getElementById('memberEmptyText');
             if (emptyRow) {
-                emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+                emptyRow.style.display = (totalMatches === 0) ? '' : 'none';
                 if (emptyText) {
                     if (currentMemberStatusFilter === 'belum_aktif' && !query && !kelas && !angkatan) {
                         emptyText.innerHTML = 'Tidak ada anggota siswa yang belum aktif. Seluruh siswa yang telah menabung otomatis berpindah ke tab <strong>Manajemen User</strong> & <strong>Data Penabung</strong>.';
@@ -1730,6 +1904,88 @@
                     }
                 }
             }
+        }
+
+        function prevMemberPage() {
+            if (currentMemberPage > 1) {
+                currentMemberPage--;
+                filterMemberTable(false);
+            }
+        }
+
+        function nextMemberPage() {
+            currentMemberPage++;
+            filterMemberTable(false);
+        }
+
+        function jumpMemberPage(val) {
+            const pageNum = parseInt(val, 10);
+            if (!isNaN(pageNum)) {
+                currentMemberPage = pageNum;
+                filterMemberTable(false);
+            }
+        }
+
+        let currentPengaduanFilter = 'semua';
+
+        function filterPengaduanStatus(status) {
+            currentPengaduanFilter = status;
+            const btns = {
+                'semua': document.getElementById('btnPengaduanAll'),
+                'menunggu': document.getElementById('btnPengaduanMenunggu'),
+                'diproses': document.getElementById('btnPengaduanDiproses'),
+                'selesai': document.getElementById('btnPengaduanSelesai')
+            };
+
+            for (const key in btns) {
+                if (btns[key]) {
+                    btns[key].className = (key === status) ? 'badge badge-role-teller' : 'badge badge-tidak-aktif';
+                }
+            }
+            filterPengaduanTable();
+        }
+
+        function filterPengaduanTable() {
+            const query = (document.getElementById('searchPengaduan')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#tablePengaduanBody tr.pengaduan-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const rStatus = row.getAttribute('data-status') || '';
+
+                const matchStatus = (currentPengaduanFilter === 'semua') || (rStatus === currentPengaduanFilter);
+                const matchQuery = !query || text.includes(query);
+
+                if (matchStatus && matchQuery) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('pengaduanEmptySearch');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
+        function openTanggapiModal(id, nama, nis, subjek, pesan, status, tanggapan) {
+            document.getElementById('formTanggapiPengaduan').action = '/admin/pengaduan/' + id + '/tanggapi';
+            document.getElementById('modalPengaduNama').innerText = nama;
+            document.getElementById('modalPengaduNis').innerText = nis;
+            document.getElementById('modalPengaduSubjek').innerText = subjek;
+            document.getElementById('modalPengaduPesan').innerText = pesan;
+            document.getElementById('modalStatusPengaduan').value = (status === 'menunggu') ? 'diproses' : status;
+            document.getElementById('modalTanggapanAdmin').value = tanggapan || '';
+            const modal = document.getElementById('modalTanggapiPengaduan');
+            modal.style.display = 'flex';
+        }
+
+        function closeTanggapiModal() {
+            const modal = document.getElementById('modalTanggapiPengaduan');
+            if (modal) modal.style.display = 'none';
         }
 
         function filterSaverTable() {
@@ -2014,6 +2270,43 @@
                 <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
                     <button type="button" onclick="closeRejectPengajuanModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
                     <button type="submit" class="btn-danger" style="flex: 1.5;">Tolak Pengajuan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TANGGAPI PENGADUAN SISWA -->
+    <div class="modal-overlay" id="modalTanggapiPengaduan">
+        <div class="modal-card" style="max-width: 520px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin:0;">Tanggapi Pengaduan Siswa</h3>
+                <button type="button" onclick="closeTanggapiModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
+            </div>
+
+            <form id="formTanggapiPengaduan" method="POST" action="">
+                @csrf
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.85rem;">
+                    <div>Pengadu: <strong id="modalPengaduNama">-</strong> (<span id="modalPengaduNis">-</span>)</div>
+                    <div style="margin-top: 4px;">Subjek: <strong id="modalPengaduSubjek">-</strong></div>
+                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; color: #334155; line-height: 1.4;" id="modalPengaduPesan">-</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tanggapan / Solusi Admin <span style="color: #dc2626;">*</span></label>
+                    <textarea name="tanggapan_admin" id="modalTanggapanAdmin" rows="4" class="form-control" required placeholder="Tuliskan balasan resmi untuk siswa..." style="resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Status Pengaduan <span style="color: #dc2626;">*</span></label>
+                    <select name="status" id="modalStatusPengaduan" class="form-control" required>
+                        <option value="diproses">Sedang Diproses</option>
+                        <option value="selesai">Selesai / Terjawab</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeTanggapiModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
+                    <button type="submit" class="btn-primary" style="flex: 2;">Kirim Tanggapan</button>
                 </div>
             </form>
         </div>

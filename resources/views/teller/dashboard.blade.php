@@ -827,6 +827,85 @@
             </div>
         </div>
 
+        <!-- SISTEM ANTREAN BANK MINI (TELLER) -->
+        <div class="card" style="border-left: 5px solid var(--primary-600); margin-bottom: 1.75rem; background: #ffffff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h4 style="margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Antrean Pelayanan Loket Bank Mini</h4>
+                    <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.35rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.9rem; color: #64748b; font-weight: 600;">Nomor Sedang Dilayani:</span>
+                        <strong style="font-size: 1.5rem; color: {{ $antreanSedangDilayani ? '#2563eb' : '#64748b' }};">
+                            {{ $antreanSedangDilayani ? $antreanSedangDilayani->nomor_antrean : '-' }}
+                        </strong>
+                        @if($antreanSedangDilayani)
+                            <span style="font-size: 0.85rem; color: #1e293b; font-weight: 700;">({{ $antreanSedangDilayani->nama_siswa }} - NIS: {{ $antreanSedangDilayani->nis }})</span>
+                        @endif
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        Antrean menunggu: <strong style="color: #0f172a;">{{ $totalAntreanMenunggu }} siswa</strong> &bull; Total nomor terbit hari ini: <strong>{{ isset($antreanHariIni) ? count($antreanHariIni) : 0 }}</strong>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                    @if($antreanSedangDilayani)
+                        <form action="{{ route('teller.antrean.selesai', $antreanSedangDilayani->id) }}" method="POST" style="margin: 0;">
+                            @csrf
+                            <button type="submit" class="btn-success" style="padding: 0.65rem 1.15rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px;">
+                                Selesaikan Antrean ({{ $antreanSedangDilayani->nomor_antrean }})
+                            </button>
+                        </form>
+                    @endif
+
+                    <form action="{{ route('teller.antrean.panggil') }}" method="POST" style="margin: 0;">
+                        @csrf
+                        <button type="submit" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px; {{ $totalAntreanMenunggu == 0 ? 'opacity: 0.75;' : '' }}">
+                            Panggil Antrean Berikutnya
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            @if(isset($antreanHariIni) && count($antreanHariIni) > 0)
+                <details style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+                    <summary style="font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer;">
+                        Lihat Daftar Lengkap Antrean Hari Ini ({{ count($antreanHariIni) }} Siswa)
+                    </summary>
+                    <div style="margin-top: 0.5rem; max-height: 180px; overflow-y: auto;">
+                        <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8fafc; color: #64748b; text-align: left;">
+                                    <th style="padding: 6px 10px;">Nomor</th>
+                                    <th style="padding: 6px 10px;">Nama Siswa</th>
+                                    <th style="padding: 6px 10px;">NIS</th>
+                                    <th style="padding: 6px 10px;">Waktu Ambil</th>
+                                    <th style="padding: 6px 10px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($antreanHariIni as $ant)
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 6px 10px; font-weight: 700; font-family: monospace;">{{ $ant->nomor_antrean }}</td>
+                                    <td style="padding: 6px 10px;">{{ $ant->nama_siswa }}</td>
+                                    <td style="padding: 6px 10px;">{{ $ant->nis }}</td>
+                                    <td style="padding: 6px 10px; color: #64748b;">{{ date('H:i', strtotime($ant->created_at)) }} WIB</td>
+                                    <td style="padding: 6px 10px;">
+                                        @if($ant->status === 'dilayani')
+                                            <span style="background: #dbeafe; color: #1d4ed8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Dilayani</span>
+                                        @elseif($ant->status === 'menunggu')
+                                            <span style="background: #fef3c7; color: #b45309; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Menunggu</span>
+                                        @else
+                                            <span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Selesai</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            @endif
+        </div>
+
         <!-- SEARCH BOX: PENCARIAN PENABUNG -->
         <div class="search-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.5rem;">

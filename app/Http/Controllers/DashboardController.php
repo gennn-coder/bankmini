@@ -14,6 +14,10 @@ use App\Models\AuditLog;
 use App\Models\JurnalAkuntansi;
 use App\Models\PengajuanKas;
 use App\Models\Pengaturan;
+use App\Models\TargetTabungan;
+use App\Models\Antrean;
+use App\Models\Pengaduan;
+use Illuminate\Support\Facades\Hash;
 
 class DashboardController extends Controller
 {
@@ -108,11 +112,16 @@ class DashboardController extends Controller
             ->take(30)
             ->get();
 
+        $pengaduanList = Pengaduan::with(['user' => fn($q) => $q->withTrashed()])
+            ->orderBy('created_at', 'desc')
+            ->take(50)
+            ->get();
+
         return view('admin.dashboard', compact(
             'user', 'totalUsers', 'totalMembers', 'totalBelumAktif', 'filterMember', 'totalSavers', 'totalRekening', 'totalSaldo',
             'users', 'members', 'savers', 'laporanPending', 'laporanApproved',
             'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
-            'auditLogs', 'jurnals', 'pengajuanKasList'
+            'auditLogs', 'jurnals', 'pengajuanKasList', 'pengaduanList'
         ));
     }
 
@@ -176,13 +185,18 @@ class DashboardController extends Controller
 
         $statusLayanan = Pengaturan::getStatusLayanan();
 
+        // Antrean Live untuk Teller
+        $antreanHariIni = Antrean::where('tanggal', date('Y-m-d'))->orderBy('angka_antrean', 'asc')->get();
+        $antreanSedangDilayani = $antreanHariIni->where('status', 'dilayani')->first();
+        $totalAntreanMenunggu = $antreanHariIni->where('status', 'menunggu')->count();
+
         return view('teller.dashboard', compact(
             'user', 'transaksiHariIni', 'totalSetoran', 'totalPenarikan',
             'savers', 'membersUnactivated', 'laporanHariIni',
             'modalAwal', 'isModalAwalSet', 'tambahanKasHariIni', 'tambahanKasApproved', 'sisaKasLaci',
             'isLaporanSubmitted', 'isLaporanApproved',
             'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
-            'statusLayanan'
+            'statusLayanan', 'antreanHariIni', 'antreanSedangDilayani', 'totalAntreanMenunggu'
         ));
     }
 
@@ -192,7 +206,7 @@ class DashboardController extends Controller
         return redirect()->route('admin.dashboard');
     }
 
-    public function nasabah()
+    public function nasabah(Request $request)
     {
         $user = Auth::user();
         if ($user->role !== 'nasabah' && $user->role !== 'saver') {
@@ -235,6 +249,192 @@ class DashboardController extends Controller
             : collect();
         $statusLayanan = Pengaturan::getStatusLayanan();
 
-        return view('nasabah.dashboard', compact('user', 'saver', 'nasabah', 'member', 'transaksi', 'statusLayanan'));
+        // 1. Target Tabungan (Celengan Impian)
+        $targetTabungan = TargetTabungan::where('user_id', $user->id)->first();
+
+        // 2. Antrean Bank Mini Live Hari Ini
+        $today = date('Y-m-d');
+        $antreanSaya = Antrean::where('tanggal', $today)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['menunggu', 'dilayani'])
+            ->first();
+        $antreanSedangDilayani = Antrean::where('tanggal', $today)->where('status', 'dilayani')->first();
+        $totalAntreanMenunggu = Antrean::where('tanggal', $today)->where('status', 'menunggu')->count();
+        $antreanSebelumSaya = ($antreanSaya && $antreanSaya->status === 'menunggu')
+            ? Antrean::where('tanggal', $today)->where('status', 'menunggu')->where('angka_antrean', '<', $antreanSaya->angka_antrean)->count()
+            : 0;
+
+        // 3. Laporan Keuangan Bulanan (Ringkasan Akhir Bulan)
+        $selectedBulan = (int) $request->query('bulan', date('n'));
+        $selectedTahun = (int) $request->query('tahun', date('Y'));
+
+        $saldoAwalBulan = 0;
+        $saldoAkhirBulan = 0;
+        $totalSetoranBulanIni = 0;
+        $totalPenarikanBulanIni = 0;
+
+        if ($saver) {
+            $startOfMonth = \Carbon\Carbon::createFromDate($selectedTahun, $selectedBulan, 1)->startOfMonth();
+            $endOfMonth = \Carbon\Carbon::createFromDate($selectedTahun, $selectedBulan, 1)->endOfMonth();
+
+            $trxBulanIni = Transaksi::where('saver_id', $saver->id)
+                ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+                ->get();
+
+            $totalSetoranBulanIni = (int) $trxBulanIni->where('jenis_trans', 'setoran')->sum('nominal');
+            $totalPenarikanBulanIni = (int) $trxBulanIni->where('jenis_trans', 'penarikan')->sum('nominal');
+
+            $setoranSebelum = (int) Transaksi::where('saver_id', $saver->id)
+                ->where('tanggal', '<', $startOfMonth)
+                ->where('jenis_trans', 'setoran')
+                ->sum('nominal');
+            $penarikanSebelum = (int) Transaksi::where('saver_id', $saver->id)
+                ->where('tanggal', '<', $startOfMonth)
+                ->where('jenis_trans', 'penarikan')
+                ->sum('nominal');
+
+            $saldoAwalBulan = $setoranSebelum - $penarikanSebelum;
+            $saldoAkhirBulan = $saldoAwalBulan + ($totalSetoranBulanIni - $totalPenarikanBulanIni);
+        }
+
+        // 4. Riwayat Pengaduan Nasabah
+        $pengaduanList = Pengaduan::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+
+        return view('nasabah.dashboard', compact(
+            'user', 'saver', 'nasabah', 'member', 'transaksi', 'statusLayanan',
+            'targetTabungan', 'antreanSaya', 'antreanSedangDilayani', 'totalAntreanMenunggu', 'antreanSebelumSaya',
+            'selectedBulan', 'selectedTahun', 'saldoAwalBulan', 'saldoAkhirBulan', 'totalSetoranBulanIni', 'totalPenarikanBulanIni',
+            'pengaduanList'
+        ));
+    }
+
+    public function simpanTargetTabungan(Request $request)
+    {
+        $request->validate([
+            'judul_target' => 'required|string|max:100',
+            'nominal_target' => 'required|integer|min:10000',
+            'target_tanggal' => 'nullable|date',
+            'keterangan' => 'nullable|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        $saver = Saver::where('user_id', $user->id)->first();
+
+        TargetTabungan::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'saver_id' => $saver?->id,
+                'judul_target' => $request->judul_target,
+                'nominal_target' => $request->nominal_target,
+                'target_tanggal' => $request->target_tanggal,
+                'keterangan' => $request->keterangan,
+                'status' => 'berjalan',
+            ]
+        );
+
+        return back()->with('success', 'Target tabungan berhasil disimpan.');
+    }
+
+    public function hapusTargetTabungan($id)
+    {
+        $user = Auth::user();
+        $target = TargetTabungan::where('user_id', $user->id)->where('id', $id)->firstOrFail();
+        $target->delete();
+
+        return back()->with('success', 'Target tabungan berhasil dihapus.');
+    }
+
+    public function ambilAntrean(Request $request)
+    {
+        $user = Auth::user();
+        $today = date('Y-m-d');
+
+        $existing = Antrean::where('tanggal', $today)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['menunggu', 'dilayani'])
+            ->first();
+
+        if ($existing) {
+            return back()->with('error', 'Anda sudah memiliki nomor antrean aktif hari ini: ' . $existing->nomor_antrean);
+        }
+
+        $next = Antrean::generateNomorHariIni();
+
+        Antrean::create([
+            'nomor_antrean' => $next['nomor'],
+            'angka_antrean' => $next['angka'],
+            'user_id' => $user->id,
+            'nama_siswa' => $user->member->student_name ?? ($user->saver->student_name ?? $user->nama_petugas),
+            'nis' => $user->member->nis ?? ($user->saver->nis ?? $user->username),
+            'tanggal' => $today,
+            'status' => 'menunggu',
+        ]);
+
+        return back()->with('success', 'Nomor antrean Anda berhasil dibuat: ' . $next['nomor']);
+    }
+
+    public function statusAntrean()
+    {
+        $today = date('Y-m-d');
+        $user = Auth::user();
+
+        $antreanSaya = $user ? Antrean::where('tanggal', $today)->where('user_id', $user->id)->whereIn('status', ['menunggu', 'dilayani'])->first() : null;
+        $sedangDilayani = Antrean::where('tanggal', $today)->where('status', 'dilayani')->first();
+        $totalMenunggu = Antrean::where('tanggal', $today)->where('status', 'menunggu')->count();
+
+        $sisaAntrean = ($antreanSaya && $antreanSaya->status === 'menunggu')
+            ? Antrean::where('tanggal', $today)->where('status', 'menunggu')->where('angka_antrean', '<', $antreanSaya->angka_antrean)->count()
+            : 0;
+
+        return response()->json([
+            'status_layanan' => Pengaturan::getStatusLayanan(),
+            'sedang_dilayani' => $sedangDilayani ? $sedangDilayani->nomor_antrean : '-',
+            'total_menunggu' => $totalMenunggu,
+            'nomor_saya' => $antreanSaya ? $antreanSaya->nomor_antrean : null,
+            'status_saya' => $antreanSaya ? $antreanSaya->status : null,
+            'sisa_antrean' => $sisaAntrean,
+        ]);
+    }
+
+    public function kirimPengaduan(Request $request)
+    {
+        $request->validate([
+            'kategori' => 'required|string|max:50',
+            'judul' => 'required|string|max:150',
+            'isi_pesan' => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        Pengaduan::create([
+            'user_id' => $user->id,
+            'nama_pengadu' => $user->member->student_name ?? ($user->saver->student_name ?? $user->nama_petugas),
+            'nis' => $user->member->nis ?? ($user->saver->nis ?? $user->username),
+            'kategori' => $request->kategori,
+            'judul' => $request->judul,
+            'isi_pesan' => $request->isi_pesan,
+            'status' => 'menunggu',
+        ]);
+
+        return back()->with('success', 'Pengaduan berhasil dikirim ke Administrator.');
+    }
+
+    public function gantiPassword(Request $request)
+    {
+        $request->validate([
+            'sandi_lama' => 'required|string',
+            'sandi_baru' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->sandi_lama, $user->password)) {
+            return back()->with('error', 'Kata sandi saat ini yang Anda masukkan salah.');
+        }
+
+        $user->password = Hash::make($request->sandi_baru);
+        $user->save();
+
+        return back()->with('success', 'Kata sandi akun Anda berhasil diperbarui.');
     }
 }

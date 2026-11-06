@@ -803,4 +803,45 @@ class TellerController extends Controller
             'message' => 'Status layanan berhasil diubah menjadi ' . ucfirst($status) . '.',
         ]);
     }
+
+    public function panggilAntreanSelanjutnya(Request $request)
+    {
+        $today = date('Y-m-d');
+
+        // Selesaikan antrean yang sedang dilayani saat ini (jika ada)
+        \App\Models\Antrean::where('tanggal', $today)
+            ->where('status', 'dilayani')
+            ->update([
+                'status' => 'selesai',
+                'selesai_pada' => now(),
+            ]);
+
+        // Cari antrean menunggu berikutnya
+        $next = \App\Models\Antrean::where('tanggal', $today)
+            ->where('status', 'menunggu')
+            ->orderBy('angka_antrean', 'asc')
+            ->first();
+
+        if (!$next) {
+            return back()->with('info', 'Tidak ada antrean siswa yang sedang menunggu saat ini.');
+        }
+
+        $next->update([
+            'status' => 'dilayani',
+            'dipanggil_pada' => now(),
+        ]);
+
+        return back()->with('success', 'Memanggil nomor antrean: ' . $next->nomor_antrean . ' (' . $next->nama_siswa . ')');
+    }
+
+    public function selesaikanAntrean($id)
+    {
+        $antrean = \App\Models\Antrean::findOrFail($id);
+        $antrean->update([
+            'status' => 'selesai',
+            'selesai_pada' => now(),
+        ]);
+
+        return back()->with('success', 'Antrean ' . $antrean->nomor_antrean . ' berhasil diselesaikan.');
+    }
 }
