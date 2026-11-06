@@ -1569,7 +1569,28 @@
             document.getElementById('modalAktKelasAngkatan').innerText = (kelas || '-') + ' / ' + (angkatan || '-');
             document.getElementById('modalAktEmail').value = email || '';
             document.getElementById('modalAktNominal').value = 10000;
-            document.getElementById('modalAktPin').value = '';
+            
+            const pinInp = document.getElementById('modalAktPin');
+            if (pinInp) {
+                pinInp.value = '';
+                pinInp.type = 'password';
+            }
+            const pinConfirmInp = document.getElementById('modalAktPinConfirm');
+            if (pinConfirmInp) {
+                pinConfirmInp.value = '';
+                pinConfirmInp.type = 'password';
+            }
+
+            const btnToggle1 = document.getElementById('btnTogglePinAktivasi');
+            if (btnToggle1) {
+                btnToggle1.textContent = 'Lihat';
+                btnToggle1.style.color = '#64748b';
+            }
+            const btnToggle2 = document.getElementById('btnTogglePinConfirmAktivasi');
+            if (btnToggle2) {
+                btnToggle2.textContent = 'Lihat';
+                btnToggle2.style.color = '#64748b';
+            }
 
             const modal = document.getElementById('modalAktivasiAnggota');
             if (modal) {
@@ -1583,6 +1604,42 @@
         function closeModalAktivasi() {
             const modal = document.getElementById('modalAktivasiAnggota');
             if (modal) modal.style.display = 'none';
+            const pinInp = document.getElementById('modalAktPin');
+            if (pinInp) pinInp.value = '';
+            const pinConfirmInp = document.getElementById('modalAktPinConfirm');
+            if (pinConfirmInp) pinConfirmInp.value = '';
+        }
+
+        function validateAktivasiForm(form) {
+            const pin = (document.getElementById('modalAktPin')?.value || '').trim();
+            const pinConfirm = (document.getElementById('modalAktPinConfirm')?.value || '').trim();
+            const email = (document.getElementById('modalAktEmail')?.value || '').trim();
+
+            if (!email) {
+                alert('Alamat Gmail siswa / nasabah wajib diisi.');
+                document.getElementById('modalAktEmail')?.focus();
+                return false;
+            }
+
+            if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+                alert('PIN Transaksi harus terdiri dari tepat 6 angka numerik (0-9).');
+                document.getElementById('modalAktPin')?.focus();
+                return false;
+            }
+
+            if (pinConfirm.length !== 6 || !/^\d{6}$/.test(pinConfirm)) {
+                alert('Konfirmasi PIN Transaksi harus terdiri dari tepat 6 angka numerik.');
+                document.getElementById('modalAktPinConfirm')?.focus();
+                return false;
+            }
+
+            if (pin !== pinConfirm) {
+                alert('Konfirmasi PIN tidak cocok dengan PIN yang dibuat. Pastikan kedua kolom PIN sama!');
+                document.getElementById('modalAktPinConfirm')?.focus();
+                return false;
+            }
+
+            return true;
         }
 
         function setModalAktNominal(val) {
@@ -2792,7 +2849,7 @@
                 </div>
             </div>
 
-            <form action="{{ route('teller.aktivasi-anggota') }}" method="POST" class="prevent-double-submit">
+            <form action="{{ route('teller.aktivasi-anggota') }}" method="POST" class="prevent-double-submit" onsubmit="return validateAktivasiForm(this);">
                 @csrf
                 <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                 <input type="hidden" name="user_id" id="modalAktUserId" required>
@@ -2812,18 +2869,32 @@
 
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
-                        Buat PIN 6-Digit Keamanan Penabung Baru
+                        Alamat Email Siswa / Nasabah <span style="color: #dc2626;">*</span>
                     </label>
-                    <input type="password" name="pin" id="modalAktPin" class="form-control" required maxlength="6" minlength="6" placeholder="Contoh: 123456" pattern="[0-9]{6}" inputmode="numeric">
+                    <input type="email" name="email" id="modalAktEmail" class="form-control" required placeholder="Contoh: siswa@gmail.com">
+                    <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Digunakan untuk pengiriman informasi dan pemulihan PIN nasabah.</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
+                        Buat PIN 6-Digit Keamanan Penabung Baru <span style="color: #dc2626;">*</span>
+                    </label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" name="pin" id="modalAktPin" class="form-control" required maxlength="6" minlength="6" placeholder="Contoh: 123456" pattern="[0-9]{6}" inputmode="numeric" style="padding-right: 4.8rem; letter-spacing: 2px; font-weight: 700;">
+                        <button type="button" id="btnTogglePinAktivasi" onclick="togglePasswordVisibility('modalAktPin', this)" style="position: absolute; right: 8px; background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer; padding: 4px 8px;">Lihat</button>
+                    </div>
                     <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">PIN 6 angka ini digunakan nasabah saat verifikasi penarikan uang tabungan.</small>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.25rem;">
                     <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
-                        Alamat Email Siswa / Nasabah <span style="color: #dc2626;">*</span>
+                        Konfirmasi PIN 6-Digit <span style="color: #dc2626;">*</span>
                     </label>
-                    <input type="email" name="email" id="modalAktEmail" class="form-control" required placeholder="Contoh: siswa@gmail.com">
-                    <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Digunakan untuk pengiriman informasi dan pemulihan PIN nasabah.</small>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" name="pin_confirmation" id="modalAktPinConfirm" class="form-control" required maxlength="6" minlength="6" placeholder="Ketik ulang 6 angka PIN" pattern="[0-9]{6}" inputmode="numeric" style="padding-right: 4.8rem; letter-spacing: 2px; font-weight: 700;">
+                        <button type="button" id="btnTogglePinConfirmAktivasi" onclick="togglePasswordVisibility('modalAktPinConfirm', this)" style="position: absolute; right: 8px; background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer; padding: 4px 8px;">Lihat</button>
+                    </div>
+                    <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Masukkan ulang 6 angka PIN yang sama untuk verifikasi kecocokan.</small>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem;">

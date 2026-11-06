@@ -636,6 +636,9 @@
                                     Template CSV
                                 </a>
                             </div>
+                            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+                                Format kolom template: <strong>nisn, nama, jurusan, tahun_keluar</strong>. Alamat Gmail dan PIN nasabah akan diinput oleh petugas saat aktivasi rekening di loket Teller.
+                            </small>
                         </div>
 
                         <form action="{{ route('admin.members.import') }}" method="POST" enctype="multipart/form-data">

@@ -1024,7 +1024,49 @@ class BankMiniRevisionTest extends TestCase
         $this->assertDatabaseHas('users', ['username' => $nis2, 'nama_petugas' => 'Dewi Lestari']);
         $this->assertDatabaseHas('members', ['nis' => $nis2, 'student_name' => 'Dewi Lestari', 'status' => 'rekening tidak aktif', 'pin' => null]);
 
-        // 4. Impor ulang file yang sama -> Data harus dilewati (skip) karena duplikat
+        // 4. Impor data anggota melalui file CSV dengan format baru (nisn,nama,jurusan,tahun_keluar)
+        $nis3 = '202699003';
+        Member::where('nis', $nis3)->forceDelete();
+        User::where('username', $nis3)->forceDelete();
+
+        $csvNewFormat = "nisn,nama,jurusan,tahun_keluar\n"
+                      . "{$nis3},Siti Aminah,AKL,2028\n";
+        $fileNew = \Illuminate\Http\UploadedFile::fake()->createWithContent('anggota_baru.csv', $csvNewFormat);
+
+        $resImportNew = $this->post(route('admin.members.import'), [
+            'file' => $fileNew,
+        ]);
+        $resImportNew->assertSessionHas('success');
+        $this->assertDatabaseHas('members', ['nis' => $nis3, 'student_name' => 'Siti Aminah', 'class_grade' => 'AKL', 'graduation_year' => '2028']);
+
+        // 5. Test aktivasi teller dengan pin dan konfirmasi pin cocok
+        $teller = User::where('role', 'teller')->first();
+        $this->actingAs($teller);
+        $member3 = Member::where('nis', $nis3)->first();
+
+        // 5a. Konfirmasi pin salah harus gagal
+        $resFailPin = $this->post(route('teller.aktivasi-anggota'), [
+            'user_id' => $member3->user_id,
+            'nominal' => 10000,
+            'pin' => '123456',
+            'pin_confirmation' => '654321',
+            'email' => 'siti.aminah@gmail.com',
+        ]);
+        $resFailPin->assertSessionHasErrors('pin');
+
+        // 5b. Konfirmasi pin cocok harus berhasil
+        $resSuccessPin = $this->post(route('teller.aktivasi-anggota'), [
+            'user_id' => $member3->user_id,
+            'nominal' => 10000,
+            'pin' => '123456',
+            'pin_confirmation' => '123456',
+            'email' => 'siti.aminah@gmail.com',
+        ]);
+        $resSuccessPin->assertSessionHas('success');
+        $this->assertDatabaseHas('savers', ['nis' => $nis3, 'email' => 'siti.aminah@gmail.com']);
+
+        // 6. Impor ulang file yang sama -> Data harus dilewati (skip) karena duplikat
+        $this->actingAs($admin);
         $resImportDup = $this->post(route('admin.members.import'), [
             'file' => $file,
         ]);

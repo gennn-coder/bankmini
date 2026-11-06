@@ -146,14 +146,12 @@ class AdminController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Anggota');
 
-        // Header Kolom Database (Format Jurusan dan Tahun Kelulusan)
+        // Header Kolom Database (Format Baru: nisn, nama, jurusan, tahun_keluar)
         $headers = [
-            'A1' => 'nama_siswa',
-            'B1' => 'nis',
-            'C1' => 'email',
-            'D1' => 'jurusan',
-            'E1' => 'tahun_kelulusan',
-            'F1' => 'password',
+            'A1' => 'nisn',
+            'B1' => 'nama',
+            'C1' => 'jurusan',
+            'D1' => 'tahun_keluar',
         ];
 
         foreach ($headers as $cell => $val) {
@@ -162,22 +160,18 @@ class AdminController extends Controller
         }
 
         // Contoh Data 1
-        $sheet->setCellValueExplicit('A2', 'Ahmad Fauzi', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('B2', '202611091', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('C2', 'ahmad.fauzi@gmail.com', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('D2', 'RPL', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('E2', '2028', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('F2', '123456', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('A2', '1029384756', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B2', 'Ahmad Fauzi', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('C2', 'RPL', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D2', '2028', DataType::TYPE_STRING);
 
         // Contoh Data 2
-        $sheet->setCellValueExplicit('A3', 'Siti Nurhaliza', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('B3', '202611092', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('C3', 'siti.nurhaliza@gmail.com', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('D3', 'AKL', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('E3', '2028', DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('F3', '123456', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('A3', '1029384757', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B3', 'Siti Nurhaliza', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('C3', 'AKL', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D3', '2028', DataType::TYPE_STRING);
 
-        foreach (range('A', 'F') as $col) {
+        foreach (range('A', 'D') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -245,23 +239,23 @@ class AdminController extends Controller
         $columnMap = [];
         foreach ($headerRow as $colLetter => $headerName) {
             $norm = strtolower(trim(preg_replace('/[^a-zA-Z0-9_]/', '', str_replace([' ', '-'], '_', (string)$headerName))));
-            if (in_array($norm, ['nama_siswa', 'namasiswa', 'student_name', 'nama'])) {
+            if (in_array($norm, ['nama', 'nama_siswa', 'namasiswa', 'student_name'])) {
                 $columnMap['nama_siswa'] = $colLetter;
-            } elseif (in_array($norm, ['nis', 'nomor_induk', 'nomorinduk', 'no_induk'])) {
+            } elseif (in_array($norm, ['nisn', 'nis', 'nomor_induk', 'nomorinduk', 'no_induk'])) {
                 $columnMap['nis'] = $colLetter;
+            } elseif (in_array($norm, ['jurusan', 'kelas', 'class_grade', 'class', 'tingkat'])) {
+                $columnMap['kelas'] = $colLetter;
+            } elseif (in_array($norm, ['tahun_keluar', 'tahunkeluar', 'tahun_lulus', 'tahunlulus', 'tahun_kelulusan', 'tahunkelulusan', 'angkatan_keluar', 'angkatankeluar', 'graduation_year'])) {
+                $columnMap['angkatan_keluar'] = $colLetter;
             } elseif (in_array($norm, ['email', 'alamat_email', 'gmail'])) {
                 $columnMap['email'] = $colLetter;
-            } elseif (in_array($norm, ['kelas', 'class_grade', 'class', 'tingkat'])) {
-                $columnMap['kelas'] = $colLetter;
-            } elseif (in_array($norm, ['angkatan_keluar', 'angkatankeluar', 'graduation_year', 'tahun_lulus', 'tahun_kelulusan'])) {
-                $columnMap['angkatan_keluar'] = $colLetter;
             } elseif (in_array($norm, ['password', 'sandi', 'kata_sandi'])) {
                 $columnMap['password'] = $colLetter;
             }
         }
 
         if (!isset($columnMap['nama_siswa']) || !isset($columnMap['nis'])) {
-            return back()->with('error', 'Format template salah. Kolom nama_siswa dan nis wajib ada di baris pertama template.');
+            return back()->with('error', 'Format template salah. Kolom nisn (atau nis) dan nama wajib ada di baris pertama template.');
         }
 
         $importedCount = 0;
@@ -291,9 +285,9 @@ class AdminController extends Controller
                     continue;
                 }
 
-                $email = isset($columnMap['email']) ? trim((string)($row[$columnMap['email']] ?? '')) : '';
-                if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $email = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $nis)) . '@gmail.com';
+                $email = isset($columnMap['email']) ? trim((string)($row[$columnMap['email']] ?? '')) : null;
+                if ($email === '' || ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL))) {
+                    $email = null;
                 }
 
                 $kelas = isset($columnMap['kelas']) ? trim((string)($row[$columnMap['kelas']] ?? '')) : 'RPL';
@@ -305,7 +299,7 @@ class AdminController extends Controller
                 $passwordRaw = isset($columnMap['password']) ? trim((string)($row[$columnMap['password']] ?? '')) : '123456';
                 if (strlen($passwordRaw) < 6) $passwordRaw = '123456';
 
-                // 1. Buat User Nasabah
+                // 1. Buat User Nasabah (Email akan diisi dan diverifikasi saat aktivasi di loket Teller)
                 $user = User::create([
                     'username' => $nis,
                     'nama_petugas' => $namaSiswa,
@@ -315,7 +309,7 @@ class AdminController extends Controller
                     'status' => 'aktif',
                 ]);
 
-                // 2. Buat Member (Status rekening tidak aktif, PIN belum diset karena belum aktivasi & setor minimal Rp 10.000 di teller)
+                // 2. Buat Member (Status rekening tidak aktif, PIN & Gmail akan diset saat aktivasi oleh teller)
                 Member::create([
                     'user_id' => $user->id,
                     'student_name' => $namaSiswa,

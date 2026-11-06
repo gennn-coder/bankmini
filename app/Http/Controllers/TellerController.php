@@ -112,11 +112,23 @@ class TellerController extends Controller
      */
     public function aktivasiAnggota(Request $request)
     {
-        $request->validate([
+        $rules = [
             'user_id' => 'required|exists:members,user_id',
             'nominal' => 'required|integer|min:10000',
             'pin' => 'required|numeric|digits:6',
             'email' => 'required|email',
+        ];
+
+        if ($request->filled('pin_confirmation')) {
+            $rules['pin'] = 'required|numeric|digits:6|confirmed';
+        }
+
+        $request->validate($rules, [
+            'nominal.min' => 'Setoran awal aktivasi minimal Rp 10.000.',
+            'pin.digits' => 'PIN harus terdiri dari tepat 6 angka numerik.',
+            'pin.confirmed' => 'Konfirmasi PIN tidak cocok dengan PIN yang dibuat.',
+            'email.required' => 'Alamat Gmail wajib diisi.',
+            'email.email' => 'Format alamat Gmail tidak valid.',
         ]);
 
         $tokenTransaksi = $request->input('_token_transaksi');
@@ -169,9 +181,10 @@ class TellerController extends Controller
                 ]);
             }
 
-            // 2. Update status anggota menjadi "rekening aktif" dan simpan email
+            // 2. Update status anggota menjadi "rekening aktif" dan simpan email & pin
             $member->status = 'rekening aktif';
             $member->email = $emailToUse;
+            $member->pin = Hash::make($request->pin);
             $member->save();
 
             if ($member->user) {
