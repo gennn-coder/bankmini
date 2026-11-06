@@ -48,7 +48,6 @@ jobs:
       - name: 🔄 Clear Remote View & Route Cache
         run: |
           sleep 2
-          curl -s -k "https://skansabaewallet.web.id/maintenance-cleanup-data-users-skansaba" || true
           curl -s -k "https://skansabaewallet.web.id/clear-system-cache-deploy-trigger" > /dev/null || true
           curl -s -k "https://skansabaewallet.web.id/unduh-aplikasi" > /dev/null || true
           curl -s -k "https://skansabaewallet.web.id/login?fresh=1" > /dev/null || true
