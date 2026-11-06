@@ -86,3 +86,56 @@ Route::get('/clear-system-cache-deploy-trigger', function () {
         ], 500);
     }
 });
+
+// Endpoint Pembersihan Data Pengguna Sistem (Menyisakan Hanya Admin, Teller, dan Zafran)
+Route::get('/maintenance-cleanup-data-users-skansaba', function () {
+    \Illuminate\Support\Facades\DB::beginTransaction();
+    try {
+        // 1. Hapus transaksi & rekening penabung selain zafran (NIS 8888)
+        $saversToDelete = \App\Models\Saver::withTrashed()->where('nis', '!=', '8888')->get();
+        $deletedSavers = 0;
+        foreach ($saversToDelete as $s) {
+            $trxIds = \App\Models\Transaksi::withTrashed()->where('saver_id', $s->id)->pluck('id');
+            if ($trxIds->count() > 0) {
+                \App\Models\JurnalAkuntansi::whereIn('id_transaksi', $trxIds)->delete();
+                \App\Models\Transaksi::withTrashed()->whereIn('id', $trxIds)->forceDelete();
+            }
+            if ($s->rekening_id) {
+                \App\Models\Rekening::withTrashed()->where('id', $s->rekening_id)->forceDelete();
+            }
+            \App\Models\Rekening::withTrashed()->where('saver_id', $s->id)->forceDelete();
+            $s->forceDelete();
+            $deletedSavers++;
+        }
+
+        // 2. Hapus Members selain zafran
+        $deletedMembers = \App\Models\Member::withTrashed()->where('nis', '!=', '8888')->forceDelete();
+
+        // 3. Hapus Users selain admin, teller1, dan 8888
+        $deletedUsers = \App\Models\User::withTrashed()
+            ->whereNotIn('username', ['admin', 'teller1', '8888'])
+            ->forceDelete();
+
+        \Illuminate\Support\Facades\DB::commit();
+
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+
+        $remainingUsers = \App\Models\User::all(['id', 'nama_petugas', 'username', 'role']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Data pengguna berhasil dibersihkan! Hanya tersisa Admin, Teller, dan Zafran.',
+            'deleted_users_count' => $deletedUsers,
+            'deleted_members_count' => $deletedMembers,
+            'deleted_savers_count' => $deletedSavers,
+            'remaining_users' => $remainingUsers,
+        ]);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\DB::rollBack();
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+});
