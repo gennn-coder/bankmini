@@ -75,11 +75,23 @@ class NasabahApiController extends Controller
             ], 404);
         }
 
-        $namaSiswa = $saverData ? $saverData->student_name : ($memberData->student_name ?? $user->nama_petugas);
+        // Auto-sinkronkan Saver dengan Member jika data profil diubah oleh admin
+        if ($saverData && $memberData) {
+            if ($saverData->student_name !== $memberData->student_name || $saverData->class_grade !== $memberData->class_grade || $saverData->nis !== $memberData->nis) {
+                $saverData->update([
+                    'student_name' => $memberData->student_name,
+                    'class_grade' => $memberData->class_grade,
+                    'nis' => $memberData->nis,
+                    'email' => $memberData->email ?? $saverData->email,
+                ]);
+            }
+        }
+
+        $namaSiswa = $memberData ? $memberData->student_name : ($saverData ? $saverData->student_name : $user->nama_petugas);
         $noRekening = $saverData ? $saverData->account_number : '-';
-        $nis = $saverData ? $saverData->nis : ($memberData->nis ?? $user->username);
-        $kelas = $saverData ? $saverData->class_grade : ($memberData->class_grade ?? '-');
-        $email = $saverData ? $saverData->email : ($memberData->email ?? $user->email);
+        $nis = $memberData ? $memberData->nis : ($saverData ? $saverData->nis : $user->username);
+        $kelas = $memberData ? $memberData->class_grade : ($saverData ? $saverData->class_grade : '-');
+        $email = $memberData ? $memberData->email : ($saverData ? $saverData->email : $user->email);
         $saldo = $saverData ? (int) ($saverData->rekening->saldo ?? 0) : 0;
         $statusRekening = $saverData && $saverData->rekening ? $saverData->rekening->status : 'rekening tidak aktif';
 
@@ -114,8 +126,13 @@ class NasabahApiController extends Controller
     {
         $saver = Saver::with('rekening')->find($id);
         $member = null;
-        if (!$saver) {
+        if ($saver && $saver->user_id) {
+            $member = Member::where('user_id', $saver->user_id)->orWhere('nis', $saver->nis)->first();
+        } elseif (!$saver) {
             $member = Member::where('user_id', $id)->orWhere('nis', $id)->first();
+            if ($member) {
+                $saver = Saver::with('rekening')->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
+            }
         }
 
         if (!$saver && !$member) {
@@ -125,11 +142,23 @@ class NasabahApiController extends Controller
             ], 404);
         }
 
-        $namaSiswa = $saver ? $saver->student_name : $member->student_name;
+        // Auto-sinkronkan Saver dengan Member jika data profil diubah oleh admin
+        if ($saver && $member) {
+            if ($saver->student_name !== $member->student_name || $saver->class_grade !== $member->class_grade || $saver->nis !== $member->nis) {
+                $saver->update([
+                    'student_name' => $member->student_name,
+                    'class_grade' => $member->class_grade,
+                    'nis' => $member->nis,
+                    'email' => $member->email ?? $saver->email,
+                ]);
+            }
+        }
+
+        $namaSiswa = $member ? $member->student_name : ($saver ? $saver->student_name : '-');
         $noRekening = $saver ? $saver->account_number : '-';
-        $nis = $saver ? $saver->nis : $member->nis;
-        $kelas = $saver ? $saver->class_grade : $member->class_grade;
-        $email = $saver ? $saver->email : $member->email;
+        $nis = $member ? $member->nis : ($saver ? $saver->nis : '-');
+        $kelas = $member ? $member->class_grade : ($saver ? $saver->class_grade : '-');
+        $email = $member ? $member->email : ($saver ? $saver->email : null);
         $saldo = $saver ? (int) ($saver->rekening->saldo ?? 0) : 0;
         $statusRekening = $saver && $saver->rekening ? $saver->rekening->status : 'rekening tidak aktif';
 

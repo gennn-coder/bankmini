@@ -200,8 +200,33 @@ class DashboardController extends Controller
         }
 
         $saver = Saver::where('user_id', $user->id)->with(['rekening', 'member'])->first();
-        $nasabah = $saver;
         $member = Member::where('user_id', $user->id)->first();
+
+        // Auto-sinkronkan data Saver dari Member jika ada perbedaan nama, kelas, atau NIS (Self-Healing)
+        if ($saver && $member) {
+            $changed = false;
+            if ($saver->student_name !== $member->student_name) {
+                $saver->student_name = $member->student_name;
+                $changed = true;
+            }
+            if ($saver->class_grade !== $member->class_grade) {
+                $saver->class_grade = $member->class_grade;
+                $changed = true;
+            }
+            if ($saver->nis !== $member->nis) {
+                $saver->nis = $member->nis;
+                $changed = true;
+            }
+            if ($member->email && $saver->email !== $member->email) {
+                $saver->email = $member->email;
+                $changed = true;
+            }
+            if ($changed) {
+                $saver->save();
+            }
+        }
+
+        $nasabah = $saver;
         $transaksi = $saver
             ? Transaksi::where('saver_id', $saver->id)->orderBy('tanggal', 'desc')->get()
             : collect();

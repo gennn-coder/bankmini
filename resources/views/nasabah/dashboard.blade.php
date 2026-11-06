@@ -187,7 +187,7 @@
                     <span id="labelStatusLayanan">{{ ucfirst($statusLayanan) }}</span>
                 </div>
             </div>
-            <span>Halo, <strong>{{ $nasabah->nama_siswa ?? $user->nama_petugas }}</strong></span>
+            <span>Halo, <strong>{{ $member->student_name ?? $nasabah->nama_siswa ?? $user->nama_petugas }}</strong></span>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
                 <button type="submit" class="btn-logout">Keluar</button>
@@ -204,10 +204,10 @@
             <div class="card">
                 <h4>Identitas Penabung</h4>
                 <div class="value" style="font-size: 1.4rem; color: #0f172a; margin-bottom: 0.35rem;">
-                    {{ $nasabah->nama_siswa ?? $member->student_name ?? $user->nama_petugas }}
+                    {{ $member->student_name ?? $nasabah->nama_siswa ?? $user->nama_petugas }}
                 </div>
                 <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-                    Jurusan: {{ $nasabah->kelas ?? $member->class_grade ?? '-' }} &bull; NIS: {{ $nasabah->nis ?? $member->nis ?? $user->username }}
+                    Jurusan: {{ $member->class_grade ?? $nasabah->kelas ?? '-' }} &bull; NIS: {{ $member->nis ?? $nasabah->nis ?? $user->username }}
                 </div>
             </div>
             <div class="card" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">

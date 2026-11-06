@@ -71,6 +71,28 @@ class BankMiniRevisionTest extends TestCase
         $this->assertEquals('Siswa Uji Coba Update', $member->fresh()->student_name);
         $this->assertEquals('siswa.uji.update@gmail.com', $member->fresh()->email);
 
+        // Pastikan sinkronisasi juga berlaku jika ada Saver
+        $testSaver = Saver::create([
+            'user_id' => $member->user_id,
+            'account_number' => 'TEST9999',
+            'nis' => $nis,
+            'student_name' => 'Siswa Uji Coba Update',
+            'class_grade' => 'X PPLG 2',
+            'email' => 'siswa.uji.update@gmail.com',
+            'security_pin' => bcrypt('123456'),
+        ]);
+        $responseUpdateSaver = $this->post(route('admin.members.update', $member->user_id), [
+            'student_name' => 'Nama Baru Sinkron Saver',
+            'nis' => $nis,
+            'email' => 'nama.baru@gmail.com',
+            'class_grade' => 'RPL 1',
+            'graduation_year' => '2028',
+        ]);
+        $responseUpdateSaver->assertSessionHas('success');
+        $this->assertEquals('Nama Baru Sinkron Saver', $testSaver->fresh()->student_name);
+        $this->assertEquals('RPL 1', $testSaver->fresh()->class_grade);
+        $testSaver->forceDelete();
+
         // DELETE
         $responseDelete = $this->post(route('admin.members.destroy', $member->user_id));
         $responseDelete->assertSessionHas('success');

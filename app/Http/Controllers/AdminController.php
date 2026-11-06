@@ -387,9 +387,19 @@ class AdminController extends Controller
             $member->user->update($userData);
         }
 
-        // Jika status diubah menjadi "rekening aktif", pastikan Saver dan Rekening otomatis dibuat atau dipulihkan
-        if ($request->status === 'rekening aktif') {
-            $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
+        // Selalu sinkronkan data penabung (Saver) jika sudah ada agar data di Nasabah Dashboard & Mobile selalu terupdate
+        $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
+        if ($saver) {
+            $saver->update([
+                'student_name' => $request->student_name,
+                'nis' => $request->nis,
+                'class_grade' => $request->class_grade,
+                'email' => $request->email ?? $saver->email,
+            ]);
+        }
+
+        // Jika status diubah menjadi "rekening aktif" atau member sudah aktif, pastikan Saver dan Rekening otomatis dibuat/dipulihkan
+        if ($request->status === 'rekening aktif' || $member->status === 'rekening aktif') {
             if (!$saver) {
                 $accountNumber = Saver::generateNomorRekening();
                 $saver = Saver::create([
@@ -414,12 +424,6 @@ class AdminController extends Controller
                 if ($saver->trashed()) {
                     $saver->restore();
                 }
-                $saver->update([
-                    'student_name' => $request->student_name,
-                    'nis' => $request->nis,
-                    'class_grade' => $request->class_grade,
-                    'email' => $request->email ?? $saver->email,
-                ]);
                 $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
                 if ($rekening) {
                     if ($rekening->trashed()) {

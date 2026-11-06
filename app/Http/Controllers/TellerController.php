@@ -50,10 +50,21 @@ class TellerController extends Controller
             ]);
         }
 
+        if ($saver->member) {
+            if ($saver->student_name !== $saver->member->student_name || $saver->class_grade !== $saver->member->class_grade || $saver->nis !== $saver->member->nis) {
+                $saver->update([
+                    'student_name' => $saver->member->student_name,
+                    'class_grade' => $saver->member->class_grade,
+                    'nis' => $saver->member->nis,
+                    'email' => $saver->member->email ?? $saver->email,
+                ]);
+            }
+        }
+
         if (($saver->member && $saver->member->status === 'rekening tidak aktif') || ($saver->rekening && $saver->rekening->status === 'nonaktif')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rekening ' . $saver->student_name . ' (No Rek: ' . $saver->account_number . ') berstatus tidak aktif. Tidak dapat melakukan transaksi menabung / penarikan.',
+                'message' => 'Rekening ' . ($saver->member->student_name ?? $saver->student_name) . ' (No Rek: ' . $saver->account_number . ') berstatus tidak aktif. Tidak dapat melakukan transaksi menabung / penarikan.',
             ]);
         }
 
@@ -62,9 +73,9 @@ class TellerController extends Controller
             'data' => [
                 'id' => $saver->id,
                 'no_rekening' => $saver->account_number,
-                'nis' => $saver->nis,
-                'nama_siswa' => $saver->student_name,
-                'kelas' => $saver->class_grade,
+                'nis' => $saver->member->nis ?? $saver->nis,
+                'nama_siswa' => $saver->member->student_name ?? $saver->student_name,
+                'kelas' => $saver->member->class_grade ?? $saver->class_grade,
                 'email' => $saver->email ?? ($saver->member->email ?? ''),
                 'saldo' => (int) ($saver->rekening->saldo ?? 0),
                 'status' => $saver->rekening->status ?? 'aktif',
