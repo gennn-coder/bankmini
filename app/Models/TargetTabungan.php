@@ -36,3 +36,4 @@ class TargetTabungan extends Model
         return $this->belongsTo(Saver::class, 'saver_id');
     }
 }
+

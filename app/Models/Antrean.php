@@ -51,3 +51,4 @@ class Antrean extends Model
         ];
     }
 }
+
