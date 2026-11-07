@@ -714,7 +714,7 @@
                     </a>
                 </div>
                 <div class="hero-meta-note">
-                    Versi 1.0.0 &bull; Android 8.0 ke atas &bull; Bebas Iklan &amp; Aman
+                    Versi 1.1.0 &bull; Android 8.0 ke atas &bull; Bebas Iklan &amp; Aman
                 </div>
             </div>
 
