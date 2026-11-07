@@ -151,6 +151,8 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 0.5rem;
             width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .tab-btn {
             background: transparent;
@@ -428,8 +430,8 @@
         <!-- NAVIGATION TABS -->
         <div class="nav-tabs">
             <button class="tab-btn active" onclick="switchTab('tab-users')">Manajemen User</button>
-            <button class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa (CRUD)</button>
-            <button class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung (Saver)</button>
+            <button class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa</button>
+            <button class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung</button>
             <button class="tab-btn" onclick="switchTab('tab-supervisor')">
                 Approval Kas & Tutup Kas
                 @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
