@@ -394,12 +394,12 @@
         <!-- NAVIGATION 3 TAB UTAMA -->
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" id="btn-tab-dashboard" onclick="switchNasabahTab('tab-dashboard')">Dashboard</button>
-            <button type="button" class="tab-btn" id="btn-tab-mutasi" onclick="switchNasabahTab('tab-mutasi')">Mutasi & Laporan Bulanan</button>
+            <button type="button" class="tab-btn" id="btn-tab-mutasi" onclick="switchNasabahTab('tab-mutasi')">Laporan Bulanan & Target</button>
             <button type="button" class="tab-btn" id="btn-tab-profil" onclick="switchNasabahTab('tab-profil')">Profil & Pengaduan</button>
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 1: DASHBOARD (Saldo, Antrean & Target)  -->
+        <!-- TAB 1: DASHBOARD (Saldo, Antrean & Mutasi) -->
         <!-- ========================================== -->
         <div id="tab-dashboard" class="tab-content active">
             <!-- GRID IDENTITAS, REKENING & SALDO -->
@@ -487,127 +487,7 @@
                 </div>
             </div>
 
-            <!-- FITUR: TARGET TABUNGAN (CELENGAN IMPIAN) -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                    <div>
-                        <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Target Tabungan Saya</h3>
-                        <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">Kelola target tabungan untuk memotivasi perencanaan keuangan Anda.</p>
-                    </div>
-                    <button type="button" onclick="openTargetModal()" class="btn-primary">
-                        {{ $targetTabungan ? 'Perbarui Target' : 'Pasang Target Baru' }}
-                    </button>
-                </div>
-
-                @if($targetTabungan)
-                    @php
-                        $nominalTarget = $targetTabungan->nominal_target > 0 ? $targetTabungan->nominal_target : 1;
-                        $persen = min(100, round(($currentSaldo / $nominalTarget) * 100, 1));
-                        $sisa = max(0, $targetTabungan->nominal_target - $currentSaldo);
-                    @endphp
-                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-                            <span style="font-size: 1.1rem; font-weight: 800; color: #1e293b;">{{ $targetTabungan->judul_target }}</span>
-                            <span class="badge {{ $persen >= 100 ? 'badge-aktif' : 'badge-diproses' }}">
-                                {{ $persen >= 100 ? 'Target Tercapai' : 'Sedang Berjalan (' . $persen . '%)' }}
-                            </span>
-                        </div>
-
-                        <!-- PROGRESS BAR SEDERHANA & ELEGAN -->
-                        <div style="background: #e2e8f0; height: 12px; border-radius: 999px; overflow: hidden; margin: 0.75rem 0;">
-                            <div style="background: {{ $persen >= 100 ? '#16a34a' : 'var(--primary-600)' }}; width: {{ $persen }}%; height: 100%; transition: width 0.5s ease;"></div>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.88rem; color: #475569;">
-                            <div>
-                                Saldo Saat Ini: <strong>Rp {{ number_format($currentSaldo, 0, ',', '.') }}</strong> dari Target: <strong>Rp {{ number_format($targetTabungan->nominal_target, 0, ',', '.') }}</strong>
-                            </div>
-                            <div>
-                                @if($sisa > 0)
-                                    Sisa yang dibutuhkan: <strong style="color: #b91c1c;">Rp {{ number_format($sisa, 0, ',', '.') }}</strong>
-                                @else
-                                    <strong style="color: #16a34a;">Selamat! Target tabungan Anda sudah tercapai.</strong>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if($targetTabungan->keterangan)
-                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.65rem;">
-                                Catatan: {{ $targetTabungan->keterangan }}
-                            </div>
-                        @endif
-
-                        <div style="margin-top: 1rem; text-align: right;">
-                            <form action="{{ route('nasabah.target-tabungan.delete', $targetTabungan->id) }}" method="POST" onsubmit="return confirm('Hapus target tabungan ini?')" style="display:inline;">
-                                @csrf
-                                <button type="submit" class="btn-secondary" style="color: #dc2626; padding: 0.35rem 0.75rem; font-size: 0.8rem;">Hapus Target</button>
-                            </form>
-                        </div>
-                    </div>
-                @else
-                    <div style="text-align: center; padding: 2rem 1rem; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 14px;">
-                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Belum ada target tabungan yang dipasang. Pasang target tabungan untuk memantau perkembangan impian Anda.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- TAB 2: MUTASI & LAPORAN BULANAN             -->
-        <!-- ========================================== -->
-        <div id="tab-mutasi" class="tab-content">
-            <!-- LAPORAN KEUANGAN BULANAN (RINGKASAN AKHIR BULAN) -->
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-                    <div>
-                        <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Ringkasan Keuangan Bulanan</h3>
-                        <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">Rangkuman mutasi keuangan tabungan Anda per periode bulan.</p>
-                    </div>
-                    <form method="GET" action="{{ route('nasabah.dashboard') }}" style="display: flex; gap: 0.5rem; align-items: center; margin:0;">
-                        <select name="bulan" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; width: auto;" onchange="this.form.submit()">
-                            @for($b = 1; $b <= 12; $b++)
-                                <option value="{{ $b }}" {{ $selectedBulan === $b ? 'selected' : '' }}>
-                                    {{ \Carbon\Carbon::create(null, $b, 1)->translatedFormat('F') }}
-                                </option>
-                            @endfor
-                        </select>
-                        <select name="tahun" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; width: auto;" onchange="this.form.submit()">
-                            @for($t = date('Y'); $t >= date('Y') - 3; $t--)
-                                <option value="{{ $t }}" {{ $selectedTahun === $t ? 'selected' : '' }}>{{ $t }}</option>
-                            @endfor
-                        </select>
-                    </form>
-                </div>
-
-                <div class="grid" style="margin-bottom: 0;">
-                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Saldo Awal Bulan</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-top: 0.35rem;">
-                            Rp {{ number_format($saldoAwalBulan, 0, ',', '.') }}
-                        </div>
-                    </div>
-                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; font-weight: 700; color: #166534; text-transform: uppercase;">Total Setoran Masuk (+)</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #15803d; margin-top: 0.35rem;">
-                            + Rp {{ number_format($totalSetoranBulanIni, 0, ',', '.') }}
-                        </div>
-                    </div>
-                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; font-weight: 700; color: #991b1b; text-transform: uppercase;">Total Penarikan Keluar (-)</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: #b91c1c; margin-top: 0.35rem;">
-                            - Rp {{ number_format($totalPenarikanBulanIni, 0, ',', '.') }}
-                        </div>
-                    </div>
-                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 1.25rem;">
-                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase;">Saldo Akhir Bulan</div>
-                        <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-600); margin-top: 0.35rem;">
-                            Rp {{ number_format($saldoAkhirBulan, 0, ',', '.') }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TABEL RIWAYAT MUTASI -->
+            <!-- TABEL RIWAYAT MUTASI REKENING (PINDAH KE DASHBOARD) -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
@@ -682,6 +562,126 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: LAPORAN BULANAN & TARGET TABUNGAN   -->
+        <!-- ========================================== -->
+        <div id="tab-mutasi" class="tab-content">
+            <!-- LAPORAN KEUANGAN BULANAN (RINGKASAN AKHIR BULAN) -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Ringkasan Keuangan Bulanan</h3>
+                        <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">Rangkuman mutasi keuangan tabungan Anda per periode bulan.</p>
+                    </div>
+                    <form method="GET" action="{{ route('nasabah.dashboard') }}" style="display: flex; gap: 0.5rem; align-items: center; margin:0;">
+                        <select name="bulan" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; width: auto;" onchange="this.form.submit()">
+                            @for($b = 1; $b <= 12; $b++)
+                                <option value="{{ $b }}" {{ $selectedBulan === $b ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create(null, $b, 1)->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+                        <select name="tahun" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; width: auto;" onchange="this.form.submit()">
+                            @for($t = date('Y'); $t >= date('Y') - 3; $t--)
+                                <option value="{{ $t }}" {{ $selectedTahun === $t ? 'selected' : '' }}>{{ $t }}</option>
+                            @endfor
+                        </select>
+                    </form>
+                </div>
+
+                <div class="grid" style="margin-bottom: 0;">
+                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Saldo Awal Bulan</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-top: 0.35rem;">
+                            Rp {{ number_format($saldoAwalBulan, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #166534; text-transform: uppercase;">Total Setoran Masuk (+)</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: #15803d; margin-top: 0.35rem;">
+                            + Rp {{ number_format($totalSetoranBulanIni, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #991b1b; text-transform: uppercase;">Total Penarikan Keluar (-)</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: #b91c1c; margin-top: 0.35rem;">
+                            - Rp {{ number_format($totalPenarikanBulanIni, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 1.25rem;">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase;">Saldo Akhir Bulan</div>
+                        <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-600); margin-top: 0.35rem;">
+                            Rp {{ number_format($saldoAkhirBulan, 0, ',', '.') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FITUR: TARGET TABUNGAN (PINDAH KE LAPORAN BULAN) -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Target Tabungan Saya</h3>
+                        <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">Kelola target tabungan untuk memotivasi perencanaan keuangan Anda.</p>
+                    </div>
+                    <button type="button" onclick="openTargetModal()" class="btn-primary">
+                        {{ $targetTabungan ? 'Perbarui Target' : 'Pasang Target Baru' }}
+                    </button>
+                </div>
+
+                @if($targetTabungan)
+                    @php
+                        $nominalTarget = $targetTabungan->nominal_target > 0 ? $targetTabungan->nominal_target : 1;
+                        $persen = min(100, round(($currentSaldo / $nominalTarget) * 100, 1));
+                        $sisa = max(0, $targetTabungan->nominal_target - $currentSaldo);
+                    @endphp
+                    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span style="font-size: 1.1rem; font-weight: 800; color: #1e293b;">{{ $targetTabungan->judul_target }}</span>
+                            <span class="badge {{ $persen >= 100 ? 'badge-aktif' : 'badge-diproses' }}">
+                                {{ $persen >= 100 ? 'Target Tercapai' : 'Sedang Berjalan (' . $persen . '%)' }}
+                            </span>
+                        </div>
+
+                        <!-- PROGRESS BAR SEDERHANA & ELEGAN -->
+                        <div style="background: #e2e8f0; height: 12px; border-radius: 999px; overflow: hidden; margin: 0.75rem 0;">
+                            <div style="background: {{ $persen >= 100 ? '#16a34a' : 'var(--primary-600)' }}; width: {{ $persen }}%; height: 100%; transition: width 0.5s ease;"></div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; font-size: 0.88rem; color: #475569;">
+                            <div>
+                                Saldo Saat Ini: <strong>Rp {{ number_format($currentSaldo, 0, ',', '.') }}</strong> dari Target: <strong>Rp {{ number_format($targetTabungan->nominal_target, 0, ',', '.') }}</strong>
+                            </div>
+                            <div>
+                                @if($sisa > 0)
+                                    Sisa yang dibutuhkan: <strong style="color: #b91c1c;">Rp {{ number_format($sisa, 0, ',', '.') }}</strong>
+                                @else
+                                    <strong style="color: #16a34a;">Selamat! Target tabungan Anda sudah tercapai.</strong>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if($targetTabungan->keterangan)
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.65rem;">
+                                Catatan: {{ $targetTabungan->keterangan }}
+                            </div>
+                        @endif
+
+                        <div style="margin-top: 1rem; text-align: right;">
+                            <form action="{{ route('nasabah.target-tabungan.delete', $targetTabungan->id) }}" method="POST" onsubmit="return confirm('Hapus target tabungan ini?')" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn-secondary" style="color: #dc2626; padding: 0.35rem 0.75rem; font-size: 0.8rem;">Hapus Target</button>
+                            </form>
+                        </div>
+                    </div>
+                @else
+                    <div style="text-align: center; padding: 2rem 1rem; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: 14px;">
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Belum ada target tabungan yang dipasang. Pasang target tabungan untuk memantau perkembangan impian Anda.</p>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -940,6 +940,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('bulan') || urlParams.has('tahun')) {
+                    switchNasabahTab('tab-mutasi');
+                    return;
+                }
                 const savedTab = sessionStorage.getItem('nasabah_active_tab');
                 if (savedTab && document.getElementById(savedTab)) {
                     switchNasabahTab(savedTab);
