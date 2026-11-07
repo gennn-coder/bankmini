@@ -822,7 +822,18 @@ class TellerController extends Controller
             ->orderBy('angka_antrean', 'asc')
             ->first();
 
+        $totalMenunggu = \App\Models\Antrean::where('tanggal', $today)->where('status', 'menunggu')->count();
+        $totalHariIni = \App\Models\Antrean::where('tanggal', $today)->count();
+
         if (!$next) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada antrean siswa yang sedang menunggu saat ini.',
+                    'total_menunggu' => $totalMenunggu,
+                    'total_hari_ini' => $totalHariIni,
+                ]);
+            }
             return back()->with('info', 'Tidak ada antrean siswa yang sedang menunggu saat ini.');
         }
 
@@ -831,16 +842,47 @@ class TellerController extends Controller
             'dipanggil_pada' => now(),
         ]);
 
+        $totalMenunggu = \App\Models\Antrean::where('tanggal', $today)->where('status', 'menunggu')->count();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Memanggil nomor antrean: ' . $next->nomor_antrean . ' (' . $next->nama_siswa . ')',
+                'antrean' => [
+                    'id' => $next->id,
+                    'nomor_antrean' => $next->nomor_antrean,
+                    'nama_siswa' => $next->nama_siswa,
+                    'nis' => $next->nis,
+                ],
+                'total_menunggu' => $totalMenunggu,
+                'total_hari_ini' => $totalHariIni,
+            ]);
+        }
+
         return back()->with('success', 'Memanggil nomor antrean: ' . $next->nomor_antrean . ' (' . $next->nama_siswa . ')');
     }
 
-    public function selesaikanAntrean($id)
+    public function selesaikanAntrean(Request $request, $id)
     {
         $antrean = \App\Models\Antrean::findOrFail($id);
         $antrean->update([
             'status' => 'selesai',
             'selesai_pada' => now(),
         ]);
+
+        $today = date('Y-m-d');
+        $totalMenunggu = \App\Models\Antrean::where('tanggal', $today)->where('status', 'menunggu')->count();
+        $totalHariIni = \App\Models\Antrean::where('tanggal', $today)->count();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Antrean ' . $antrean->nomor_antrean . ' berhasil diselesaikan.',
+                'nomor_antrean' => $antrean->nomor_antrean,
+                'total_menunggu' => $totalMenunggu,
+                'total_hari_ini' => $totalHariIni,
+            ]);
+        }
 
         return back()->with('success', 'Antrean ' . $antrean->nomor_antrean . ' berhasil diselesaikan.');
     }

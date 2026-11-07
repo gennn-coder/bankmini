@@ -862,37 +862,39 @@
         </div>
 
         <!-- SISTEM ANTREAN BANK MINI (TELLER) (DI BAWAH) -->
-        <div class="card" style="border-left: 5px solid var(--primary-600); margin-bottom: 1.75rem; background: #ffffff;">
+        <div class="card" id="cardAntreanTeller" style="border-left: 5px solid var(--primary-600); margin-bottom: 1.75rem; background: #ffffff;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
                     <h4 style="margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Antrean Pelayanan Loket Bank Mini</h4>
                     <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.35rem; flex-wrap: wrap;">
                         <span style="font-size: 0.9rem; color: #64748b; font-weight: 600;">Nomor Sedang Dilayani:</span>
-                        <strong style="font-size: 1.5rem; color: {{ $antreanSedangDilayani ? '#2563eb' : '#64748b' }};">
+                        <strong id="antreanNomorSedangDilayani" style="font-size: 1.5rem; color: {{ $antreanSedangDilayani ? '#2563eb' : '#64748b' }};">
                             {{ $antreanSedangDilayani ? $antreanSedangDilayani->nomor_antrean : '-' }}
                         </strong>
-                        @if($antreanSedangDilayani)
-                            <span style="font-size: 0.85rem; color: #1e293b; font-weight: 700;">({{ $antreanSedangDilayani->nama_siswa }} - NIS: {{ $antreanSedangDilayani->nis }})</span>
-                        @endif
+                        <span id="antreanInfoSiswaSedangDilayani" style="font-size: 0.85rem; color: #1e293b; font-weight: 700; {{ $antreanSedangDilayani ? '' : 'display: none;' }}">
+                            @if($antreanSedangDilayani)
+                                ({{ $antreanSedangDilayani->nama_siswa }} - NIS: {{ $antreanSedangDilayani->nis }})
+                            @endif
+                        </span>
                     </div>
                     <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
-                        Antrean menunggu: <strong style="color: #0f172a;">{{ $totalAntreanMenunggu }} siswa</strong> &bull; Total nomor terbit hari ini: <strong>{{ isset($antreanHariIni) ? count($antreanHariIni) : 0 }}</strong>
+                        Antrean menunggu: <strong style="color: #0f172a;"><span id="antreanTotalMenungguText">{{ $totalAntreanMenunggu }}</span> siswa</strong> &bull; Total nomor terbit hari ini: <strong><span id="antreanTotalTerbitText">{{ isset($antreanHariIni) ? count($antreanHariIni) : 0 }}</span></strong>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
-                    @if($antreanSedangDilayani)
-                        <form action="{{ route('teller.antrean.selesai', $antreanSedangDilayani->id) }}" method="POST" style="margin: 0;">
+                <div id="antreanActionButtons" style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                    <div id="wrapperBtnSelesaiAntrean" style="{{ $antreanSedangDilayani ? 'display: inline-block;' : 'display: none;' }}">
+                        <form id="formSelesaiAntrean" action="{{ $antreanSedangDilayani ? route('teller.antrean.selesai', $antreanSedangDilayani->id) : '#' }}" method="POST" style="margin: 0;" onsubmit="handleSelesaiAntreanSubmit(event)">
                             @csrf
-                            <button type="submit" class="btn-success" style="padding: 0.65rem 1.15rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px;">
-                                Selesaikan Antrean ({{ $antreanSedangDilayani->nomor_antrean }})
+                            <button type="submit" id="btnSelesaiAntrean" class="btn-success" data-id="{{ $antreanSedangDilayani ? $antreanSedangDilayani->id : '' }}" data-nomor="{{ $antreanSedangDilayani ? $antreanSedangDilayani->nomor_antrean : '' }}" style="padding: 0.65rem 1.15rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px;">
+                                Selesaikan Antrean (<span id="labelNomorSelesai">{{ $antreanSedangDilayani ? $antreanSedangDilayani->nomor_antrean : '' }}</span>)
                             </button>
                         </form>
-                    @endif
+                    </div>
 
-                    <form action="{{ route('teller.antrean.panggil') }}" method="POST" style="margin: 0;">
+                    <form id="formPanggilAntrean" action="{{ route('teller.antrean.panggil') }}" method="POST" style="margin: 0;" onsubmit="handlePanggilAntreanSubmit(event)">
                         @csrf
-                        <button type="submit" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px; {{ $totalAntreanMenunggu == 0 ? 'opacity: 0.75;' : '' }}">
+                        <button type="submit" id="btnPanggilAntrean" class="btn-primary" style="padding: 0.65rem 1.25rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px; {{ $totalAntreanMenunggu == 0 ? 'opacity: 0.75;' : '' }}">
                             Panggil Antrean Berikutnya
                         </button>
                     </form>
@@ -900,9 +902,9 @@
             </div>
             
             @if(isset($antreanHariIni) && count($antreanHariIni) > 0)
-                <details style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+                <details id="detailsAntreanHariIni" style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
                     <summary style="font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer;">
-                        Lihat Daftar Lengkap Antrean Hari Ini ({{ count($antreanHariIni) }} Siswa)
+                        Lihat Daftar Lengkap Antrean Hari Ini (<span id="labelJumlahAntreanHariIni">{{ count($antreanHariIni) }}</span> Siswa)
                     </summary>
                     <div style="margin-top: 0.5rem; max-height: 180px; overflow-y: auto;">
                         <table style="width: 100%; font-size: 0.82rem; border-collapse: collapse;">
@@ -915,14 +917,14 @@
                                     <th style="padding: 6px 10px;">Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tbodyDaftarAntreanHariIni">
                                 @foreach($antreanHariIni as $ant)
-                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <tr id="row-antrean-{{ $ant->nomor_antrean }}" style="border-bottom: 1px solid #f1f5f9;">
                                     <td style="padding: 6px 10px; font-weight: 700; font-family: monospace;">{{ $ant->nomor_antrean }}</td>
                                     <td style="padding: 6px 10px;">{{ $ant->nama_siswa }}</td>
                                     <td style="padding: 6px 10px;">{{ $ant->nis }}</td>
                                     <td style="padding: 6px 10px; color: #64748b;">{{ date('H:i', strtotime($ant->created_at)) }} WIB</td>
-                                    <td style="padding: 6px 10px;">
+                                    <td style="padding: 6px 10px;" id="badge-antrean-{{ $ant->nomor_antrean }}">
                                         @if($ant->status === 'dilayani')
                                             <span style="background: #dbeafe; color: #1d4ed8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Dilayani</span>
                                         @elseif($ant->status === 'menunggu')
@@ -1657,8 +1659,8 @@
             } catch (e) {}
 
             try {
-                if (window.history && window.history.replaceState) {
-                    window.history.replaceState(null, null, '#' + tabId);
+                if (window.history && window.history.replaceState && window.location.hash) {
+                    window.history.replaceState(null, null, window.location.pathname + window.location.search);
                 }
             } catch (e) {}
         }
@@ -3203,10 +3205,208 @@
             });
         }
 
+        /* Handler Antrean Loket Teller (AJAX Tanpa Scroll / Tanpa Reload) */
+        async function handlePanggilAntreanSubmit(e) {
+            if (e) e.preventDefault();
+            const btn = document.getElementById('btnPanggilAntrean');
+            const originalText = btn ? btn.innerText : 'Panggil Antrean Berikutnya';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Memanggil...';
+            }
+
+            try {
+                const response = await fetch('{{ route("teller.antrean.panggil") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success && data.antrean) {
+                    applyAntreanSedangDilayani(data.antrean, data.total_menunggu, data.total_hari_ini);
+                } else {
+                    alert(data.message || 'Tidak ada antrean yang menunggu.');
+                    if (data.total_menunggu !== undefined) {
+                        applyAntreanCounts(data.total_menunggu, data.total_hari_ini);
+                    }
+                }
+            } catch (err) {
+                console.error('Fetch panggil error, fallback submit:', err);
+                sessionStorage.setItem('teller_stay_antrean', 'true');
+                document.getElementById('formPanggilAntrean')?.submit();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            }
+        }
+
+        async function handleSelesaiAntreanSubmit(e) {
+            if (e) e.preventDefault();
+            const btn = document.getElementById('btnSelesaiAntrean');
+            const antreanId = btn ? btn.getAttribute('data-id') : null;
+            const nomorAntrean = btn ? btn.getAttribute('data-nomor') : '';
+
+            if (!antreanId) {
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Menyelesaikan...';
+            }
+
+            try {
+                const url = '{{ url("/teller/antrean") }}/' + antreanId + '/selesai';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    applyAntreanSelesai(data.nomor_antrean || nomorAntrean, data.total_menunggu, data.total_hari_ini);
+                } else {
+                    alert(data.message || 'Gagal menyelesaikan antrean.');
+                }
+            } catch (err) {
+                console.error('Fetch selesai error, fallback submit:', err);
+                sessionStorage.setItem('teller_stay_antrean', 'true');
+                document.getElementById('formSelesaiAntrean')?.submit();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    const curNomor = btn.getAttribute('data-nomor') || '';
+                    btn.innerHTML = 'Selesaikan Antrean (<span id="labelNomorSelesai">' + curNomor + '</span>)';
+                }
+            }
+        }
+
+        function applyAntreanSedangDilayani(antrean, totalMenunggu, totalHariIni) {
+            const elNomor = document.getElementById('antreanNomorSedangDilayani');
+            if (elNomor) {
+                elNomor.textContent = antrean.nomor_antrean;
+                elNomor.style.color = '#2563eb';
+            }
+
+            const elInfo = document.getElementById('antreanInfoSiswaSedangDilayani');
+            if (elInfo) {
+                elInfo.textContent = '(' + antrean.nama_siswa + ' - NIS: ' + antrean.nis + ')';
+                elInfo.style.display = 'inline';
+            }
+
+            const wrapperSelesai = document.getElementById('wrapperBtnSelesaiAntrean');
+            const btnSelesai = document.getElementById('btnSelesaiAntrean');
+            const labelNomorSelesai = document.getElementById('labelNomorSelesai');
+            const formSelesai = document.getElementById('formSelesaiAntrean');
+
+            if (wrapperSelesai) wrapperSelesai.style.display = 'inline-block';
+            if (btnSelesai) {
+                btnSelesai.setAttribute('data-id', antrean.id);
+                btnSelesai.setAttribute('data-nomor', antrean.nomor_antrean);
+            }
+            if (labelNomorSelesai) {
+                labelNomorSelesai.textContent = antrean.nomor_antrean;
+            }
+            if (formSelesai) {
+                formSelesai.action = '{{ url("/teller/antrean") }}/' + antrean.id + '/selesai';
+            }
+
+            document.querySelectorAll('#tbodyDaftarAntreanHariIni span').forEach(span => {
+                if (span.textContent.trim() === 'Dilayani') {
+                    span.textContent = 'Selesai';
+                    span.style.background = '#f1f5f9';
+                    span.style.color = '#64748b';
+                }
+            });
+            const badgeNow = document.getElementById('badge-antrean-' + antrean.nomor_antrean);
+            if (badgeNow) {
+                badgeNow.innerHTML = '<span style="background: #dbeafe; color: #1d4ed8; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Dilayani</span>';
+            }
+
+            applyAntreanCounts(totalMenunggu, totalHariIni);
+        }
+
+        function applyAntreanSelesai(nomorAntrean, totalMenunggu, totalHariIni) {
+            const elNomor = document.getElementById('antreanNomorSedangDilayani');
+            if (elNomor) {
+                elNomor.textContent = '-';
+                elNomor.style.color = '#64748b';
+            }
+
+            const elInfo = document.getElementById('antreanInfoSiswaSedangDilayani');
+            if (elInfo) {
+                elInfo.textContent = '';
+                elInfo.style.display = 'none';
+            }
+
+            const wrapperSelesai = document.getElementById('wrapperBtnSelesaiAntrean');
+            const btnSelesai = document.getElementById('btnSelesaiAntrean');
+            if (wrapperSelesai) wrapperSelesai.style.display = 'none';
+            if (btnSelesai) {
+                btnSelesai.removeAttribute('data-id');
+                btnSelesai.removeAttribute('data-nomor');
+            }
+
+            if (nomorAntrean) {
+                const badgeNow = document.getElementById('badge-antrean-' + nomorAntrean);
+                if (badgeNow) {
+                    badgeNow.innerHTML = '<span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Selesai</span>';
+                }
+            }
+
+            applyAntreanCounts(totalMenunggu, totalHariIni);
+        }
+
+        function applyAntreanCounts(totalMenunggu, totalHariIni) {
+            if (totalMenunggu !== undefined) {
+                const elMenunggu = document.getElementById('antreanTotalMenungguText');
+                if (elMenunggu) elMenunggu.textContent = totalMenunggu;
+                const btnPanggil = document.getElementById('btnPanggilAntrean');
+                if (btnPanggil) {
+                    btnPanggil.style.opacity = totalMenunggu === 0 ? '0.75' : '1';
+                }
+            }
+            if (totalHariIni !== undefined) {
+                const elTerbit = document.getElementById('antreanTotalTerbitText');
+                if (elTerbit) elTerbit.textContent = totalHariIni;
+                const labelJml = document.getElementById('labelJumlahAntreanHariIni');
+                if (labelJml) labelJml.textContent = totalHariIni;
+            }
+        }
+
+        // Pertahankan posisi stay pada kartu antrean jika terjadi reload
+        window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('teller_stay_antrean') === 'true') {
+                sessionStorage.removeItem('teller_stay_antrean');
+                const antreanCard = document.getElementById('cardAntreanTeller');
+                if (antreanCard) {
+                    antreanCard.scrollIntoView({ behavior: 'instant', block: 'center' });
+                }
+            }
+        });
+
         // Pastikan saat ada konfirmasi transaksi/laporan, layar langsung fokus di atas
         @if(session('success') || session('error') || $errors->any())
             window.addEventListener('DOMContentLoaded', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (sessionStorage.getItem('teller_stay_antrean') === 'true') {
+                    sessionStorage.removeItem('teller_stay_antrean');
+                    const antreanCard = document.getElementById('cardAntreanTeller');
+                    if (antreanCard) {
+                        antreanCard.scrollIntoView({ behavior: 'instant', block: 'center' });
+                    }
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
             });
         @endif
     </script>
