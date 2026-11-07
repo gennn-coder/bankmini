@@ -402,41 +402,6 @@
         <!-- TAB 1: DASHBOARD (Saldo, Antrean & Target)  -->
         <!-- ========================================== -->
         <div id="tab-dashboard" class="tab-content active">
-            <!-- LIVE STATUS & SISTEM ANTREAN BANK MINI -->
-            <div class="card" style="border-left: 5px solid var(--primary-600); margin-bottom: 1.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div>
-                        <h4 style="margin:0; font-size: 0.8rem; color: var(--text-muted);">Sistem Antrean Loket Bank Mini</h4>
-                        <div style="font-size: 1.15rem; font-weight: 800; color: #1e293b; margin-top: 0.25rem;">
-                            Sedang Dilayani: <span style="color: var(--primary-600);" id="liveSedangDilayani">{{ $antreanSedangDilayani ? $antreanSedangDilayani->nomor_antrean : 'Belum Ada Panggilan' }}</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
-                            Total antrean yang sedang menunggu hari ini: <strong id="liveTotalMenunggu">{{ $totalAntreanMenunggu }} orang</strong>
-                        </div>
-                    </div>
-                    <div>
-                        @if($antreanSaya)
-                            <div style="text-align: right; background: #eff6ff; padding: 0.75rem 1.25rem; border-radius: 12px; border: 1px solid #bfdbfe;">
-                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase;">Nomor Antrean Anda</div>
-                                <div style="font-size: 1.6rem; font-weight: 800; color: #1e293b;">{{ $antreanSaya->nomor_antrean }}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
-                                    @if($antreanSaya->status === 'dilayani')
-                                        <span style="color: #16a34a; font-weight: 800;">Silakan menuju loket Teller sekarang</span>
-                                    @else
-                                        Menunggu (Sisa: {{ $antreanSebelumSaya }} orang sebelum Anda)
-                                    @endif
-                                </div>
-                            </div>
-                        @else
-                            <form action="{{ route('nasabah.ambil-antrean') }}" method="POST" style="margin:0;">
-                                @csrf
-                                <button type="submit" class="btn-primary" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">Ambil Nomor Antrean Hari Ini</button>
-                            </form>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
             <!-- GRID IDENTITAS, REKENING & SALDO -->
             <div class="grid">
                 <div class="card">
@@ -482,6 +447,41 @@
                             <span style="color: #16a34a;">Status: Rekening Aktif</span>
                         @else
                             <span style="color: #ef4444;">Status: Rekening Belum Aktif</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVE STATUS & SISTEM ANTREAN BANK MINI -->
+            <div class="card" style="border-left: 5px solid var(--primary-600); margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h4 style="margin:0; font-size: 0.8rem; color: var(--text-muted);">Sistem Antrean Loket Bank Mini</h4>
+                        <div style="font-size: 1.15rem; font-weight: 800; color: #1e293b; margin-top: 0.25rem;">
+                            Sedang Dilayani: <span style="color: var(--primary-600);" id="liveSedangDilayani">{{ $antreanSedangDilayani ? $antreanSedangDilayani->nomor_antrean : 'Belum Ada Panggilan' }}</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+                            Total antrean yang sedang menunggu hari ini: <strong id="liveTotalMenunggu">{{ $totalAntreanMenunggu }} orang</strong>
+                        </div>
+                    </div>
+                    <div>
+                        @if($antreanSaya)
+                            <div style="text-align: right; background: #eff6ff; padding: 0.75rem 1.25rem; border-radius: 12px; border: 1px solid #bfdbfe;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: var(--primary-600); text-transform: uppercase;">Nomor Antrean Anda</div>
+                                <div style="font-size: 1.6rem; font-weight: 800; color: #1e293b;">{{ $antreanSaya->nomor_antrean }}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+                                    @if($antreanSaya->status === 'dilayani')
+                                        <span style="color: #16a34a; font-weight: 800;">Silakan menuju loket Teller sekarang</span>
+                                    @else
+                                        Menunggu (Sisa: {{ $antreanSebelumSaya }} orang sebelum Anda)
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <form action="{{ route('nasabah.ambil-antrean') }}" method="POST" style="margin:0;">
+                                @csrf
+                                <button type="submit" class="btn-primary" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">Ambil Nomor Antrean Hari Ini</button>
+                            </form>
                         @endif
                     </div>
                 </div>
