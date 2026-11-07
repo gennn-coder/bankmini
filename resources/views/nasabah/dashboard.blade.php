@@ -652,7 +652,7 @@
                         </thead>
                         <tbody id="tableMutasiBody">
                             @forelse($transaksi as $t)
-                                <tr class="mutasi-row" data-jenis="{{ $t->jenis_trans }}">
+                                <tr class="mutasi-row" data-jenis="{{ strtolower($t->jenis_trans) }}">
                                     <td>{{ $t->tanggal ? \Carbon\Carbon::parse($t->tanggal)->format('Y-m-d H:i:s') : '-' }}</td>
                                     <td><code>{{ $t->no_transaksi }}</code></td>
                                     <td>
@@ -968,8 +968,12 @@
             document.getElementById('pengaduanModal').style.display = 'none';
         }
 
-        // Filter Mutasi
+        // Filter & Pencarian Mutasi
+        let currentMutasiJenis = 'semua';
+
         function filterMutasi(jenis) {
+            currentMutasiJenis = jenis;
+
             document.querySelectorAll('.btn-filter-mutasi').forEach(btn => {
                 btn.style.background = '#fff';
                 btn.style.color = '#334155';
@@ -980,32 +984,30 @@
                 activeBtn.style.color = '#fff';
             }
 
-            const rows = document.querySelectorAll('#tableMutasiBody tr.mutasi-row');
-            rows.forEach(r => {
-                const rJenis = r.getAttribute('data-jenis');
-                if (jenis === 'semua' || rJenis === jenis) {
-                    r.style.display = '';
-                } else {
-                    r.style.display = 'none';
-                }
-            });
-            searchMutasiTable();
+            applyMutasiFilter();
         }
 
         function searchMutasiTable() {
+            applyMutasiFilter();
+        }
+
+        function applyMutasiFilter() {
             const query = (document.getElementById('searchMutasi')?.value || '').toLowerCase().trim();
             const rows = document.querySelectorAll('#tableMutasiBody tr.mutasi-row');
             let visibleCount = 0;
 
             rows.forEach(row => {
-                if (row.style.display !== 'none' || query === '') {
-                    const text = row.innerText.toLowerCase();
-                    if (!query || text.includes(query)) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
+                const rJenis = (row.getAttribute('data-jenis') || '').toLowerCase().trim();
+                const text = row.innerText.toLowerCase();
+
+                const matchJenis = (currentMutasiJenis === 'semua' || rJenis === currentMutasiJenis);
+                const matchQuery = (!query || text.includes(query));
+
+                if (matchJenis && matchQuery) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
                 }
             });
 
