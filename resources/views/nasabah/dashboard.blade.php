@@ -30,12 +30,18 @@
             overflow-x: hidden;
         }
         .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 900;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.25rem 2rem;
-            background: var(--bg-surface);
+            padding: 1.15rem 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
             width: 100%;
             flex-wrap: wrap;
             gap: 1rem;
@@ -48,12 +54,14 @@
         }
         .nav-tabs {
             display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
             gap: 0.5rem;
             margin-bottom: 1.75rem;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.75rem;
+            width: 100%;
         }
         .tab-btn {
             background: none;
@@ -257,7 +265,7 @@
             inset: 0;
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(8px);
-            z-index: 1000;
+            z-index: 9999;
             align-items: center;
             justify-content: center;
             padding: 1rem;
