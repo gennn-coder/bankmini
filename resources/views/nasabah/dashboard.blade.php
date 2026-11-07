@@ -271,6 +271,90 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.2);
             position: relative;
         }
+
+        /* RESPONSIVE STYLES UNTUK PORTAL NASABAH */
+        .filter-mutasi-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .filter-mutasi-buttons {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .filter-mutasi-search {
+            flex: 1 1 240px;
+            max-width: 320px;
+            min-width: 0;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem 1.25rem;
+            }
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto 2rem;
+            }
+            .card {
+                padding: 1.25rem;
+                border-radius: 14px;
+            }
+            .tab-btn {
+                padding: 0.55rem 0.95rem;
+                font-size: 0.85rem;
+            }
+            .filter-mutasi-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.65rem;
+            }
+            .filter-mutasi-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .filter-mutasi-search {
+                max-width: 100%;
+                width: 100%;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 0.85rem;
+            }
+            .container {
+                padding: 0 0.75rem;
+            }
+            .card {
+                padding: 1rem;
+            }
+            .btn-filter-mutasi {
+                flex: 1;
+                text-align: center;
+                padding: 0.45rem 0.5rem !important;
+                font-size: 0.78rem !important;
+            }
+            .filter-mutasi-buttons {
+                display: flex;
+                width: 100%;
+                gap: 0.35rem;
+            }
+            .modal-card {
+                padding: 1.25rem;
+                border-radius: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -538,8 +622,8 @@
                     </div>
                 @endif
 
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <div class="filter-mutasi-bar">
+                    <div class="filter-mutasi-buttons">
                         <button type="button" class="btn-filter-mutasi active" onclick="filterMutasi('semua')" id="btn-mutasi-semua" style="border: 1px solid var(--border-color); background: #0f172a; color: #fff; padding: 0.4rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
                             Semua ({{ $transaksi->count() }})
                         </button>
@@ -550,8 +634,8 @@
                             Penarikan ({{ $transaksi->where('jenis_trans', 'penarikan')->count() }})
                         </button>
                     </div>
-                    <div style="flex: 1; max-width: 320px; min-width: 200px;">
-                        <input type="text" id="searchMutasi" class="form-control" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;" placeholder="Cari No Transaksi, Tanggal..." oninput="searchMutasiTable()">
+                    <div class="filter-mutasi-search">
+                        <input type="text" id="searchMutasi" class="form-control" style="padding: 0.45rem 0.85rem; font-size: 0.85rem; width: 100%;" placeholder="Cari No Transaksi, Tanggal..." oninput="searchMutasiTable()">
                     </div>
                 </div>
 
@@ -605,7 +689,7 @@
         <!-- TAB 3: PROFIL & PENGADUAN KE ADMIN          -->
         <!-- ========================================== -->
         <div id="tab-profil" class="tab-content">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
                 <!-- BIODATA RESMI SISWA -->
                 <div class="card">
                     <h3 style="margin-top:0; margin-bottom: 1.25rem; font-size: 1.15rem; color: #1e293b;">Data Resmi Siswa</h3>
