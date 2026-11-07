@@ -151,8 +151,6 @@
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 0.5rem;
             width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
         .tab-btn {
             background: transparent;
@@ -439,7 +437,7 @@
                     <span style="background: #dc2626; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{{ $pendingKasCount }}</span>
                 @endif
             </button>
-            <button class="tab-btn" onclick="switchTab('tab-laporan-bulanan')">Laporan Bulanan & PDF</button>
+            <button class="tab-btn" onclick="switchTab('tab-laporan-bulanan')">Laporan Bulanan</button>
             <button class="tab-btn" onclick="switchTab('tab-jurnal')">Jurnal Akuntansi</button>
             <button class="tab-btn" onclick="switchTab('tab-audit')">Audit Logs</button>
             <button class="tab-btn" onclick="switchTab('tab-pengaduan')">
@@ -793,7 +791,7 @@
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
-                        <h3 style="margin:0;">Daftar Rekening Penabung (Savers)</h3>
+                        <h3 style="margin:0;">Daftar Rekening Penabung </h3>
                         <p style="margin:0; font-size: 0.85rem; color: var(--text-muted);">Siswa yang telah mengaktifkan rekening dan memiliki catatan saldo tabungan.</p>
                     </div>
                     <div>
