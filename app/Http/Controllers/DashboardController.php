@@ -424,17 +424,31 @@ class DashboardController extends Controller
         $request->validate([
             'sandi_lama' => 'required|string',
             'sandi_baru' => 'required|string|min:6|confirmed',
+        ], [
+            'sandi_lama.required' => 'Kata sandi saat ini wajib diisi.',
+            'sandi_baru.required' => 'Kata sandi baru wajib diisi.',
+            'sandi_baru.min' => 'Kata sandi baru minimal 6 karakter.',
+            'sandi_baru.confirmed' => 'Konfirmasi kata sandi baru tidak cocok dengan kata sandi baru.',
         ]);
 
-        $user = Auth::user();
+        $user = \App\Models\User::findOrFail(Auth::id());
 
         if (!Hash::check($request->sandi_lama, $user->password)) {
-            return back()->with('error', 'Kata sandi saat ini yang Anda masukkan salah.');
+            return back()->with('error_password', 'Kata sandi saat ini yang Anda masukkan salah.')->withInput();
         }
 
         $user->password = Hash::make($request->sandi_baru);
         $user->save();
 
-        return back()->with('success', 'Kata sandi akun Anda berhasil diperbarui.');
+        try {
+            \App\Models\AuditLog::create([
+                'user_id' => $user->id,
+                'aktivitas' => 'Ganti Kata Sandi Mandiri',
+                'detail' => 'Pengguna ' . ($user->nama_petugas ?? $user->username) . ' berhasil mengubah kata sandi akun.',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Throwable $e) {}
+
+        return back()->with('success_password', 'Kata sandi akun Anda berhasil diperbarui!');
     }
 }

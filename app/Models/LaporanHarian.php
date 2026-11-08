@@ -40,6 +40,18 @@ class LaporanHarian extends Model
         return $this->belongsTo(User::class, 'supervisor_id')->withTrashed();
     }
 
+    public function getTotalSetoranActualAttribute()
+    {
+        $sum = $this->transaksis->where('jenis_trans', 'setoran')->sum('nominal');
+        return $sum > 0 ? (int)$sum : (int)($this->attributes['total_setoran'] ?? 0);
+    }
+
+    public function getTotalPenarikanActualAttribute()
+    {
+        $sum = $this->transaksis->where('jenis_trans', 'penarikan')->sum('nominal');
+        return $sum > 0 ? (int)$sum : (int)($this->attributes['total_penarikan'] ?? 0);
+    }
+
     /**
      * Get all transactions on this report date by teller, preserving soft-deleted savers
      */

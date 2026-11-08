@@ -27,6 +27,16 @@ class Pengaduan extends Model
         'ditanggapi_pada' => 'datetime',
     ];
 
+    public function getSubjekAttribute()
+    {
+        return $this->attributes['judul'] ?? ($this->attributes['subjek'] ?? '');
+    }
+
+    public function getPesanAttribute()
+    {
+        return $this->attributes['isi_pesan'] ?? ($this->attributes['pesan'] ?? '');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

@@ -799,19 +799,59 @@
                     <h3 style="margin-top:0; margin-bottom: 0.5rem; font-size: 1.15rem; color: #1e293b;">Keamanan Akun</h3>
                     <p style="margin: 0 0 1.25rem; font-size: 0.85rem; color: var(--text-muted);">Perbarui kata sandi akun login Anda secara berkala.</p>
 
-                    <form action="{{ route('nasabah.ganti-password') }}" method="POST">
+                    @if(session('success_password'))
+                        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.88rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #10b981; color: white; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">✓</span>
+                            <span>{{ session('success_password') }}</span>
+                        </div>
+                    @endif
+
+                    @if(session('error_password'))
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.88rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">!</span>
+                            <span>{{ session('error_password') }}</span>
+                        </div>
+                    @endif
+
+                    @if($errors->any() && (old('sandi_lama') || old('sandi_baru') || session()->has('error_password')))
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.85rem; margin-bottom: 1.25rem;">
+                            <strong>Gagal memperbarui kata sandi:</strong>
+                            <ul style="margin: 4px 0 0; padding-left: 1.25rem;">
+                                @foreach($errors->all() as $err)
+                                    <li>{{ $err }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('nasabah.ganti-password') }}" method="POST" onsubmit="try{ sessionStorage.setItem('nasabah_active_tab', 'tab-profil'); }catch(e){}">
                         @csrf
                         <div class="form-group">
                             <label>Kata Sandi Saat Ini</label>
-                            <input type="password" name="sandi_lama" class="form-control" required placeholder="Masukkan kata sandi lama">
+                            <div style="position: relative;">
+                                <input type="password" name="sandi_lama" id="inputSandiLama" class="form-control" required placeholder="Masukkan kata sandi lama" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('inputSandiLama', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Kata Sandi">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Kata Sandi Baru (Min. 6 Karakter)</label>
-                            <input type="password" name="sandi_baru" class="form-control" required minlength="6" placeholder="Masukkan kata sandi baru">
+                            <div style="position: relative;">
+                                <input type="password" name="sandi_baru" id="inputSandiBaru" class="form-control" required minlength="6" placeholder="Masukkan kata sandi baru" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('inputSandiBaru', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Kata Sandi">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Konfirmasi Kata Sandi Baru</label>
-                            <input type="password" name="sandi_baru_confirmation" class="form-control" required minlength="6" placeholder="Ulangi kata sandi baru">
+                            <div style="position: relative;">
+                                <input type="password" name="sandi_baru_confirmation" id="inputSandiBaruConfirm" class="form-control" required minlength="6" placeholder="Ulangi kata sandi baru" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('inputSandiBaruConfirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Kata Sandi">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="btn-primary" style="width: 100%;">Simpan Kata Sandi Baru</button>
                     </form>
@@ -1006,6 +1046,10 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
+                @if(session('success_password') || session('error_password'))
+                    switchNasabahTab('tab-profil');
+                    return;
+                @endif
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.has('bulan') || urlParams.has('tahun')) {
                     switchNasabahTab('tab-mutasi');
@@ -1017,6 +1061,20 @@
                 }
             } catch(e) {}
         });
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            const eyeOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
+            btn.innerHTML = isPassword ? eyeOffSvg : eyeSvg;
+            btn.title = isPassword ? 'Sembunyikan' : 'Lihat';
+            btn.style.color = isPassword ? '#2563eb' : '#64748b';
+        }
 
         function openQrModal() {
             document.getElementById('qrModal').style.display = 'flex';

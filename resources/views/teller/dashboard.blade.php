@@ -743,8 +743,27 @@
             </div>
         @endif
 
-        <!-- 4 KARTU STATISTIK KAS UTAMA (TERINTEGRASI DI PALING ATAS & KONSISTEN) -->
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
+        <!-- NAVIGATION TABS -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
+            <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
+            <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
+            <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
+            <button class="tab-btn" onclick="switchTab('tab-laporan')">
+                Penutupan Kas & Laporan
+                @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
+                    <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
+                @endif
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
+            <button class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
+        </div>
+
+        <!-- TAB 0: DASHBOARD OPERASIONAL TELLER -->
+        <div id="tab-dashboard" class="tab-content active">
+            <!-- 4 KARTU STATISTIK KAS UTAMA (TERINTEGRASI DI PALING ATAS & KONSISTEN) -->
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.75rem;">
             <!-- KARTU 1: MODAL AWAL KAS -->
             <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
@@ -951,25 +970,10 @@
                 </details>
             @endif
         </div>
-
-        <!-- NAVIGATION TABS -->
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
-            <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
-            <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
-            <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
-            <button class="tab-btn" onclick="switchTab('tab-laporan')">
-                Penutupan Kas & Laporan
-                @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
-                    <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
-                @endif
-            </button>
-            <button class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
-            <button class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
         </div>
 
         <!-- TAB 1: AKTIVASI REKENING ANGGOTA SISWA -->
-        <div id="tab-aktivasi" class="tab-content active">
+        <div id="tab-aktivasi" class="tab-content">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
                     <div>
@@ -1271,12 +1275,22 @@
 
                     <div class="form-group">
                         <label>Buat PIN 6-Digit Baru</label>
-                        <input type="password" id="tabResetPinBaru" class="form-control" maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru" required>
+                        <div style="position: relative;">
+                            <input type="password" id="tabResetPinBaru" class="form-control" maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru" required style="padding-right: 2.75rem;">
+                            <button type="button" onclick="togglePasswordVisibility('tabResetPinBaru', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label>Konfirmasi PIN 6-Digit Baru</label>
-                        <input type="password" id="tabResetPinBaruConfirm" class="form-control" maxlength="6" minlength="6" placeholder="Ulangi 6 angka PIN baru" required>
+                        <div style="position: relative;">
+                            <input type="password" id="tabResetPinBaruConfirm" class="form-control" maxlength="6" minlength="6" placeholder="Ulangi 6 angka PIN baru" required style="padding-right: 2.75rem;">
+                            <button type="button" onclick="togglePasswordVisibility('tabResetPinBaruConfirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
@@ -2984,7 +2998,7 @@
                                     : (hashTab && document.getElementById(hashTab)) ? hashTab
                                     : (sessionTab && document.getElementById(sessionTab)) ? sessionTab
                                     : (localTab && document.getElementById(localTab)) ? localTab
-                                    : null;
+                                    : 'tab-dashboard';
 
                 if (tabToActivate && document.getElementById(tabToActivate)) {
                     switchTab(tabToActivate);
@@ -3139,8 +3153,10 @@
                         Buat PIN 6-Digit Keamanan Penabung Baru <span style="color: #dc2626;">*</span>
                     </label>
                     <div style="position: relative; display: flex; align-items: center;">
-                        <input type="password" name="pin" id="modalAktPin" class="form-control" required maxlength="6" minlength="6" placeholder="Contoh: 123456" pattern="[0-9]{6}" inputmode="numeric" style="padding-right: 4.8rem; letter-spacing: 2px; font-weight: 700;">
-                        <button type="button" id="btnTogglePinAktivasi" onclick="togglePasswordVisibility('modalAktPin', this)" style="position: absolute; right: 8px; background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer; padding: 4px 8px;">Lihat</button>
+                        <input type="password" name="pin" id="modalAktPin" class="form-control" required maxlength="6" minlength="6" placeholder="Contoh: 123456" pattern="[0-9]{6}" inputmode="numeric" style="padding-right: 2.75rem; letter-spacing: 2px; font-weight: 700;">
+                        <button type="button" id="btnTogglePinAktivasi" onclick="togglePasswordVisibility('modalAktPin', this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                     <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">PIN 6 angka ini digunakan nasabah saat verifikasi penarikan uang tabungan.</small>
                 </div>
@@ -3150,8 +3166,10 @@
                         Konfirmasi PIN 6-Digit <span style="color: #dc2626;">*</span>
                     </label>
                     <div style="position: relative; display: flex; align-items: center;">
-                        <input type="password" name="pin_confirmation" id="modalAktPinConfirm" class="form-control" required maxlength="6" minlength="6" placeholder="Ketik ulang 6 angka PIN" pattern="[0-9]{6}" inputmode="numeric" style="padding-right: 4.8rem; letter-spacing: 2px; font-weight: 700;">
-                        <button type="button" id="btnTogglePinConfirmAktivasi" onclick="togglePasswordVisibility('modalAktPinConfirm', this)" style="position: absolute; right: 8px; background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #64748b; cursor: pointer; padding: 4px 8px;">Lihat</button>
+                        <input type="password" name="pin_confirmation" id="modalAktPinConfirm" class="form-control" required maxlength="6" minlength="6" placeholder="Ketik ulang 6 angka PIN" pattern="[0-9]{6}" inputmode="numeric" style="padding-right: 2.75rem; letter-spacing: 2px; font-weight: 700;">
+                        <button type="button" id="btnTogglePinConfirmAktivasi" onclick="togglePasswordVisibility('modalAktPinConfirm', this)" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                     </div>
                     <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Masukkan ulang 6 angka PIN yang sama untuk verifikasi kecocokan.</small>
                 </div>

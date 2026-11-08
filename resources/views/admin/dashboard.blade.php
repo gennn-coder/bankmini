@@ -372,72 +372,10 @@
             </div>
         @endif
 
-        <!-- BANNER PERMINTAAN TAMBAHAN KAS TELLER MENUNGGU APPROVAL (LANGSUNG TAMPIL DI PALING ATAS) -->
-        @php $pendingKasTop = $pengajuanKasList->where('status', 'pending'); @endphp
-        @if($pendingKasTop->count() > 0)
-            <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 16px; padding: 1.15rem 1.35rem; margin-bottom: 1.75rem; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
-                    <div style="display: flex; align-items: center; gap: 0.65rem;">
-                        <span style="background: #f59e0b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">!</span>
-                        <h4 style="margin: 0; color: #92400e; font-size: 1.05rem; font-weight: 800;">
-                            {{ $pendingKasTop->count() }} Pengajuan Tambahan Kas Teller Menunggu Persetujuan
-                        </h4>
-                    </div>
-                    <span style="font-size: 0.75rem; background: #fef3c7; color: #92400e; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 999px; border: 1px solid #fcd34d;">
-                        AKSI CEPAT ADMINISTRATOR
-                    </span>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    @foreach($pendingKasTop as $pkTop)
-                    <div style="background: #ffffff; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                        <div>
-                            <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a;">
-                                Teller: <span style="color: #2563eb;">{{ $pkTop->teller->nama_petugas ?? 'Teller' }}</span> &bull; 
-                                Nominal: <span style="color: #16a34a; font-size: 1.05rem;">Rp {{ number_format($pkTop->nominal, 0, ',', '.') }}</span>
-                            </div>
-                            <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
-                                Alasan: <em>"{{ $pkTop->alasan }}"</em> &bull; Waktu: {{ date('H:i', strtotime($pkTop->created_at)) }} WIB
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <form action="{{ route('admin.pengajuan-kas.approve', $pkTop->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pkTop->nominal, 0, ',', '.') }} untuk {{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}?')">
-                                @csrf
-                                <button type="submit" class="btn-success" style="padding: 0.45rem 1rem; font-size: 0.85rem; border-radius: 8px;">
-                                    ✓ ACC Kas
-                                </button>
-                            </form>
-                            <button type="button" class="btn-danger" style="padding: 0.45rem 0.85rem; font-size: 0.85rem; border-radius: 8px;" onclick="openRejectPengajuanModal({{ $pkTop->id }}, '{{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}', '{{ number_format($pkTop->nominal, 0, ',', '.') }}')">
-                                Tolak
-                            </button>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
-        <div class="grid">
-            <div class="card">
-                <h4>Total Pengguna</h4>
-                <div class="value">{{ $totalUsers }}</div>
-            </div>
-            <div class="card">
-                <h4>Total Anggota Siswa</h4>
-                <div class="value" style="color: #6366f1;">{{ $totalMembers }}</div>
-            </div>
-            <div class="card">
-                <h4>Total Penabung Aktif</h4>
-                <div class="value" style="color: #10b981;">{{ $totalSavers }}</div>
-            </div>
-            <div class="card">
-                <h4>Total Saldo Penabung</h4>
-                <div class="value">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
-            </div>
-        </div>
-
         <!-- NAVIGATION TABS -->
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-users')">Manajemen User</button>
+            <button class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('tab-users')">Manajemen User</button>
             <button class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa</button>
             <button class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung</button>
             <button class="tab-btn" onclick="switchTab('tab-supervisor')">
@@ -459,8 +397,135 @@
             </button>
         </div>
 
+        <!-- TAB 0: DASHBOARD ADMINISTRATOR -->
+        <div id="tab-dashboard" class="tab-content active">
+            <!-- BANNER PERMINTAAN TAMBAHAN KAS TELLER MENUNGGU APPROVAL -->
+            @php $pendingKasTop = $pengajuanKasList->where('status', 'pending'); @endphp
+            @if($pendingKasTop->count() > 0)
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 16px; padding: 1.15rem 1.35rem; margin-bottom: 1.75rem; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span style="background: #f59e0b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">!</span>
+                            <h4 style="margin: 0; color: #92400e; font-size: 1.05rem; font-weight: 800;">
+                                {{ $pendingKasTop->count() }} Pengajuan Tambahan Kas Teller Menunggu Persetujuan
+                            </h4>
+                        </div>
+                        <button type="button" onclick="switchTab('tab-supervisor')" style="background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px; cursor: pointer;">
+                            BUKA MENU APPROVAL KAS &rarr;
+                        </button>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        @foreach($pendingKasTop as $pkTop)
+                        <div style="background: #ffffff; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                            <div>
+                                <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a;">
+                                    Teller: <span style="color: #2563eb;">{{ $pkTop->teller->nama_petugas ?? 'Teller' }}</span> &bull; 
+                                    Nominal: <span style="color: #16a34a; font-size: 1.05rem;">Rp {{ number_format($pkTop->nominal, 0, ',', '.') }}</span>
+                                </div>
+                                <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
+                                    Alasan: <em>"{{ $pkTop->alasan }}"</em> &bull; Waktu: {{ date('H:i', strtotime($pkTop->created_at)) }} WIB
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <form action="{{ route('admin.pengajuan-kas.approve', $pkTop->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pkTop->nominal, 0, ',', '.') }} untuk {{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}?')">
+                                    @csrf
+                                    <button type="submit" class="btn-success" style="padding: 0.45rem 1rem; font-size: 0.85rem; border-radius: 8px;">
+                                        ✓ ACC Kas
+                                    </button>
+                                </form>
+                                <button type="button" class="btn-danger" style="padding: 0.45rem 0.85rem; font-size: 0.85rem; border-radius: 8px;" onclick="openRejectPengajuanModal({{ $pkTop->id }}, '{{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}', '{{ number_format($pkTop->nominal, 0, ',', '.') }}')">
+                                    Tolak
+                                </button>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <div class="grid" style="margin-bottom: 1.75rem;">
+                <div class="card" onclick="switchTab('tab-users')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <h4>Total Pengguna</h4>
+                    <div class="value">{{ $totalUsers }}</div>
+                    <small style="color: #64748b; font-size: 0.78rem;">Admin, Supervisor & Teller &rarr;</small>
+                </div>
+                <div class="card" onclick="switchTab('tab-members')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <h4>Total Anggota Siswa</h4>
+                    <div class="value" style="color: #6366f1;">{{ $totalMembers }}</div>
+                    <small style="color: #64748b; font-size: 0.78rem;">Siswa terdaftar di sekolah &rarr;</small>
+                </div>
+                <div class="card" onclick="switchTab('tab-savers')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <h4>Total Penabung Aktif</h4>
+                    <div class="value" style="color: #10b981;">{{ $totalSavers }}</div>
+                    <small style="color: #64748b; font-size: 0.78rem;">Rekening aktif menabung &rarr;</small>
+                </div>
+                <div class="card" onclick="switchTab('tab-jurnal')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <h4>Total Saldo Penabung</h4>
+                    <div class="value">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                    <small style="color: #64748b; font-size: 0.78rem;">Total dana tabungan siswa &rarr;</small>
+                </div>
+            </div>
+
+            <!-- RINGKASAN CEPAT OPERASIONAL ADMIN -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+                <!-- KARTU PENGADUAN SISWA TERBARU -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <h4 style="margin: 0; color: #0f172a; font-weight: 800; font-size: 1rem;">Pengaduan Siswa Menunggu Respon</h4>
+                        <button type="button" onclick="switchTab('tab-pengaduan')" class="badge badge-role-teller" style="border: none; cursor: pointer;">
+                            Lihat Semua &rarr;
+                        </button>
+                    </div>
+                    @php $pendingPengaduan = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->take(3) : collect(); @endphp
+                    @forelse($pendingPengaduan as $pg)
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <strong style="font-size: 0.88rem; color: #0f172a;">{{ $pg->nama_pengadu }}</strong>
+                                <span style="font-size: 0.72rem; color: #64748b;">{{ date('d/m H:i', strtotime($pg->created_at)) }}</span>
+                            </div>
+                            <div style="font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 2px;">{{ $pg->judul ?? $pg->subjek }}</div>
+                            <div style="font-size: 0.8rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ $pg->isi_pesan ?? $pg->pesan }}
+                            </div>
+                        </div>
+                    @empty
+                        <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.88rem;">
+                            ✓ Semua pengaduan nasabah telah ditanggapi.
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- KARTU TUTUP KAS & LAPORAN TELLER HARI INI -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <h4 style="margin: 0; color: #0f172a; font-weight: 800; font-size: 1rem;">Laporan Tutup Kas Teller Pending</h4>
+                        <button type="button" onclick="switchTab('tab-supervisor')" class="badge badge-role-teller" style="border: none; cursor: pointer;">
+                            Buka Approval &rarr;
+                        </button>
+                    </div>
+                    @forelse($laporanPending->take(3) as $lpDash)
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 0.88rem; color: #0f172a;">{{ $lpDash->teller->nama_petugas ?? 'Teller' }}</strong>
+                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
+                                    Tgl: {{ date('d/m/Y', strtotime($lpDash->tanggal)) }} &bull; Fisik: Rp {{ number_format($lpDash->uang_fisik) }}
+                                </div>
+                            </div>
+                            <button type="button" onclick="openRiwayatModal({{ $lpDash->id }})" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; border-radius: 8px;">
+                                Cek Mutasi
+                            </button>
+                        </div>
+                    @empty
+                        <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.88rem;">
+                            ✓ Tidak ada laporan tutup kas teller yang menunggu persetujuan.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
         <!-- TAB 1: MANAJEMEN USER -->
-        <div id="tab-users" class="tab-content active">
+        <div id="tab-users" class="tab-content">
             <div class="grid-split">
                 <div class="card">
                     <h3 style="margin-top:0; margin-bottom: 1.25rem;">Tambah User Petugas</h3>
@@ -486,7 +551,12 @@
                         </div>
                         <div class="form-group">
                             <label>Password</label>
-                            <input type="password" name="password" class="form-control" required placeholder="Minimal 6 karakter">
+                            <div style="position: relative;">
+                                <input type="password" name="password" id="adminUserPassword" class="form-control" required placeholder="Minimal 6 karakter" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('adminUserPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Petugas</button>
                     </form>
@@ -627,11 +697,21 @@
                             </div>
                             <div class="form-group">
                                 <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
-                                <input type="password" name="password" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)">
+                                <div style="position: relative;">
+                                    <input type="password" name="password" id="adminMemberPassword" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)" style="padding-right: 2.75rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('adminMemberPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
-                                <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)">
+                                <div style="position: relative;">
+                                    <input type="password" name="pin" id="adminMemberPin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)" style="padding-right: 2.75rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('adminMemberPin', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
                             </div>
                             <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Data Anggota</button>
                         </form>
@@ -1469,9 +1549,9 @@
                                 <td>{{ date('d/m/Y H:i', strtotime($p->created_at)) }} WIB</td>
                                 <td><strong>{{ $p->nama_pengadu }}</strong></td>
                                 <td><code>{{ $p->nis }}</code></td>
-                                <td><strong>{{ $p->subjek }}</strong></td>
+                                <td><strong>{{ $p->judul ?? $p->subjek }}</strong></td>
                                 <td style="max-width: 280px; white-space: normal; line-height: 1.4; font-size: 0.85rem;">
-                                    {{ $p->pesan }}
+                                    {{ $p->isi_pesan ?? $p->pesan }}
                                 </td>
                                 <td>
                                     @if($p->status === 'selesai')
@@ -1486,7 +1566,7 @@
                                     {{ $p->tanggapan_admin ?: 'Belum ditanggapi' }}
                                 </td>
                                 <td>
-                                    <button type="button" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; border-radius: 6px;" onclick="openTanggapiModal({{ $p->id }}, '{{ addslashes($p->nama_pengadu) }}', '{{ $p->nis }}', '{{ addslashes($p->subjek) }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $p->pesan)) }}', '{{ $p->status }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $p->tanggapan_admin ?? '')) }}')">
+                                    <button type="button" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; border-radius: 6px;" onclick="openTanggapiModal({{ $p->id }}, '{{ addslashes($p->nama_pengadu) }}', '{{ $p->nis }}', '{{ addslashes($p->judul ?? $p->subjek) }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $p->isi_pesan ?? $p->pesan)) }}', '{{ $p->status }}', '{{ addslashes(str_replace(["\r", "\n"], ' ', $p->tanggapan_admin ?? '')) }}')">
                                         Tanggapi
                                     </button>
                                 </td>
@@ -1564,7 +1644,12 @@
                 @csrf
                 <div class="form-group">
                     <label>PIN 6-Digit Baru</label>
-                    <input type="password" name="pin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru">
+                    <div style="position: relative;">
+                        <input type="password" name="pin" id="adminResetPinInput" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN baru" style="padding-right: 2.75rem;">
+                        <button type="button" onclick="togglePasswordVisibility('adminResetPinInput', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
                     <button type="button" onclick="closeResetPinModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
@@ -1642,7 +1727,7 @@
                 const tabToActivate = (queryTab && document.getElementById(queryTab)) ? queryTab
                                     : (sessionTab && document.getElementById(sessionTab)) ? sessionTab
                                     : (localTab && document.getElementById(localTab)) ? localTab
-                                    : null;
+                                    : 'tab-dashboard';
 
                 if (tabToActivate && document.getElementById(tabToActivate)) {
                     switchTab(tabToActivate);
@@ -1654,6 +1739,20 @@
                     switchSubFilter(savedSubFilter);
                 }
             } catch (e) {}
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            const eyeOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
+            btn.innerHTML = isPassword ? eyeOffSvg : eyeSvg;
+            btn.title = isPassword ? 'Sembunyikan' : 'Lihat';
+            btn.style.color = isPassword ? '#2563eb' : '#64748b';
         }
 
         // Restore tab segera saat skrip dieksekusi agar bebas flicker
@@ -2164,14 +2263,20 @@
             </div>
 
             <!-- Summary Cards inside Modal -->
+            @php
+                $modalActualSetoran = $lp->transaksis->where('jenis_trans', 'setoran')->sum('nominal');
+                $modalActualPenarikan = $lp->transaksis->where('jenis_trans', 'penarikan')->sum('nominal');
+                $modalDisplaySetoran = $modalActualSetoran > 0 ? $modalActualSetoran : (int)$lp->total_setoran;
+                $modalDisplayPenarikan = $modalActualPenarikan > 0 ? $modalActualPenarikan : (int)$lp->total_penarikan;
+            @endphp
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
                 <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.75rem 1rem; border-radius: 12px;">
                     <div style="font-size: 0.75rem; color: #166534; font-weight: 700; text-transform: uppercase;">Total Setoran</div>
-                    <div style="font-size: 1.15rem; font-weight: 800; color: #16a34a; margin-top: 2px;">+ Rp {{ number_format($lp->total_setoran) }}</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #16a34a; margin-top: 2px;">+ Rp {{ number_format($modalDisplaySetoran) }}</div>
                 </div>
                 <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 0.75rem 1rem; border-radius: 12px;">
                     <div style="font-size: 0.75rem; color: #991b1b; font-weight: 700; text-transform: uppercase;">Total Penarikan</div>
-                    <div style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin-top: 2px;">- Rp {{ number_format($lp->total_penarikan) }}</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin-top: 2px;">- Rp {{ number_format($modalDisplayPenarikan) }}</div>
                 </div>
                 <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.75rem 1rem; border-radius: 12px;">
                     <div style="font-size: 0.75rem; color: #1e40af; font-weight: 700; text-transform: uppercase;">Uang Fisik Kas Laci</div>
