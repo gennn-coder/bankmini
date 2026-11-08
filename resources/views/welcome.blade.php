@@ -739,9 +739,6 @@
         <!-- SISI KANAN: Clean White Login Card (Tanpa Icon & Tanpa Logo) -->
         <div class="split-right-panel">
             <div class="right-header">
-                <div style="margin-bottom: 0.85rem;">
-                    <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #fff; padding: 3px; box-shadow: 0 2px 8px rgba(15,23,42,0.06); border: 1px solid #e2e8f0;">
-                </div>
                 <h2>Hello ! Welcome back</h2>
                 <p>Silakan masuk ke akun perbankan Anda</p>
             </div>
