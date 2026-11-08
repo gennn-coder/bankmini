@@ -1173,7 +1173,8 @@
 
                     <div class="form-group">
                         <label>Nominal Penarikan (Rp)</label>
-                        <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000">
+                        <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000" oninput="validatePenarikanNominalRealtime()">
+                        <div id="penarikanWarningMsg" style="display: none; margin-top: 6px; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; line-height: 1.4;"></div>
                     </div>
                     <div class="form-group">
                         <label>Verifikasi PIN 6-Digit Keamanan Penabung</label>
@@ -1194,7 +1195,7 @@
                         <label>Keterangan Slip</label>
                         <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Penarikan kebutuhan praktek">
                     </div>
-                    <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #dc2626, #ef4444); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
+                    <button type="submit" id="penarikanSubmitBtn" class="btn-primary" style="background: linear-gradient(135deg, #dc2626, #ef4444); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
                         Proses Penarikan & Simpan Jurnal
                     </button>
                 </form>
@@ -1572,16 +1573,21 @@
                     const submitBtn = form.querySelector('button[type="submit"]');
                     if (submitBtn) {
                         submitBtn.setAttribute('data-original-html', submitBtn.innerHTML);
-                        submitBtn.disabled = true;
                         submitBtn.style.opacity = '0.7';
                         submitBtn.style.cursor = 'not-allowed';
-                        submitBtn.style.pointerEvents = 'none';
                         submitBtn.innerHTML = `
                             <span style="display:inline-flex; align-items:center; justify-content:center; gap:8px;">
                                 <svg style="animation: spinDouble 0.9s linear infinite; width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path></svg>
                                 Sedang Memproses... Harap Tunggu
                             </span>
                         `;
+                        // Gunakan setTimeout agar browser menyelesaikan event submit POST sebelum tombol disabled
+                        setTimeout(() => {
+                            if (isSubmitting) {
+                                submitBtn.disabled = true;
+                                submitBtn.style.pointerEvents = 'none';
+                            }
+                        }, 50);
                     }
 
                     form.style.pointerEvents = 'none';
@@ -1909,6 +1915,73 @@
                 box.style.display = 'block';
             } else {
                 box.style.display = 'none';
+            }
+            validatePenarikanNominalRealtime();
+        }
+
+        function validatePenarikanNominalRealtime() {
+            const sel = document.getElementById('penarikanNasabahSelect');
+            const nominalInput = document.getElementById('penarikanNominal');
+            const warnBox = document.getElementById('penarikanWarningMsg');
+            const submitBtn = document.getElementById('penarikanSubmitBtn');
+            if (!nominalInput || !warnBox) return true;
+
+            const val = parseInt(nominalInput.value || '0', 10);
+            const opt = (sel && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex] : null;
+            const hasSaver = Boolean(sel && sel.value && opt);
+            const saldo = hasSaver ? parseInt(opt.getAttribute('data-saldo') || '0', 10) : null;
+            const maxTarik = (saldo !== null) ? Math.max(0, saldo - 10000) : null;
+            const kasLaci = {{ (int)$sisaKasLaci }};
+
+            if (val > 0 && maxTarik !== null && val > maxTarik) {
+                warnBox.style.display = 'block';
+                warnBox.style.background = '#fef2f2';
+                warnBox.style.borderColor = '#fecaca';
+                warnBox.style.color = '#dc2626';
+                warnBox.innerHTML = `⚠️ <strong>Nominal Melebihi Batas Saldo!</strong> Nasabah hanya bisa menarik maksimal <strong>Rp ${maxTarik.toLocaleString('id-ID')}</strong> (Saldo saat ini Rp ${saldo.toLocaleString('id-ID')}, wajib sisa mengendap Rp 10.000).`;
+                nominalInput.style.borderColor = '#dc2626';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+                return false;
+            } else if (val > 0 && val > kasLaci) {
+                warnBox.style.display = 'block';
+                warnBox.style.background = '#fffbeb';
+                warnBox.style.borderColor = '#fde68a';
+                warnBox.style.color = '#b45309';
+                warnBox.innerHTML = `⚠️ <strong>Kas di Laci Tidak Cukup!</strong> Fisik kas teller saat ini hanya <strong>Rp ${kasLaci.toLocaleString('id-ID')}</strong>. Ajukan tambahan kas ke Admin terlebih dahulu.`;
+                nominalInput.style.borderColor = '#f59e0b';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+                return false;
+            } else if (val > 0 && val < 10000) {
+                warnBox.style.display = 'block';
+                warnBox.style.background = '#fef2f2';
+                warnBox.style.borderColor = '#fecaca';
+                warnBox.style.color = '#dc2626';
+                warnBox.innerHTML = `⚠️ <strong>Minimal Penarikan:</strong> Nominal minimal penarikan tunai adalah Rp 10.000.`;
+                nominalInput.style.borderColor = '#dc2626';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+                return false;
+            } else {
+                warnBox.style.display = 'none';
+                warnBox.innerHTML = '';
+                nominalInput.style.borderColor = '';
+                if (submitBtn && (!submitBtn.closest('form') || submitBtn.closest('form').dataset.submitting !== 'true')) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
+                return true;
             }
         }
 
