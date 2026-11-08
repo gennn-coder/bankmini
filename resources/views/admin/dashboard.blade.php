@@ -3,331 +3,1045 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Administrator | E-Teller Bank Mini</title>
+    <title>Dashboard Administrator | Bank Mini E-Teller</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo_bank_mini.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #f4f7fe;
-            --bg-surface: #ffffff;
-            --border-color: #e2e8f0;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --primary-600: #2563eb;
-            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-            --emerald-600: #16a34a;
-            --rose-600: #dc2626;
-            --amber-600: #d97706;
+            --canvas-bg: #e8f1fd;
+            --app-bg: #ffffff;
+            --primary-blue: #2563eb;
+            --primary-blue-dark: #1d4ed8;
+            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            --cyan-gradient: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            --accent-cyan: #38bdf8;
+            --text-navy: #0f172a;
+            --text-slate: #475569;
+            --text-muted: #94a3b8;
+            --border-soft: #f1f5f9;
+            --border-light: #e2e8f0;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --window-shadow: 0 25px 70px rgba(37, 99, 235, 0.12), 0 10px 30px rgba(0, 0, 0, 0.03);
         }
+
         *, *::before, *::after {
             box-sizing: border-box !important;
             margin: 0;
             padding: 0;
         }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-main);
+            background-color: var(--canvas-bg);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
+            color: var(--text-navy);
             margin: 0;
+            padding: 1.25rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
             overflow-x: hidden;
         }
-        /* ADMIN SIDEBAR & TOPBAR LAYOUT */
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-            background: var(--bg-primary);
-            position: relative;
-        }
-        .admin-sidebar {
-            width: 220px;
-            min-width: 220px;
-            max-width: 220px;
+
+        /* FLOATING APP CONTAINER (CRYPTOWALL WINDOW) */
+        .cryptowall-app {
+            width: 100%;
+            max-width: 1540px;
             background: #ffffff;
-            border-right: 1px solid var(--border-color);
+            border-radius: 36px;
+            box-shadow: var(--window-shadow);
+            display: flex;
+            min-height: calc(100vh - 2.5rem);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 1. LEFT SIDEBAR */
+        .sidebar-col {
+            width: 235px;
+            min-width: 235px;
+            max-width: 235px;
+            background: #ffffff;
+            border-right: 1px solid var(--border-soft);
+            padding: 1.75rem 1.15rem 1.5rem 1.15rem;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sidebar-header {
-            padding: 1rem 1rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            background: #ffffff;
+            z-index: 100;
             flex-shrink: 0;
         }
-        .sidebar-brand-title {
-            margin: 0;
-            font-size: 1.05rem;
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            padding-left: 0.35rem;
+            margin-bottom: 1.75rem;
+        }
+        .brand-icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00c6ff 0%, #2563eb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.28);
+            flex-shrink: 0;
+        }
+        .brand-title {
+            font-size: 1.15rem;
             font-weight: 800;
             color: #0f172a;
-            line-height: 1.2;
+            line-height: 1.15;
             letter-spacing: -0.3px;
+            display: block;
         }
-        .sidebar-brand-subtitle {
-            margin: 0;
-            font-size: 0.7rem;
+        .brand-subtitle {
+            font-size: 0.72rem;
             color: var(--text-muted);
             font-weight: 600;
+            display: block;
         }
-        .sidebar-close-btn {
-            display: none;
-            background: #f1f5f9;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1.3rem;
-            color: #64748b;
-            cursor: pointer;
-            padding: 0.1rem 0.5rem;
-            line-height: 1.2;
-        }
+
         .sidebar-nav {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.85rem 0.6rem 1rem 0.6rem;
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
+            gap: 0.35rem;
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            padding-right: 2px;
         }
-        .sidebar-nav::-webkit-scrollbar {
-            width: 5px;
-        }
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 4px;
-        }
+        .sidebar-nav::-webkit-scrollbar { width: 4px; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
         .sidebar-nav-btn {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 0.75rem;
             width: 100%;
-            padding: 0.6rem 0.8rem;
+            padding: 0.7rem 0.95rem;
             border: none;
             background: transparent;
-            border-radius: 9px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #475569;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
             cursor: pointer;
             text-align: left;
-            transition: all 0.18s ease;
-            position: relative;
-            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-family: inherit;
+            text-decoration: none;
         }
         .sidebar-nav-btn:hover {
-            background: #f1f5f9;
-            color: var(--primary-600);
+            background: #f8fafc;
+            color: var(--primary-blue);
             transform: translateX(2px);
         }
         .sidebar-nav-btn.active {
-            background: var(--primary-600);
+            background: var(--primary-blue) !important;
             color: #ffffff !important;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.32);
         }
-        .sidebar-nav-btn span.nav-text {
+        .sidebar-nav-btn svg {
+            flex-shrink: 0;
+            transition: stroke 0.2s;
+        }
+        .sidebar-nav-btn.active svg {
+            stroke: #ffffff !important;
+        }
+        .sidebar-nav-btn .nav-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+        .sidebar-badge {
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .sidebar-badge-danger { background: #ef4444; color: #ffffff; }
+        .sidebar-badge-warning { background: #f59e0b; color: #ffffff; }
+
+        /* SIDEBAR PROMO / SAFE WIDGET (DISCOVER PRO STYLE) */
+        .sidebar-promo-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 22px;
+            padding: 1.25rem 1rem;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-promo-card::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .promo-illustration {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: center;
+        }
+        .promo-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 2px;
+            letter-spacing: -0.2px;
+        }
+        .promo-sub {
+            font-size: 0.72rem;
+            opacity: 0.85;
+            margin-bottom: 0.85rem;
+        }
+        .btn-promo-action {
+            background: #ffffff;
+            color: #1d4ed8;
+            font-weight: 800;
+            font-size: 0.82rem;
+            border-radius: 9999px;
+            padding: 0.55rem 1rem;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .btn-promo-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+        }
+
+        /* 2. CENTER CONTENT COLUMN */
+        .main-col {
+            flex: 1;
+            min-width: 0;
+            padding: 1.75rem 2rem 2.5rem 2rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 2.5rem);
+            background: #ffffff;
+        }
+        .main-col::-webkit-scrollbar { width: 6px; }
+        .main-col::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+        .center-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .sidebar-mobile-toggle {
+            display: none;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            padding: 0.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #334155;
+        }
+        .topbar-greeting {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .topbar-page-title {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        .search-pill-box {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 9999px;
+            padding: 0.6rem 1.25rem;
+            width: 270px;
+            transition: all 0.2s;
+        }
+        .search-pill-box:focus-within {
+            border-color: var(--primary-blue);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        .search-pill-box input {
+            border: none;
+            background: transparent;
+            font-size: 0.85rem;
+            color: #0f172a;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        /* HERO BANNER (CRYPTOWALL STYLE) */
+        .hero-banner {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 65%, #1e40af 100%);
+            border-radius: 26px;
+            padding: 2rem 2.25rem;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 36px rgba(37, 99, 235, 0.22);
+            margin-bottom: 1.75rem;
+        }
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -40px;
+            right: 180px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        }
+        .hero-content {
+            max-width: 460px;
+            z-index: 2;
+        }
+        .hero-heading {
+            font-size: 1.55rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 0.65rem;
+            letter-spacing: -0.3px;
+        }
+        .hero-subtext {
+            font-size: 0.88rem;
+            opacity: 0.88;
+            line-height: 1.5;
+            margin-bottom: 1.35rem;
+        }
+        .hero-btn {
+            background: var(--accent-cyan);
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.88rem;
+            border-radius: 9999px;
+            padding: 0.65rem 1.6rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.35);
+            transition: all 0.2s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .hero-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(56, 189, 248, 0.45);
+        }
+
+        /* 3D SMARTPHONE MOCKUP IN BANNER */
+        .hero-illustration {
+            position: relative;
+            width: 180px;
+            height: 170px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .mockup-phone {
+            width: 120px;
+            height: 155px;
+            background: #0f172a;
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 16px 35px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transform: perspective(600px) rotateY(-12deg) rotateX(6deg);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .phone-chip-pill {
+            width: 32px;
+            height: 4px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 999px;
+            margin: 0 auto 6px;
+        }
+        .phone-receipt-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 8px 6px;
+            color: #0f172a;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .receipt-icon {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        .receipt-lines {
+            flex: 1;
+        }
+        .r-line {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            margin-bottom: 3px;
+        }
+        .r-line-short {
+            width: 60%;
+            background: #38bdf8;
+        }
+        .floating-glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border-radius: 8px;
+            padding: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            margin: 4px 0;
+        }
+        .g-line {
+            height: 4px;
+            width: 80%;
+            background: rgba(255,255,255,0.5);
+            border-radius: 2px;
+        }
+        .g-line-full { width: 100%; }
+        .phone-btn-bar {
+            height: 8px;
+            background: #38bdf8;
+            border-radius: 999px;
+            width: 100%;
+        }
+        .phone-float-badge {
+            position: absolute;
+            top: 15px;
+            left: -20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #0284c7;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            white-space: nowrap;
+        }
+
+        /* "MY PORTOFOLIO" METRIC ROW */
+        .portfolio-section {
+            margin-bottom: 1.75rem;
+        }
+        .section-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.85rem;
+        }
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+        .pagination-arrows {
+            display: flex;
+            gap: 0.35rem;
+        }
+        .arrow-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .arrow-btn:hover {
+            background: var(--primary-blue);
+            color: #ffffff;
+            border-color: var(--primary-blue);
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1rem;
+        }
+        .portfolio-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 20px;
+            padding: 1.15rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .portfolio-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+            border-color: #cbd5e1;
+        }
+        .p-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .icon-cyan { background: #e0f2fe; color: #0284c7; }
+        .icon-purple { background: #ede9fe; color: #7c3aed; }
+        .icon-emerald { background: #dcfce7; color: #16a34a; }
+        .icon-blue { background: #dbeafe; color: #2563eb; }
+
+        .p-card-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+        .p-card-val {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+        }
+        .font-sm-balance {
+            font-size: 1.05rem !important;
+            letter-spacing: -0.3px;
+        }
+        .p-card-sub {
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+        .text-cyan { color: #0284c7; }
+        .text-purple { color: #7c3aed; }
+        .text-emerald { color: #16a34a; }
+        .text-blue { color: #2563eb; }
+
+        /* SINE WAVE CHART & QUICK STATUS CARD */
+        .chart-and-status-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 24px;
+            padding: 1.5rem 1.75rem;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.02);
+            position: relative;
+        }
+        .chart-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        .chart-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .chart-icon-box {
+            font-size: 1.35rem;
+        }
+        .chart-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+        }
+        .chart-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin: 2px 0 0;
+        }
+        .chart-badge-pill {
+            background: #eff6ff;
+            color: var(--primary-blue);
+            font-weight: 800;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 9999px;
+            border: 1px solid #bfdbfe;
+        }
+        .chart-visual-box {
+            position: relative;
+            width: 100%;
+            height: 160px;
+        }
+        .trend-wave-svg {
+            width: 100%;
+            height: 130px;
+        }
+        .chart-floating-tag {
+            position: absolute;
+            top: 8px;
+            left: 60%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 5px;
+        }
+        .tag-label { opacity: 0.75; }
+        .tag-val { color: #38bdf8; }
+        .chart-x-axis {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 1rem 0;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 600;
+            border-top: 1px dashed #f1f5f9;
+        }
+
+        .operations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+            gap: 1.25rem;
+        }
+        .op-card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 20px;
+            padding: 1.35rem 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+        }
+        .op-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 0.75rem;
+        }
+        .op-card-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+        }
+        .btn-op-pill {
+            background: #eff6ff;
+            color: var(--primary-blue);
+            border: 1px solid #bfdbfe;
+            padding: 0.3rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-op-pill:hover {
+            background: var(--primary-blue);
+            color: #ffffff;
+        }
+
+        /* 3. RIGHT SIDEBAR COLUMN */
+        .right-col {
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+            background: #ffffff;
+            border-left: 1px solid var(--border-soft);
+            padding: 1.75rem 1.5rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 2.5rem);
+            flex-shrink: 0;
+        }
+        .right-col::-webkit-scrollbar { width: 4px; }
+        .right-col::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+        .user-profile-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .btn-notification {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .btn-notification:hover {
+            background: #f1f5f9;
+        }
+        .notif-dot {
+            position: absolute;
+            top: 9px;
+            right: 9px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid #ffffff;
+        }
+        .user-meta-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 9999px;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+        }
+        .user-avatar-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+        .user-name-box {
+            display: flex;
+            flex-direction: column;
+        }
+        .user-name-text {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-role-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #0284c7;
+        }
+
+        /* "MY CARDS" DEBIT CARD (EXACT CRYPTOWALL BLUE/CYAN CARD) */
+        .my-cards-widget {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .widget-heading-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .widget-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+        .card-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .card-dots .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+        .card-dots .dot.active {
+            background: var(--primary-blue);
+            width: 14px;
+            border-radius: 999px;
+        }
+
+        .debit-card-blue {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            border-radius: 24px;
+            padding: 1.5rem 1.4rem;
+            color: #ffffff;
+            box-shadow: 0 14px 30px rgba(0, 114, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .debit-card-blue::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            right: -30px;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .card-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
+        }
+        .card-balance-lbl {
+            font-size: 0.75rem;
+            opacity: 0.88;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .card-balance-amount {
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 1.15rem;
+            line-height: 1.1;
+        }
+        .card-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .card-sub-lbl {
+            font-size: 0.68rem;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+        .card-sub-val {
+            font-size: 0.88rem;
+            font-weight: 800;
+        }
+        .card-growth-pill {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            padding: 0.25rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+        }
+
+        .card-actions-row {
+            display: flex;
+            gap: 0.65rem;
+        }
+        .btn-card-action {
+            flex: 1;
+            padding: 0.75rem 0.5rem;
+            border-radius: 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-card-request {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+        }
+        .btn-card-request:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        .btn-card-transfer {
+            background: #0ea5e9;
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(14, 165, 233, 0.25);
+        }
+        .btn-card-transfer:hover {
+            background: #0284c7;
+            transform: translateY(-1px);
+        }
+
+        /* RECENT TRANSACTION WIDGET */
+        .recent-trans-widget {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .trans-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .trans-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65rem;
+            padding: 0.65rem 0.75rem;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid var(--border-soft);
+            transition: all 0.2s;
+        }
+        .trans-item:hover {
+            background: #f1f5f9;
+        }
+        .trans-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .t-icon-setoran {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .t-icon-penarikan {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+        .trans-meta {
+            flex: 1;
+            min-width: 0;
+        }
+        .trans-desc {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f172a;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .sidebar-badge {
-            padding: 0.2rem 0.55rem;
-            border-radius: 999px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-left: auto;
-            flex-shrink: 0;
+        .trans-time {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 1px;
         }
-        .sidebar-badge-danger {
-            background: #ef4444;
-            color: #ffffff;
-        }
-        .sidebar-badge-warning {
-            background: #f59e0b;
-            color: #ffffff;
-        }
-        .sidebar-footer {
-            padding: 0.85rem 1rem;
-            border-top: 1px solid var(--border-color);
-            background: #ffffff;
-            flex-shrink: 0;
-        }
-        .sidebar-logout-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            padding: 0.65rem 1rem;
-            background: #fee2e2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-            border-radius: 10px;
+        .trans-amount {
             font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-        .sidebar-logout-btn:hover {
-            background: #dc2626;
-            color: #ffffff;
-            border-color: #dc2626;
-        }
-        .admin-main {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-primary);
-            min-height: 100vh;
-        }
-        .admin-topbar {
-            position: sticky;
-            top: 0;
-            z-index: 900;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0.85rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-            gap: 1rem;
-        }
-        .topbar-title {
-            margin: 0;
-            font-size: 1.15rem;
             font-weight: 800;
-            color: #0f172a;
-            line-height: 1.2;
+            white-space: nowrap;
         }
-        .topbar-subtitle {
-            margin: 0;
-            font-size: 0.78rem;
-            color: var(--text-muted);
+        .amount-green { color: #16a34a; }
+        .amount-red { color: #dc2626; }
+        .empty-trans-text {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            text-align: center;
+            padding: 1rem 0;
         }
-        .sidebar-toggle-btn {
-            display: none;
-            background: #f1f5f9;
-            border: 1px solid var(--border-color);
-            padding: 0.5rem;
-            border-radius: 8px;
-            color: #334155;
-            cursor: pointer;
+
+        /* LOKET STATUS */
+        .loket-quick-status {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 16px;
+            padding: 0.85rem 1rem;
+        }
+        .l-status-header {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2px;
         }
-        .admin-content-body {
-            flex: 1;
-            padding: 1.75rem 2rem 3rem 2rem;
-            max-width: 1440px;
-            width: 100%;
-            margin: 0 auto;
-            box-sizing: border-box;
+        .l-dot-online {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #16a34a;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
         }
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(2px);
-            z-index: 999;
+        .l-status-title {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #166534;
         }
-        @media (max-width: 992px) {
-            .admin-sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                bottom: 0;
-                height: 100vh;
-                transform: translateX(-100%);
-                z-index: 1001;
-            }
-            .admin-sidebar.open {
-                transform: translateX(0);
-            }
-            .sidebar-backdrop.active {
-                display: block;
-            }
-            .sidebar-close-btn {
-                display: block;
-            }
-            .sidebar-toggle-btn {
-                display: inline-flex;
-            }
-            .admin-topbar {
-                padding: 0.75rem 1rem;
-            }
-            .admin-content-body {
-                padding: 1.25rem 1rem 2.5rem 1rem;
-            }
+        .l-status-desc {
+            font-size: 0.75rem;
+            color: #15803d;
+            line-height: 1.35;
         }
-        .navbar {
-            display: none;
+
+        /* GENERAL STYLES FOR ALL TABS, TABLES, BUTTONS, FORMS */
+        .tab-content { display: none; width: 100%; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--border-soft);
+            border-radius: 22px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            margin-bottom: 1.5rem;
         }
-        .container {
-            max-width: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 2rem;
-        }
+        .card h4 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin: 0 0 0.5rem; letter-spacing: 0.5px; }
+        .card .value { font-size: 1.75rem; font-weight: 800; color: var(--primary-blue); }
+
         .grid-split {
             display: grid;
             grid-template-columns: minmax(320px, 1fr) minmax(360px, 2fr);
             gap: 1.75rem;
             width: 100%;
         }
-        @media (max-width: 960px) {
-            .grid-split {
-                grid-template-columns: 1fr;
-            }
-        }
-        .card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: 18px;
-            padding: 1.75rem;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.04);
-            max-width: 100%;
-            overflow: hidden;
-        }
-        .card h4 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin: 0 0 0.5rem; letter-spacing: 0.5px; }
-        .card .value { font-size: 1.75rem; font-weight: 800; color: var(--primary-600); }
-        .btn-logout {
-            background: #ef4444;
-            color: #fff;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-logout:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-        }
+
         .btn-primary {
             background: var(--primary-gradient);
             color: #fff;
@@ -342,6 +1056,7 @@
             text-decoration: none;
             display: inline-block;
             text-align: center;
+            font-family: inherit;
         }
         .btn-primary:hover {
             transform: translateY(-1px);
@@ -359,6 +1074,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            font-family: inherit;
         }
         .btn-success:hover { background: #15803d; }
         .btn-warning {
@@ -369,6 +1085,7 @@
             border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
+            font-family: inherit;
         }
         .btn-danger {
             background: #ef4444;
@@ -378,40 +1095,75 @@
             border-radius: 8px;
             font-weight: 700;
             cursor: pointer;
+            font-family: inherit;
         }
-        .nav-tabs {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
-            gap: 0.35rem;
-            margin-bottom: 1.75rem;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 0.5rem;
-            width: 100%;
-        }
-        .tab-btn {
-            background: transparent;
+        .btn-logout {
+            background: #ef4444;
+            color: #fff;
             border: none;
-            padding: 0.55rem 0.85rem;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            cursor: pointer;
+            padding: 0.6rem 1.2rem;
             border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .btn-logout:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            border: 1px solid var(--border-soft);
+            margin-top: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+        }
+        th, td {
+            padding: 0.85rem 1.15rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-soft);
+            font-size: 0.88rem;
             white-space: nowrap;
+        }
+        th { background: #f8fafc; color: #475569; font-weight: 700; }
+
+        .form-group { margin-bottom: 1.25rem; width: 100%; }
+        .form-group label { display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b; }
+        .form-control {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            background: #ffffff;
+            color: var(--text-navy);
+            font-family: inherit;
+            font-size: 0.92rem;
             transition: all 0.2s ease;
         }
-        .tab-btn:hover {
-            color: var(--primary-600);
-            background: rgba(59, 130, 246, 0.08);
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
         }
-        .tab-btn.active {
-            background: var(--primary-600);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-        }
-        .tab-content { display: none; width: 100%; }
-        .tab-content.active { display: block; }
+
+        .badge { padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .badge-aktif { background: #dcfce7; color: #15803d; }
+        .badge-tidak-aktif { background: #fee2e2; color: #b91c1c; }
+        .badge-terblokir { background: #fef2f2; color: #b91c1c; }
+        .badge-role-admin { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .badge-role-teller { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-role-nasabah { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
         .sub-filter-wrapper {
             display: flex;
             justify-content: center;
@@ -442,6 +1194,7 @@
             align-items: center;
             gap: 0.5rem;
             white-space: nowrap;
+            font-family: inherit;
         }
         .sub-filter-btn:hover {
             color: #0f172a;
@@ -459,70 +1212,18 @@
             font-weight: 800;
             line-height: 1;
         }
-        .sub-badge-danger {
-            background: #ef4444;
-            color: #ffffff;
-        }
-        .sub-badge-warning {
-            background: #f59e0b;
-            color: #ffffff;
-        }
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 14px;
-            border: 1px solid var(--border-color);
-            margin-top: 1rem;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 0;
-            background: var(--bg-surface);
-        }
-        th, td {
-            padding: 0.85rem 1.15rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-        th { background: #eff6ff; color: var(--primary-600); font-weight: 700; }
+        .sub-badge-danger { background: #ef4444; color: #ffffff; }
+        .sub-badge-warning { background: #f59e0b; color: #ffffff; }
+
         .alert {
             padding: 1rem 1.25rem;
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 1.5rem;
             font-weight: 600;
         }
         .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-        .form-group { margin-bottom: 1.25rem; width: 100%; }
-        .form-group label { display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b; }
-        .form-control {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background: #ffffff;
-            color: var(--text-main);
-            font-family: inherit;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-        }
-        .badge { padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-aktif { background: #dcfce7; color: #15803d; }
-        .badge-tidak-aktif { background: #fee2e2; color: #b91c1c; }
-        .badge-terblokir { background: #fef2f2; color: #b91c1c; }
-        .badge-role-admin { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
-        .badge-role-teller { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-        .badge-role-nasabah { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
         .notice-box {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -533,7 +1234,8 @@
             font-size: 0.9rem;
             line-height: 1.5;
         }
-        /* Modal Styles */
+
+        /* MODAL STYLES */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -547,280 +1249,477 @@
         }
         .modal-card {
             background: #ffffff;
-            border-radius: 20px;
+            border-radius: 24px;
             width: 100%;
             max-width: 520px;
             padding: 2rem;
             box-shadow: 0 25px 50px rgba(0,0,0,0.2);
             position: relative;
         }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+        }
+
+        /* RESPONSIVE BREAKPOINTS */
+        @media (max-width: 1280px) {
+            .right-col {
+                display: none; /* Can be viewed via toggle or responsive layout */
+            }
+        }
+        @media (max-width: 992px) {
+            body {
+                padding: 0;
+            }
+            .cryptowall-app {
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            .sidebar-col {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 1001;
+                box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .sidebar-col.open {
+                transform: translateX(0);
+            }
+            .sidebar-backdrop.active {
+                display: block;
+            }
+            .sidebar-mobile-toggle {
+                display: inline-flex;
+            }
+            .main-col {
+                padding: 1.25rem 1rem 2rem 1rem;
+            }
+            .grid-split {
+                grid-template-columns: 1fr;
+            }
+            .hero-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1.5rem;
+            }
+            .hero-illustration {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="admin-layout">
-        <!-- BACKDROP FOR MOBILE SIDEBAR -->
+    <div class="cryptowall-app">
+        <!-- BACKDROP UNTUK MOBILE SIDEBAR -->
         <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
 
-        <!-- SIDEBAR KIRI -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <!-- BRAND HEADER -->
-            <div class="sidebar-header">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 38px; width: 38px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-color); background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
+        <!-- 1. LEFT SIDEBAR (CRYPTOWALL STYLE) -->
+        <aside class="sidebar-col admin-sidebar" id="adminSidebar">
+            <div>
+                <!-- BRAND LOGO & TITLE -->
+                <div class="sidebar-brand">
+                    <div class="brand-icon-wrap">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 21h18"/>
+                            <path d="M3 10h18"/>
+                            <path d="M5 6l7-3 7 3"/>
+                            <path d="M4 10v11"/>
+                            <path d="M20 10v11"/>
+                            <path d="M8 14v4"/>
+                            <path d="M12 14v4"/>
+                            <path d="M16 14v4"/>
+                        </svg>
+                    </div>
                     <div>
-                        <h2 class="sidebar-brand-title">Bank Mini</h2>
-                        <p class="sidebar-brand-subtitle">Administrator Panel</p>
+                        <span class="brand-title">Bank Mini</span>
+                        <span class="brand-subtitle">Administrator Panel</span>
                     </div>
                 </div>
-                <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Tutup Menu">&times;</button>
+
+                <!-- NAVIGATION BUTTONS WITH SVG ICONS -->
+                <nav class="sidebar-nav">
+                    <!-- 1. Dashboard -->
+                    <button type="button" class="tab-btn sidebar-nav-btn active" onclick="switchTab('tab-dashboard')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
+
+                    <!-- 2. Manajemen User -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-users')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span class="nav-text">Manajemen User</span>
+                    </button>
+
+                    <!-- 3. Data Anggota Siswa -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-members')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                        <span class="nav-text">Data Anggota Siswa</span>
+                    </button>
+
+                    <!-- 4. Data Penabung -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-savers')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <span class="nav-text">Data Penabung</span>
+                    </button>
+
+                    <!-- 5. Approval Kas & Tutup Kas -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-supervisor')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                        <span class="nav-text">Approval Kas & Tutup Kas</span>
+                        @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
+                        @if($pendingKasCount > 0)
+                            <span class="sidebar-badge sidebar-badge-danger">{{ $pendingKasCount }}</span>
+                        @endif
+                    </button>
+
+                    <!-- 6. Laporan Bulanan -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-laporan-bulanan')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                        <span class="nav-text">Laporan Bulanan</span>
+                    </button>
+
+                    <!-- 7. Jurnal Akuntansi -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-jurnal')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+                        <span class="nav-text">Jurnal Akuntansi</span>
+                    </button>
+
+                    <!-- 8. Audit Logs -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-audit')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span class="nav-text">Audit Logs</span>
+                    </button>
+
+                    <!-- 9. Pengaduan Nasabah -->
+                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-pengaduan')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span class="nav-text">Pengaduan Nasabah</span>
+                        @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
+                        @if($pendingPengaduanCount > 0)
+                            <span class="sidebar-badge sidebar-badge-warning">{{ $pendingPengaduanCount }}</span>
+                        @endif
+                    </button>
+                </nav>
             </div>
 
-            <nav class="sidebar-nav">
-                <!-- 1. Dashboard -->
-                <button type="button" class="tab-btn sidebar-nav-btn active" onclick="switchTab('tab-dashboard')">
-                    <span class="nav-text">Dashboard</span>
-                </button>
-
-                <!-- 2. Manajemen User -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-users')">
-                    <span class="nav-text">Manajemen User</span>
-                </button>
-
-                <!-- 3. Data Anggota Siswa -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-members')">
-                    <span class="nav-text">Data Anggota Siswa</span>
-                </button>
-
-                <!-- 4. Data Penabung -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-savers')">
-                    <span class="nav-text">Data Penabung</span>
-                </button>
-
-                <!-- 5. Approval Kas & Tutup Kas -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-supervisor')">
-                    <span class="nav-text">Approval Kas & Tutup Kas</span>
-                    @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
-                    @if($pendingKasCount > 0)
-                        <span class="sidebar-badge sidebar-badge-danger">{{ $pendingKasCount }}</span>
-                    @endif
-                </button>
-
-                <!-- 6. Laporan Bulanan -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-laporan-bulanan')">
-                    <span class="nav-text">Laporan Bulanan</span>
-                </button>
-
-                <!-- 7. Jurnal Akuntansi -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-jurnal')">
-                    <span class="nav-text">Jurnal Akuntansi</span>
-                </button>
-
-                <!-- 8. Audit Logs -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-audit')">
-                    <span class="nav-text">Audit Logs</span>
-                </button>
-
-                <!-- 9. Pengaduan Nasabah -->
-                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-pengaduan')">
-                    <span class="nav-text">Pengaduan Nasabah</span>
-                    @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
-                    @if($pendingPengaduanCount > 0)
-                        <span class="sidebar-badge sidebar-badge-warning">{{ $pendingPengaduanCount }}</span>
-                    @endif
-                </button>
-            </nav>
-
-            <!-- FOOTER SIDEBAR: LOGOUT -->
-            <div class="sidebar-footer">
-                <form action="{{ route('logout') }}" method="POST" style="margin:0; width: 100%;">
+            <!-- PROMO / SAFE WIDGET (DISCOVER PRO STYLE) -->
+            <div class="sidebar-promo-card">
+                <div class="promo-illustration">
+                    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                        <rect x="4" y="6" width="36" height="26" rx="6" fill="#1e40af" stroke="#93c5fd" stroke-width="2"/>
+                        <rect x="9" y="11" width="14" height="6" rx="2" fill="#38bdf8"/>
+                        <circle cx="29" cy="14" r="3" fill="#facc15"/>
+                        <rect x="9" y="21" width="26" height="4" rx="2" fill="#93c5fd" opacity="0.8"/>
+                        <path d="M16 32L12 40H32L28 32" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="promo-title">Bank Mini Safe</div>
+                <div class="promo-sub">E-Teller Sekolah v2.0</div>
+                <form action="{{ route('logout') }}" method="POST" style="margin: 0; width: 100%;">
                     @csrf
-                    <button type="submit" class="sidebar-logout-btn" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">
-                        <span>Keluar Sistem</span>
+                    <button type="submit" class="btn-promo-action" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">
+                        Keluar Sistem
                     </button>
                 </form>
             </div>
         </aside>
 
-        <!-- AREA KANAN: TOPBAR & KONTEN -->
-        <div class="admin-main">
+        <!-- 2. CENTER CONTENT COLUMN -->
+        <main class="main-col admin-main" id="adminCenter">
             <!-- TOPBAR HEADER -->
-            <header class="admin-topbar">
-                <div style="display: flex; align-items: center; gap: 0.85rem;">
-                    <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Buka Menu">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            <header class="center-topbar">
+                <div class="topbar-left">
+                    <button type="button" class="sidebar-mobile-toggle" onclick="toggleSidebar()" aria-label="Buka Menu">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
                     </button>
                     <div>
-                        <h2 class="topbar-title" id="activeTabTitle">Dashboard Administrator</h2>
-                        <p class="topbar-subtitle" id="activeTabDesc">Ringkasan operasional dan statistik Bank Mini</p>
+                        <div class="topbar-greeting">Administrator</div>
+                        <h1 class="topbar-page-title" id="activeTabTitle">Dashboard</h1>
+                        <p id="activeTabDesc" style="display: none;">Ringkasan operasional dan statistik Bank Mini</p>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a;">{{ $user->nama_petugas }}</span>
-                    <form action="{{ route('logout') }}" method="POST" style="margin:0;">
-                        @csrf
-                        <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">Keluar</button>
-                    </form>
+                <div class="topbar-right">
+                    <div class="search-pill-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+                        <input type="text" id="globalSearchInput" placeholder="Cari data / fitur..." oninput="handleGlobalSearch(this.value)">
+                    </div>
                 </div>
             </header>
 
-            <!-- KONTEN UTAMA -->
-            <main class="admin-content-body">
-                <!-- NOTIFIKASI SUKSES / ERROR (LANGSUNG TAMPIL DI PALING ATAS DENGAN DESAIN MODERN) -->
-                @if(session('success'))
-                    <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12); border-left: 5px solid #16a34a;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="background: #16a34a; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✓</div>
-                            <div>
-                                <div style="font-weight: 800; color: #15803d; font-size: 0.95rem;">Berhasil Dikonfirmasi</div>
-                                <div style="font-size: 0.88rem; color: #166534; margin-top: 2px;">{{ session('success') }}</div>
-                            </div>
+            <!-- NOTIFIKASI SUKSES / ERROR SISTEM -->
+            @if(session('success'))
+                <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12); border-left: 5px solid #16a34a;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="background: #16a34a; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✓</div>
+                        <div>
+                            <div style="font-weight: 800; color: #15803d; font-size: 0.95rem;">Berhasil Dikonfirmasi</div>
+                            <div style="font-size: 0.88rem; color: #166534; margin-top: 2px;">{{ session('success') }}</div>
                         </div>
-                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #15803d; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
                     </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="background: #dc2626; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">!</div>
-                            <div>
-                                <div style="font-weight: 800; color: #b91c1c; font-size: 0.95rem;">Pemberitahuan Sistem</div>
-                                <div style="font-size: 0.88rem; color: #991b1b; margin-top: 2px;">{{ session('error') }}</div>
-                            </div>
-                        </div>
-                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #b91c1c; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
-                    </div>
-                @endif
-
-        <!-- TAB 0: DASHBOARD ADMINISTRATOR -->
-        <div id="tab-dashboard" class="tab-content active">
-            <!-- BANNER PERMINTAAN TAMBAHAN KAS TELLER MENUNGGU APPROVAL -->
-            @php $pendingKasTop = $pengajuanKasList->where('status', 'pending'); @endphp
-            @if($pendingKasTop->count() > 0)
-                <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 16px; padding: 1.15rem 1.35rem; margin-bottom: 1.75rem; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.65rem;">
-                            <span style="background: #f59e0b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">!</span>
-                            <h4 style="margin: 0; color: #92400e; font-size: 1.05rem; font-weight: 800;">
-                                {{ $pendingKasTop->count() }} Pengajuan Tambahan Kas Teller Menunggu Persetujuan
-                            </h4>
-                        </div>
-                        <button type="button" onclick="switchTab('tab-supervisor')" style="background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px; cursor: pointer;">
-                            BUKA MENU APPROVAL KAS &rarr;
-                        </button>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        @foreach($pendingKasTop as $pkTop)
-                        <div style="background: #ffffff; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-                            <div>
-                                <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a;">
-                                    Teller: <span style="color: #2563eb;">{{ $pkTop->teller->nama_petugas ?? 'Teller' }}</span> &bull; 
-                                    Nominal: <span style="color: #16a34a; font-size: 1.05rem;">Rp {{ number_format($pkTop->nominal, 0, ',', '.') }}</span>
-                                </div>
-                                <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
-                                    Alasan: <em>"{{ $pkTop->alasan }}"</em> &bull; Waktu: {{ date('H:i', strtotime($pkTop->created_at)) }} WIB
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <form action="{{ route('admin.pengajuan-kas.approve', $pkTop->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pkTop->nominal, 0, ',', '.') }} untuk {{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}?')">
-                                    @csrf
-                                    <button type="submit" class="btn-success" style="padding: 0.45rem 1rem; font-size: 0.85rem; border-radius: 8px;">
-                                        ✓ ACC Kas
-                                    </button>
-                                </form>
-                                <button type="button" class="btn-danger" style="padding: 0.45rem 0.85rem; font-size: 0.85rem; border-radius: 8px;" onclick="openRejectPengajuanModal({{ $pkTop->id }}, '{{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}', '{{ number_format($pkTop->nominal, 0, ',', '.') }}')">
-                                    Tolak
-                                </button>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
+                    <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #15803d; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
                 </div>
             @endif
 
-            <div class="grid" style="margin-bottom: 1.75rem;">
-                <div class="card" onclick="switchTab('tab-users')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                    <h4>Total Pengguna</h4>
-                    <div class="value">{{ $totalUsers }}</div>
-                    <small style="color: #64748b; font-size: 0.78rem;">Admin, Supervisor & Teller &rarr;</small>
-                </div>
-                <div class="card" onclick="switchTab('tab-members')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                    <h4>Total Anggota Siswa</h4>
-                    <div class="value" style="color: #6366f1;">{{ $totalMembers }}</div>
-                    <small style="color: #64748b; font-size: 0.78rem;">Siswa terdaftar di sekolah &rarr;</small>
-                </div>
-                <div class="card" onclick="switchTab('tab-savers')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                    <h4>Total Penabung Aktif</h4>
-                    <div class="value" style="color: #10b981;">{{ $totalSavers }}</div>
-                    <small style="color: #64748b; font-size: 0.78rem;">Rekening aktif menabung &rarr;</small>
-                </div>
-                <div class="card" onclick="switchTab('tab-jurnal')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                    <h4>Total Saldo Penabung</h4>
-                    <div class="value">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
-                    <small style="color: #64748b; font-size: 0.78rem;">Total dana tabungan siswa &rarr;</small>
-                </div>
-            </div>
-
-            <!-- RINGKASAN CEPAT OPERASIONAL ADMIN -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
-                <!-- KARTU PENGADUAN SISWA TERBARU -->
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-                        <h4 style="margin: 0; color: #0f172a; font-weight: 800; font-size: 1rem;">Pengaduan Siswa Menunggu Respon</h4>
-                        <button type="button" onclick="switchTab('tab-pengaduan')" class="badge badge-role-teller" style="border: none; cursor: pointer;">
-                            Lihat Semua &rarr;
-                        </button>
-                    </div>
-                    @php $pendingPengaduan = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->take(3) : collect(); @endphp
-                    @forelse($pendingPengaduan as $pg)
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="font-size: 0.88rem; color: #0f172a;">{{ $pg->nama_pengadu }}</strong>
-                                <span style="font-size: 0.72rem; color: #64748b;">{{ date('d/m H:i', strtotime($pg->created_at)) }}</span>
-                            </div>
-                            <div style="font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 2px;">{{ $pg->judul ?? $pg->subjek }}</div>
-                            <div style="font-size: 0.8rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                {{ $pg->isi_pesan ?? $pg->pesan }}
-                            </div>
+            @if(session('error'))
+                <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="background: #dc2626; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">!</div>
+                        <div>
+                            <div style="font-weight: 800; color: #b91c1c; font-size: 0.95rem;">Pemberitahuan Sistem</div>
+                            <div style="font-size: 0.88rem; color: #991b1b; margin-top: 2px;">{{ session('error') }}</div>
                         </div>
-                    @empty
-                        <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.88rem;">
-                            ✓ Semua pengaduan nasabah telah ditanggapi.
-                        </div>
-                    @endforelse
-                </div>
-
-                <!-- KARTU TUTUP KAS & LAPORAN TELLER HARI INI -->
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-                        <h4 style="margin: 0; color: #0f172a; font-weight: 800; font-size: 1rem;">Laporan Tutup Kas Teller Pending</h4>
-                        <button type="button" onclick="switchTab('tab-supervisor')" class="badge badge-role-teller" style="border: none; cursor: pointer;">
-                            Buka Approval &rarr;
-                        </button>
                     </div>
-                    @forelse($laporanPending->take(3) as $lpDash)
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <strong style="font-size: 0.88rem; color: #0f172a;">{{ $lpDash->teller->nama_petugas ?? 'Teller' }}</strong>
-                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
-                                    Tgl: {{ date('d/m/Y', strtotime($lpDash->tanggal)) }} &bull; Fisik: Rp {{ number_format($lpDash->uang_fisik) }}
-                                </div>
+                    <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #b91c1c; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+                </div>
+            @endif
+
+            <!-- TAB 0: DASHBOARD ADMINISTRATOR -->
+            <div id="tab-dashboard" class="tab-content active">
+                <!-- BANNER PERMINTAAN TAMBAHAN KAS TELLER MENUNGGU APPROVAL -->
+                @php $pendingKasTop = $pengajuanKasList->where('status', 'pending'); @endphp
+                @if($pendingKasTop->count() > 0)
+                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 18px; padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <span style="background: #f59e0b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">!</span>
+                                <h4 style="margin: 0; color: #92400e; font-size: 1rem; font-weight: 800;">
+                                    {{ $pendingKasTop->count() }} Pengajuan Tambahan Kas Teller Menunggu Persetujuan
+                                </h4>
                             </div>
-                            <button type="button" onclick="openRiwayatModal({{ $lpDash->id }})" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; border-radius: 8px;">
-                                Cek Mutasi
+                            <button type="button" onclick="switchTab('tab-supervisor')" style="background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px; cursor: pointer;">
+                                BUKA APPROVAL &rarr;
                             </button>
                         </div>
-                    @empty
-                        <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.88rem;">
-                            ✓ Tidak ada laporan tutup kas teller yang menunggu persetujuan.
+                        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                            @foreach($pendingKasTop as $pkTop)
+                            <div style="background: #ffffff; border: 1px solid #fef3c7; border-radius: 12px; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                                <div>
+                                    <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a;">
+                                        Teller: <span style="color: #2563eb;">{{ $pkTop->teller->nama_petugas ?? 'Teller' }}</span> &bull; 
+                                        Nominal: <span style="color: #16a34a; font-size: 1.05rem;">Rp {{ number_format($pkTop->nominal, 0, ',', '.') }}</span>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
+                                        Alasan: <em>"{{ $pkTop->alasan }}"</em> &bull; Waktu: {{ date('H:i', strtotime($pkTop->created_at)) }} WIB
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <form action="{{ route('admin.pengajuan-kas.approve', $pkTop->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pkTop->nominal, 0, ',', '.') }} untuk {{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}?')">
+                                        @csrf
+                                        <button type="submit" class="btn-success" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px;">
+                                            ✓ ACC Kas
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn-danger" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;" onclick="openRejectPengajuanModal({{ $pkTop->id }}, '{{ addslashes($pkTop->teller->nama_petugas ?? 'Teller') }}', '{{ number_format($pkTop->nominal, 0, ',', '.') }}')">
+                                        Tolak
+                                    </button>
+                                </div>
+                            </div>
+                            @endforeach
                         </div>
-                    @endforelse
+                    </div>
+                @endif
+
+                <!-- HERO BANNER (EASY TO MANAGE YOUR MINI BANK SYSTEM) -->
+                <div class="hero-banner">
+                    <div class="hero-content">
+                        <h2 class="hero-heading">Easy to Manage Your Mini Bank System</h2>
+                        <p class="hero-subtext">Pantau kas teller, verifikasi setoran & penarikan, serta kelola akun nasabah secara aman dan real-time.</p>
+                        <button type="button" class="hero-btn" onclick="switchTab('tab-supervisor')">
+                            Detail Transaksi &rarr;
+                        </button>
+                    </div>
+                    <div class="hero-illustration">
+                        <div class="mockup-phone">
+                            <div class="phone-chip-pill"></div>
+                            <div class="phone-receipt-card">
+                                <div class="receipt-icon">🪙</div>
+                                <div class="receipt-lines">
+                                    <div class="r-line r-line-short"></div>
+                                    <div class="r-line"></div>
+                                </div>
+                            </div>
+                            <div class="floating-glass-card">
+                                <div class="g-line"></div>
+                            </div>
+                            <div class="floating-glass-card">
+                                <div class="g-line g-line-full"></div>
+                            </div>
+                            <div class="phone-btn-bar"></div>
+                        </div>
+                        <div class="phone-float-badge">✦ Bank Mini</div>
+                    </div>
+                </div>
+
+                <!-- "MY PORTOFOLIO" METRIC ROW -->
+                <div class="portfolio-section">
+                    <div class="section-header-flex">
+                        <h3 class="section-title">My Portofolio</h3>
+                        <div class="pagination-arrows">
+                            <button type="button" class="arrow-btn" onclick="switchTab('tab-users')">&lsaquo;</button>
+                            <button type="button" class="arrow-btn" onclick="switchTab('tab-savers')">&rsaquo;</button>
+                        </div>
+                    </div>
+                    <div class="portfolio-grid">
+                        <!-- 1. Total Pengguna -->
+                        <div class="portfolio-card" onclick="switchTab('tab-users')">
+                            <div class="p-card-icon icon-cyan">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <div>
+                                <div class="p-card-label">Total Pengguna</div>
+                                <div class="p-card-val">{{ $totalUsers }}</div>
+                                <div class="p-card-sub text-cyan">Admin, Spv & Teller &rarr;</div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Total Anggota Siswa -->
+                        <div class="portfolio-card" onclick="switchTab('tab-members')">
+                            <div class="p-card-icon icon-purple">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                            </div>
+                            <div>
+                                <div class="p-card-label">Total Anggota</div>
+                                <div class="p-card-val" style="color: #6366f1;">{{ $totalMembers }}</div>
+                                <div class="p-card-sub text-purple">Siswa Terdaftar &rarr;</div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Total Penabung Aktif -->
+                        <div class="portfolio-card" onclick="switchTab('tab-savers')">
+                            <div class="p-card-icon icon-emerald">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                            </div>
+                            <div>
+                                <div class="p-card-label">Penabung Aktif</div>
+                                <div class="p-card-val" style="color: #10b981;">{{ $totalSavers }}</div>
+                                <div class="p-card-sub text-emerald">Rekening Aktif &rarr;</div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Total Saldo Penabung -->
+                        <div class="portfolio-card" onclick="switchTab('tab-jurnal')">
+                            <div class="p-card-icon icon-blue">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div>
+                                <div class="p-card-label">Total Saldo</div>
+                                <div class="p-card-val font-sm-balance">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                                <div class="p-card-sub text-blue">Dana Tabungan &rarr;</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOTAL PORTOFOLIO CHART & OPERASIONAL CARDS -->
+                <div class="chart-and-status-grid">
+                    <!-- SINE WAVE CURVE GRAPH CARD -->
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <div class="chart-title-wrap">
+                                <span class="chart-icon-box">📊</span>
+                                <div>
+                                    <h4 class="chart-title">Total Portofolio & Aliran Kas</h4>
+                                    <p class="chart-sub">Pergerakan transaksi kas dan pertumbuhan tabungan sekolah</p>
+                                </div>
+                            </div>
+                            <div class="chart-badge-pill">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="chart-visual-box">
+                            <svg class="trend-wave-svg" viewBox="0 0 600 140" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22"/>
+                                        <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,95 C70,110 130,70 190,85 C250,100 310,40 370,30 C430,22 470,80 530,95 C560,102 585,100 600,98 L600,140 L0,140 Z" fill="url(#waveGrad)"/>
+                                <path d="M0,95 C70,110 130,70 190,85 C250,100 310,40 370,30 C430,22 470,80 530,95 C560,102 585,100 600,98" fill="none" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round"/>
+                                <circle cx="370" cy="30" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="3"/>
+                                <line x1="370" y1="36" x2="370" y2="140" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6"/>
+                            </svg>
+                            <div class="chart-floating-tag">
+                                <span class="tag-label">Saldo:</span>
+                                <span class="tag-val">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="chart-x-axis">
+                                <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RINGKASAN CEPAT OPERASIONAL ADMIN -->
+                    <div class="operations-grid">
+                        <!-- KARTU PENGADUAN SISWA TERBARU -->
+                        <div class="op-card">
+                            <div class="op-card-header">
+                                <h4 class="op-card-title">Pengaduan Siswa Menunggu Respon</h4>
+                                <button type="button" onclick="switchTab('tab-pengaduan')" class="btn-op-pill">
+                                    Lihat Semua &rarr;
+                                </button>
+                            </div>
+                            @php $pendingPengaduan = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->take(3) : collect(); @endphp
+                            @forelse($pendingPengaduan as $pg)
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                        <strong style="font-size: 0.88rem; color: #0f172a;">{{ $pg->nama_pengadu }}</strong>
+                                        <span style="font-size: 0.72rem; color: #64748b;">{{ date('d/m H:i', strtotime($pg->created_at)) }}</span>
+                                    </div>
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 2px;">{{ $pg->judul ?? $pg->subjek }}</div>
+                                    <div style="font-size: 0.8rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        {{ $pg->isi_pesan ?? $pg->pesan }}
+                                    </div>
+                                </div>
+                            @empty
+                                <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.85rem;">
+                                    ✓ Semua pengaduan nasabah telah ditanggapi.
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <!-- KARTU TUTUP KAS & LAPORAN TELLER HARI INI -->
+                        <div class="op-card">
+                            <div class="op-card-header">
+                                <h4 class="op-card-title">Laporan Tutup Kas Teller Pending</h4>
+                                <button type="button" onclick="switchTab('tab-supervisor')" class="btn-op-pill">
+                                    Buka Approval &rarr;
+                                </button>
+                            </div>
+                            @forelse($laporanPending->take(3) as $lpDash)
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong style="font-size: 0.88rem; color: #0f172a;">{{ $lpDash->teller->nama_petugas ?? 'Teller' }}</strong>
+                                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
+                                            Tgl: {{ date('d/m/Y', strtotime($lpDash->tanggal)) }} &bull; Fisik: Rp {{ number_format($lpDash->uang_fisik) }}
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="openRiwayatModal({{ $lpDash->id }})" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; border-radius: 8px;">
+                                        Cek Mutasi
+                                    </button>
+                                </div>
+                            @empty
+                                <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.85rem;">
+                                    ✓ Tidak ada laporan tutup kas teller yang menunggu persetujuan.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- TAB 1: MANAJEMEN USER -->
-        <div id="tab-users" class="tab-content">
+            <!-- TABS 1 TO 8 (PRESERVED IN FULL INTEGRITY) -->
+<div id="tab-users" class="tab-content">
             <div class="grid-split">
                 <div class="card">
                     <h3 style="margin-top:0; margin-bottom: 1.25rem;">Tambah User Petugas</h3>
@@ -1851,11 +2750,119 @@
                 </div>
             </div>
         </div>
-            </main>
-        </div>
+        </main>
+
+        <!-- 3. RIGHT SIDEBAR COLUMN (CRYPTOWALL PANEL) -->
+        <aside class="right-col" id="adminRightPanel">
+            <!-- USER PROFILE HEADER -->
+            <div class="user-profile-header">
+                <button type="button" class="btn-notification" onclick="switchTab('tab-pengaduan')" title="Notifikasi & Pengaduan">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                    @php $totalNotif = ($pendingPengaduanCount ?? 0) + ($pendingKasTop ? $pendingKasTop->count() : 0); @endphp
+                    @if($totalNotif > 0)
+                        <span class="notif-dot"></span>
+                    @endif
+                </button>
+                <div class="user-meta-wrap">
+                    <div class="user-avatar-circle">
+                        {{ strtoupper(substr($user->nama_petugas, 0, 1)) }}
+                    </div>
+                    <div class="user-name-box">
+                        <span class="user-name-text">{{ $user->nama_petugas }}</span>
+                        <span class="user-role-badge">Administrator</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- "MY CARDS" WIDGET (KAS UTAMA & BRANKAS SEKOLAH) -->
+            <div class="my-cards-widget">
+                <div class="widget-heading-row">
+                    <h4 class="widget-title">My Cards</h4>
+                    <div class="card-dots">
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+
+                <div class="debit-card-blue">
+                    <div class="card-top-row">
+                        <div class="card-balance-lbl">Balance (Kas Utama)</div>
+                        <div class="card-chip-symbol">
+                            <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+                                <rect width="28" height="20" rx="4" fill="rgba(255,255,255,0.2)"/>
+                                <circle cx="9" cy="10" r="5" fill="#facc15" opacity="0.9"/>
+                                <circle cx="19" cy="10" r="5" fill="#ef4444" opacity="0.9"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="card-balance-amount">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                    <div class="card-bottom-row">
+                        <div>
+                            <div class="card-sub-lbl">Monthly Volume</div>
+                            <div class="card-sub-val">Rp {{ number_format($monthlySetoran + $monthlyPenarikan, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="card-growth-pill">▲ +10%</div>
+                    </div>
+                </div>
+
+                <!-- ACTION BUTTONS: REQUEST & TRANSFER -->
+                <div class="card-actions-row">
+                    <button type="button" class="btn-card-action btn-card-request" onclick="switchTab('tab-supervisor')" title="Buka Approval Tambahan Kas">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                        <span>Request</span>
+                    </button>
+                    <button type="button" class="btn-card-action btn-card-transfer" onclick="switchTab('tab-supervisor')" title="Buka Approval Tutup Kas">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                        <span>Transfer</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- "RECENT TRANSACTION" WIDGET -->
+            <div class="recent-trans-widget">
+                <h4 class="widget-title">Recent Transaction</h4>
+                <div class="trans-list">
+                    @forelse($jurnals->take(5) as $trxJurnal)
+                        @php
+                            $isKredit = ($trxJurnal->kredit > 0);
+                            $trxNominal = $isKredit ? $trxJurnal->kredit : $trxJurnal->debet;
+                            $isSetoran = str_contains(strtolower($trxJurnal->keterangan), 'setoran') || (!$isKredit && str_contains(strtolower($trxJurnal->akun->nama_akun ?? ''), 'kas'));
+                        @endphp
+                        <div class="trans-item">
+                            <div class="trans-icon {{ $isSetoran ? 't-icon-setoran' : 't-icon-penarikan' }}">
+                                @if($isSetoran)
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                                @else
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                                @endif
+                            </div>
+                            <div class="trans-meta">
+                                <div class="trans-desc">{{ $trxJurnal->keterangan ?: ($isSetoran ? 'Setoran Nasabah' : 'Penarikan Nasabah') }}</div>
+                                <div class="trans-time">{{ date('d M, H:i', strtotime($trxJurnal->created_at)) }}</div>
+                            </div>
+                            <div class="trans-amount {{ $isSetoran ? 'amount-green' : 'amount-red' }}">
+                                {{ $isSetoran ? '+' : '-' }}Rp {{ number_format($trxNominal, 0, ',', '.') }}
+                            </div>
+                        </div>
+                    @empty
+                        <div class="empty-trans-text">Belum ada transaksi hari ini</div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- QUICK LOKET STATUS -->
+            <div class="loket-quick-status">
+                <div class="l-status-header">
+                    <span class="l-dot-online"></span>
+                    <span class="l-status-title">Loket Teller Online</span>
+                </div>
+                <div class="l-status-desc">Sistem terhubung ke database dan siap melayani transaksi siswa.</div>
+            </div>
+        </aside>
     </div>
 
-    <!-- MODAL TAMBAH ANGGOTA SISWA BARU -->
+<!-- MODAL TAMBAH ANGGOTA SISWA BARU -->
     <div class="modal-overlay" id="modalTambahMember">
         <div class="modal-card" style="max-width: 540px; max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
@@ -2624,6 +3631,31 @@
                 emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
             }
         }
+    
+        function handleGlobalSearch(val) {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (!activeTab) return;
+            if (activeTab.id === 'tab-users') {
+                const input = document.getElementById('searchUser');
+                if (input) { input.value = val; filterUserTable(); }
+            } else if (activeTab.id === 'tab-members') {
+                const input = document.getElementById('searchMember');
+                if (input) { input.value = val; filterMemberTable(true); }
+            } else if (activeTab.id === 'tab-savers') {
+                const input = document.getElementById('searchSaver');
+                if (input) { input.value = val; filterSaverTable(); }
+            } else if (activeTab.id === 'tab-pengaduan') {
+                const input = document.getElementById('searchPengaduan');
+                if (input) { input.value = val; filterPengaduanTable(); }
+            } else if (activeTab.id === 'tab-jurnal') {
+                const input = document.getElementById('searchJurnal');
+                if (input) { input.value = val; filterJurnalTable(); }
+            } else if (activeTab.id === 'tab-audit') {
+                const input = document.getElementById('searchAudit');
+                if (input) { input.value = val; filterAuditTable(); }
+            }
+        }
+
     </script>
 
     <!-- MODAL POPUP RIWAYAT TRANSAKSI TELLER SEBELUM APPROVE -->
