@@ -745,14 +745,23 @@
 
             <!-- Pesan Kesalahan / Sukses -->
             @if($errors->any())
-                <div class="alert-error">
-                    {{ $errors->first() }}
+                <div class="alert-error" style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.25rem;">
+                    <div style="background: #dc2626; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;">!</div>
+                    <div style="font-size: 0.9rem; font-weight: 600;">{{ $errors->first() }}</div>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert-error" style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.25rem;">
+                    <div style="background: #dc2626; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;">!</div>
+                    <div style="font-size: 0.9rem; font-weight: 600;">{{ session('error') }}</div>
                 </div>
             @endif
 
             @if(session('error_lupa'))
-                <div class="alert-error">
-                    {{ session('error_lupa') }}
+                <div class="alert-error" style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.25rem;">
+                    <div style="background: #dc2626; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;">!</div>
+                    <div style="font-size: 0.9rem; font-weight: 600;">{{ session('error_lupa') }}</div>
                 </div>
             @endif
 

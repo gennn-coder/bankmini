@@ -446,17 +446,24 @@ class TellerController extends Controller
             'nominal' => 'required|integer|min:10000',
             'pin' => 'required|numeric|digits:6',
             'keterangan' => 'nullable|string',
+        ], [
+            'id_nasabah.required' => 'Pilih penabung terlebih dahulu.',
+            'nominal.required' => 'Nominal penarikan wajib diisi.',
+            'nominal.min' => 'Nominal penarikan tunai minimal adalah Rp 10.000.',
+            'pin.required' => 'PIN 6-digit keamanan penabung wajib diisi.',
+            'pin.numeric' => 'PIN penabung harus berupa angka.',
+            'pin.digits' => 'PIN penabung harus tepat 6 digit angka.',
         ]);
 
         if ($request->nominal < 10000) {
-            return back()->with('error', 'Transaksi Ditolak: Nominal penarikan tunai minimal adalah Rp 10.000.');
+            return back()->withInput($request->except('pin'))->with('error', 'Transaksi Ditolak: Nominal penarikan tunai minimal adalah Rp 10.000.');
         }
 
         $tokenTransaksi = $request->input('_token_transaksi');
         if ($tokenTransaksi) {
             $cacheKey = 'trx_token_' . $tokenTransaksi;
             if (!Cache::add($cacheKey, true, now()->addMinutes(10))) {
-                return back()->with('error', 'Transaksi ditolak: Permintaan penarikan ganda (double submission) terdeteksi. Transaksi sudah diproses.');
+                return back()->withInput($request->except('pin'))->with('error', 'Transaksi ditolak: Permintaan penarikan ganda (double submission) terdeteksi. Transaksi sudah diproses.');
             }
         }
 
@@ -471,7 +478,7 @@ class TellerController extends Controller
             ->first();
 
         if ($recentDuplicate) {
-            return back()->with('error', 'Transaksi ganda terdeteksi! Penarikan untuk penabung ini baru saja diproses (No: ' . $recentDuplicate->no_transaksi . ').');
+            return back()->withInput($request->except('pin'))->with('error', 'Transaksi ganda terdeteksi! Penarikan untuk penabung ini baru saja diproses (No: ' . $recentDuplicate->no_transaksi . ').');
         }
 
         // Cek kecukupan uang kas fisik di laci teller
@@ -498,14 +505,14 @@ class TellerController extends Controller
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
-                return back()->with('error', 'Modal awal kas hari ini belum diinput.');
+                return back()->withInput($request->except('pin'))->with('error', 'Modal awal kas hari ini belum diinput.');
             }
 
             if ($sisaKasLaci < $request->nominal) {
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
-                return back()->with('error', 'Kas di laci tidak cukup (Sisa: Rp ' . number_format($sisaKasLaci) . ', Butuh: Rp ' . number_format($request->nominal) . '). Ajukan tambahan kas ke Admin.');
+                return back()->withInput($request->except('pin'))->with('error', 'Kas di laci tidak cukup (Sisa: Rp ' . number_format($sisaKasLaci) . ', Butuh: Rp ' . number_format($request->nominal) . '). Ajukan tambahan kas ke Admin.');
             }
         }
 
@@ -518,7 +525,7 @@ class TellerController extends Controller
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
-                return back()->with('error', 'Rekening penabung sedang nonaktif.');
+                return back()->withInput($request->except('pin'))->with('error', 'Rekening penabung sedang nonaktif.');
             }
 
             // Verifikasi PIN 6 Digit
@@ -526,7 +533,10 @@ class TellerController extends Controller
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
-                return back()->with('error', 'PIN 6-Digit Keamanan Penabung Salah! Silakan gunakan fitur Reset PIN jika nasabah lupa PIN.');
+                return back()
+                    ->withInput($request->except('pin'))
+                    ->with('error', 'PIN 6-Digit Keamanan Penabung Salah! Silakan periksa kembali atau gunakan fitur Reset PIN jika nasabah lupa.')
+                    ->with('error_pin_salah', true);
             }
 
             // Validasi Saldo Minimum Mengendap Rp 10.000
@@ -535,7 +545,7 @@ class TellerController extends Controller
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
-                return back()->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
+                return back()->withInput($request->except('pin'))->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
             }
 
             $saldoSebelum = $rekening->saldo;

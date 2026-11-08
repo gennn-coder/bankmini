@@ -824,7 +824,7 @@
             <div class="grid-split">
                 <div class="card">
                     <h3 style="margin-top:0; margin-bottom: 1.25rem;">Tambah User Petugas</h3>
-                    <form action="{{ route('admin.users.store') }}" method="POST">
+                    <form action="{{ route('admin.users.store') }}" method="POST" onsubmit="return confirm('Konfirmasi: Apakah Anda yakin ingin menyimpan dan membuat akun user petugas baru ini?');">
                         @csrf
                         <div class="form-group">
                             <label>Nama Petugas</label>
@@ -938,7 +938,7 @@
                                     <td><span class="badge badge-{{ $u->status }}">{{ strtoupper($u->status) }}</span></td>
                                     <td>
                                         @if($u->id !== auth()->id())
-                                            <form action="{{ route('admin.users.toggle-status', $u->id) }}" method="POST" style="margin:0;">
+                                            <form action="{{ route('admin.users.toggle-status', $u->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Konfirmasi: Apakah Anda yakin ingin {{ $u->status === 'aktif' ? 'MEMBLOKIR' : 'MEMBUKA BLOKIR' }} akun user {{ addslashes($u->nama_petugas) }}?');">
                                                 @csrf
                                                 <button type="submit" class="btn-warning">
                                                     {{ $u->status === 'aktif' ? 'Blokir' : 'Buka Blokir' }}
@@ -997,7 +997,7 @@
                             </div>
                         </div>
 
-                        <form action="{{ route('admin.members.import') }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('admin.members.import') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('Konfirmasi Impor:\n\nApakah Anda yakin ingin mengunggah dan mengimpor file data anggota siswa ini ke database?');">
                             @csrf
                             <div class="form-group" style="margin-bottom: 0.75rem;">
                                 <label style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.35rem;">Pilih Berkas CSV / XLSX</label>
@@ -1305,7 +1305,7 @@
                                 <td>
                                     @if($pk->status === 'pending')
                                         <div style="display: flex; gap: 0.4rem; align-items: center;">
-                                            <form action="{{ route('admin.pengajuan-kas.approve', $pk->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('ACC tambahan kas Rp {{ number_format($pk->nominal, 0, ',', '.') }}?')">
+                                            <form action="{{ route('admin.pengajuan-kas.approve', $pk->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Konfirmasi Approval Kas:\n\nApakah Anda yakin ingin MENYETUJUI (ACC) tambahan modal kas sebesar Rp {{ number_format($pk->nominal, 0, ',', '.') }} untuk {{ addslashes($pk->teller->nama_petugas ?? 'Teller') }}?');">
                                                 @csrf
                                                 <button type="submit" class="btn-success" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">ACC</button>
                                             </form>
@@ -1395,7 +1395,7 @@
                                         <button type="button" onclick="openRiwayatModal({{ $lp->id }})" style="background: #2563eb; color: #fff; border:none; padding: 0.45rem 0.75rem; border-radius: 6px; font-weight:700; font-size: 0.85rem; cursor:pointer;">
                                             Riwayat Transaksi
                                         </button>
-                                        <form action="{{ route('admin.laporan.approve', $lp->id) }}" method="POST" style="margin:0;">
+                                        <form action="{{ route('admin.laporan.approve', $lp->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Konfirmasi Approval Tutup Kas:\n\nApakah Anda yakin ingin MENYETUJUI (Approve & Vault) penutupan kas harian {{ addslashes($lp->teller->nama_petugas ?? 'Teller') }} sebesar Rp {{ number_format($lp->saldo_akhir_sistem) }}?');">
                                             @csrf
                                             <button type="submit" class="btn-success" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">Approve & Vault</button>
                                         </form>
@@ -1866,7 +1866,7 @@
                 <button type="button" onclick="closeTambahMemberModal()" style="background: none; border: none; font-size: 1.4rem; color: #64748b; cursor: pointer; font-weight: 700; line-height: 1;">&times;</button>
             </div>
 
-            <form action="{{ route('admin.members.store') }}" method="POST">
+            <form action="{{ route('admin.members.store') }}" method="POST" onsubmit="return confirm('Konfirmasi: Apakah Anda yakin ingin mendaftarkan anggota siswa baru ini?');">
                 @csrf
                 <div class="form-group">
                     <label>Nama Siswa <span style="color: #dc2626;">*</span></label>
@@ -1924,7 +1924,7 @@
                 <button type="button" onclick="closeEditMemberModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
             </div>
 
-            <form id="editMemberForm" method="POST">
+            <form id="editMemberForm" method="POST" onsubmit="return confirm('Konfirmasi: Simpan perubahan data profil anggota siswa ini?');">
                 @csrf
                 <div class="form-group">
                     <label>Nama Siswa</label>
@@ -1966,7 +1966,7 @@
                 Mereset PIN 6 digit untuk penabung: <strong id="resetPinNama">-</strong> (No Rek: <code id="resetPinNoRek">-</code>)
             </p>
 
-            <form id="resetPinForm" method="POST">
+            <form id="resetPinForm" method="POST" onsubmit="return confirm('Konfirmasi Reset PIN:\n\nApakah Anda yakin ingin mengatur ulang PIN keamanan 6-digit untuk nasabah ini?');">
                 @csrf
                 <div class="form-group">
                     <label>PIN 6-Digit Baru</label>
@@ -2728,7 +2728,7 @@
                 <span id="rejectTellerNama">-</span> &bull; Tanggal: <strong id="rejectTanggal">-</strong> &bull; Selisih: <strong id="rejectSelisih" style="color: #dc2626;">-</strong>
             </div>
 
-            <form id="rejectLaporanForm" method="POST">
+            <form id="rejectLaporanForm" method="POST" onsubmit="return confirm('Konfirmasi Penolakan:\n\nApakah Anda yakin ingin MENOLAK laporan penutupan kas harian ini?');">
                 @csrf
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="font-weight: 600; font-size: 0.85rem;">Alasan Penolakan <span style="color: #dc2626;">*</span></label>
@@ -2754,7 +2754,7 @@
                 Teller: <strong id="rejectPengajuanTeller">-</strong> &bull; Nominal: <strong id="rejectPengajuanNominal" style="color: #dc2626;">-</strong>
             </div>
 
-            <form id="rejectPengajuanForm" method="POST">
+            <form id="rejectPengajuanForm" method="POST" onsubmit="return confirm('Konfirmasi Penolakan:\n\nApakah Anda yakin ingin MENOLAK pengajuan tambahan modal kas ini?');">
                 @csrf
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="font-weight: 600; font-size: 0.85rem;">Alasan Penolakan <span style="color: #dc2626;">*</span></label>
@@ -2776,7 +2776,7 @@
                 <button type="button" onclick="closeTanggapiModal()" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
             </div>
 
-            <form id="formTanggapiPengaduan" method="POST" action="">
+            <form id="formTanggapiPengaduan" method="POST" action="" onsubmit="return confirm('Konfirmasi: Kirimkan tanggapan resmi ini ke nasabah?');">
                 @csrf
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.85rem; margin-bottom: 1.25rem; font-size: 0.85rem;">
                     <div>Pengadu: <strong id="modalPengaduNama">-</strong> (<span id="modalPengaduNis">-</span>)</div>

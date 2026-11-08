@@ -544,7 +544,7 @@
                                 </div>
                             </div>
                         @else
-                            <form action="{{ route('nasabah.ambil-antrean') }}" method="POST" style="margin:0;">
+                            <form action="{{ route('nasabah.ambil-antrean') }}" method="POST" style="margin:0;" onsubmit="return confirm('Konfirmasi: Ambil nomor antrean loket Bank Mini hari ini?');">
                                 @csrf
                                 <button type="submit" class="btn-primary" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">Ambil Nomor Antrean Hari Ini</button>
                             </form>
@@ -824,16 +824,21 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('nasabah.ganti-password') }}" method="POST" onsubmit="try{ sessionStorage.setItem('nasabah_active_tab', 'tab-profil'); }catch(e){}">
+                    <form action="{{ route('nasabah.ganti-password') }}" method="POST" onsubmit="try{ sessionStorage.setItem('nasabah_active_tab', 'tab-profil'); }catch(e){} return confirm('Konfirmasi: Apakah Anda yakin ingin memperbarui kata sandi akun?');">
                         @csrf
                         <div class="form-group">
                             <label>Kata Sandi Saat Ini</label>
                             <div style="position: relative;">
-                                <input type="password" name="sandi_lama" id="inputSandiLama" class="form-control" required placeholder="Masukkan kata sandi lama" style="padding-right: 2.75rem;">
+                                <input type="password" name="sandi_lama" id="inputSandiLama" class="form-control" required placeholder="Masukkan kata sandi lama" style="padding-right: 2.75rem; {{ session('error_password') ? 'border: 2px solid #dc2626; background: #fff5f5;' : '' }}">
                                 <button type="button" onclick="togglePasswordVisibility('inputSandiLama', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Kata Sandi">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 </button>
                             </div>
+                            @if(session('error_password'))
+                                <div style="margin-top: 6px; color: #dc2626; font-size: 0.82rem; font-weight: 700;">
+                                    ⚠️ Kata sandi saat ini yang Anda masukkan salah.
+                                </div>
+                            @endif
                         </div>
                         <div class="form-group">
                             <label>Kata Sandi Baru (Min. 6 Karakter)</label>
@@ -938,7 +943,7 @@
                 <button type="button" onclick="closeTargetModal()" style="background: none; border: none; font-size: 1.3rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
             </div>
 
-            <form action="{{ route('nasabah.target-tabungan.store') }}" method="POST">
+            <form action="{{ route('nasabah.target-tabungan.store') }}" method="POST" onsubmit="return confirm('Konfirmasi: Simpan target tabungan impian baru?');">
                 @csrf
                 <div class="form-group">
                     <label>Nama Target / Impian *</label>
@@ -972,7 +977,7 @@
                 <button type="button" onclick="closePengaduanModal()" style="background: none; border: none; font-size: 1.3rem; color: #64748b; cursor: pointer; font-weight: 700;">&times;</button>
             </div>
 
-            <form action="{{ route('nasabah.pengaduan.store') }}" method="POST">
+            <form action="{{ route('nasabah.pengaduan.store') }}" method="POST" onsubmit="return confirm('Konfirmasi: Kirimkan pesan pengaduan ini ke pihak Bank Mini?');">
                 @csrf
                 <div class="form-group">
                     <label>Kategori Masalah *</label>

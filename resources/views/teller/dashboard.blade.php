@@ -536,11 +536,11 @@
 
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                         @if(session('error') && str_contains(session('error'), 'PIN'))
-                            <button type="button" onclick="document.getElementById('modalTransaksiGagal').style.display='none'; switchTab('tab-reset-pin');" style="flex: 1; background: #d97706; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+                            <button type="button" onclick="goToResetPinFromGagal()" style="flex: 1; background: #d97706; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
                                 Reset PIN Nasabah
                             </button>
                         @endif
-                        <button type="button" onclick="document.getElementById('modalTransaksiGagal').style.display='none'" style="flex: 1; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+                        <button type="button" onclick="closeModalTransaksiGagal()" style="flex: 1; background: #2563eb; color: #ffffff; border: none; padding: 0.85rem 1rem; border-radius: 12px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
                             Tutup &amp; Perbaiki Form
                         </button>
                     </div>
@@ -784,7 +784,7 @@
                     <!-- FORM INPUT CEPAT MODAL AWAL LANGSUNG DI DALAM KARTU ATAS -->
                     <div style="margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color);">
                         <div style="font-size: 0.78rem; color: #64748b; margin-bottom: 0.5rem; font-weight: 600;">Input modal awal kas sebelum mulai:</div>
-                        <form action="{{ route('teller.modal-awal') }}" method="POST" class="prevent-double-submit" style="display: flex; gap: 0.4rem;">
+                        <form action="{{ route('teller.modal-awal') }}" method="POST" class="prevent-double-submit" style="display: flex; gap: 0.4rem;" onsubmit="return confirm('Konfirmasi: Simpan modal awal kas laci teller sebesar Rp ' + (this.modal_awal.value ? Number(this.modal_awal.value).toLocaleString('id-ID') : '0') + '?')">
                             @csrf
                             <input type="number" name="modal_awal" class="form-control" required min="1000" step="1000" placeholder="Rp..." style="padding: 0.45rem 0.75rem; font-size: 0.85rem; flex: 1;">
                             <button type="submit" class="btn-primary" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px;">
@@ -1083,7 +1083,7 @@
         <div id="tab-setoran" class="tab-content">
             <div class="card" style="max-width: 600px; margin: 0 auto;">
                 <h3 style="margin-top:0; color: #16a34a; margin-bottom: 1.25rem;">Form Transaksi Setoran Tunai Penabung</h3>
-                <form action="{{ route('teller.setoran') }}" method="POST" class="prevent-double-submit">
+                <form action="{{ route('teller.setoran') }}" method="POST" class="prevent-double-submit" onsubmit="return confirmSetoran(this);">
                     @csrf
                     <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <div class="form-group">
@@ -1091,7 +1091,7 @@
                         <select name="id_nasabah" id="setoranNasabahSelect" class="form-control" required>
                             <option value="">-- Pilih Penabung --</option>
                             @foreach($savers as $s)
-                                <option value="{{ $s->id }}">
+                                <option value="{{ $s->id }}" {{ old('id_nasabah') == $s->id ? 'selected' : '' }}>
                                     {{ $s->account_number }} - {{ $s->student_name }} (Saldo: Rp {{ number_format($s->rekening->saldo ?? 0) }})
                                 </option>
                             @endforeach
@@ -1099,11 +1099,11 @@
                     </div>
                     <div class="form-group">
                         <label>Nominal Setoran (Rp)</label>
-                        <input type="number" name="nominal" id="setoranNominal" class="form-control" required min="1000" step="1000" placeholder="Contoh: 50000">
+                        <input type="number" name="nominal" id="setoranNominal" class="form-control" required min="1000" step="1000" placeholder="Contoh: 50000" value="{{ old('nominal') }}">
                     </div>
                     <div class="form-group">
                         <label>Keterangan Slip</label>
-                        <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Setoran tabungan mingguan">
+                        <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Setoran tabungan mingguan" value="{{ old('keterangan') }}">
                     </div>
                     <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #22c55e); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
                         Proses Setoran & Simpan Jurnal
@@ -1149,7 +1149,7 @@
                     </div>
                 @endif
                 
-                <form action="{{ route('teller.penarikan') }}" method="POST" class="prevent-double-submit">
+                <form action="{{ route('teller.penarikan') }}" method="POST" class="prevent-double-submit" onsubmit="return confirmPenarikan(this);">
                     @csrf
                     <input type="hidden" name="_token_transaksi" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <div class="form-group">
@@ -1157,14 +1157,14 @@
                         <select name="id_nasabah" id="penarikanNasabahSelect" class="form-control" required onchange="onPenarikanSelectChange()">
                             <option value="">-- Pilih Penabung --</option>
                             @foreach($savers as $s)
-                                <option value="{{ $s->id }}" data-saldo="{{ $s->rekening->saldo ?? 0 }}" data-name="{{ $s->student_name }}" data-norek="{{ $s->account_number }}" data-nis="{{ $s->nis }}" data-email="{{ $s->email ?? '' }}">
+                                <option value="{{ $s->id }}" {{ old('id_nasabah') == $s->id ? 'selected' : '' }} data-saldo="{{ $s->rekening->saldo ?? 0 }}" data-name="{{ $s->student_name }}" data-norek="{{ $s->account_number }}" data-nis="{{ $s->nis }}" data-email="{{ $s->email ?? '' }}">
                                     {{ $s->account_number }} - {{ $s->student_name }} (Saldo: Rp {{ number_format($s->rekening->saldo ?? 0) }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div id="penarikanInfoBox" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem;">
+                    <div id="penarikanInfoBox" style="display: {{ old('id_nasabah') ? 'block' : 'none' }}; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
                             <span style="color: #64748b;">Saldo Tabungan Saat Ini:</span>
                             <strong id="penarikanInfoSaldo" style="color: #16a34a;">Rp 0</strong>
@@ -1177,17 +1177,23 @@
 
                     <div class="form-group">
                         <label>Nominal Penarikan (Rp)</label>
-                        <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000" oninput="validatePenarikanNominalRealtime()">
+                        <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000" value="{{ old('nominal') }}" oninput="validatePenarikanNominalRealtime()">
                         <div id="penarikanWarningMsg" style="display: none; margin-top: 6px; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; line-height: 1.4;"></div>
                     </div>
                     <div class="form-group">
                         <label>Verifikasi PIN 6-Digit Keamanan Penabung</label>
                         <div style="position: relative;">
-                            <input type="password" name="pin" id="penarikanPin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN penabung" style="padding-right: 2.75rem;">
+                            <input type="password" name="pin" id="penarikanPin" class="form-control" required maxlength="6" minlength="6" placeholder="Masukkan 6 angka PIN penabung" style="padding-right: 2.75rem; {{ (session('error_pin_salah') || (session('error') && str_contains(session('error'), 'PIN'))) ? 'border: 2px solid #dc2626; background: #fff5f5;' : '' }}">
                             <button type="button" onclick="togglePasswordVisibility('penarikanPin', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
                         </div>
+                        @if(session('error_pin_salah') || (session('error') && str_contains(session('error'), 'PIN')))
+                            <div style="margin-top: 8px; padding: 9px 12px; background: #fef2f2; border: 1.5px solid #ef4444; border-radius: 10px; color: #b91c1c; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(239,68,68,0.15);">
+                                <span style="background: #ef4444; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;">!</span>
+                                <span>PIN Keamanan Salah! 6 digit PIN yang Anda masukkan tidak sesuai dengan data penabung.</span>
+                            </div>
+                        @endif
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; flex-wrap: wrap; gap: 0.25rem;">
                             <small style="color: #64748b; font-size: 0.78rem;">Wajib 6 angka PIN keamanan penabung.</small>
                             <a href="javascript:void(0)" onclick="openLupaPinOtpModal()" style="font-size: 0.82rem; color: #2563eb; font-weight: 700; text-decoration: underline;">
@@ -1197,7 +1203,7 @@
                     </div>
                     <div class="form-group">
                         <label>Keterangan Slip</label>
-                        <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Penarikan kebutuhan praktek">
+                        <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Penarikan kebutuhan praktek" value="{{ old('keterangan') }}">
                     </div>
                     <button type="submit" id="penarikanSubmitBtn" class="btn-primary" style="background: linear-gradient(135deg, #dc2626, #ef4444); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
                         Proses Penarikan & Simpan Jurnal
@@ -1404,7 +1410,7 @@
                         Input modal awal kas terlebih dahulu sebelum melakukan penutupan kas.
                     </div>
                 @elseif(!$isLaporanSubmitted || $laporanHariIni->status_approval === 'rejected')
-                    <form action="{{ route('teller.laporan-harian') }}" method="POST" class="prevent-double-submit">
+                    <form action="{{ route('teller.laporan-harian') }}" method="POST" class="prevent-double-submit" onsubmit="return confirm('Konfirmasi Tutup Kas Harian:\n\nApakah Anda yakin ingin mengirimkan laporan penutupan kas hari ini ke Administrator?');">
                         @csrf
                         @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
                             <input type="hidden" name="laporan_id" value="{{ $laporanHariIni->id }}">
@@ -1672,14 +1678,7 @@
 
             if (shouldScroll) {
                 setTimeout(() => {
-                    const navTabs = document.querySelector('.nav-tabs');
-                    if (navTabs) {
-                        const yOffset = -20;
-                        const y = navTabs.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                    } else {
-                        targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
+                    targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 60);
             }
 
@@ -1772,7 +1771,8 @@
                 return false;
             }
 
-            return true;
+            const studentName = document.getElementById('modalAktNama')?.innerText || 'siswa';
+            return confirm('Konfirmasi Aktivasi Rekening:\n\nApakah Anda yakin ingin mengaktivasi buku rekening tabungan untuk ' + studentName + ' dengan PIN yang telah dibuat?');
         }
 
         function setModalAktNominal(val) {
@@ -1908,12 +1908,56 @@
             }
         }
 
+        function confirmSetoran(form) {
+            const select = document.getElementById('setoranNasabahSelect');
+            const nasabahText = (select && select.selectedIndex > 0) ? select.options[select.selectedIndex].text.trim() : 'Nasabah';
+            const nominal = document.getElementById('setoranNominal')?.value || 0;
+            return confirm('Konfirmasi Transaksi Setoran Tunai:\n\n' +
+                'Nasabah: ' + nasabahText + '\n' +
+                'Nominal: Rp ' + Number(nominal).toLocaleString('id-ID') + '\n\n' +
+                'Apakah Anda yakin ingin memproses setoran tunai ini?');
+        }
+
+        function confirmPenarikan(form) {
+            const select = document.getElementById('penarikanNasabahSelect');
+            const nasabahText = (select && select.selectedIndex > 0) ? select.options[select.selectedIndex].text.trim() : 'Nasabah';
+            const nominal = document.getElementById('penarikanNominal')?.value || 0;
+            return confirm('Konfirmasi Transaksi Penarikan Tunai:\n\n' +
+                'Nasabah: ' + nasabahText + '\n' +
+                'Nominal: Rp ' + Number(nominal).toLocaleString('id-ID') + '\n\n' +
+                'Pastikan uang kas fisik telah disiapkan di loket dan PIN penabung telah terverifikasi.\nApakah Anda yakin ingin memproses penarikan ini?');
+        }
+
+        function closeModalTransaksiGagal() {
+            const modal = document.getElementById('modalTransaksiGagal');
+            if (modal) modal.style.display = 'none';
+            const pinInput = document.getElementById('penarikanPin');
+            if (pinInput && document.querySelector('#tab-penarikan.active')) {
+                pinInput.focus();
+                pinInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function goToResetPinFromGagal() {
+            const modal = document.getElementById('modalTransaksiGagal');
+            if (modal) modal.style.display = 'none';
+            selectForResetPin();
+        }
+
         function selectForSetoran() {
             if (!selectedSaverData) return;
             switchTab('tab-setoran', true);
             const sel = document.getElementById('setoranNasabahSelect');
-            sel.value = selectedSaverData.id;
-            setTimeout(() => document.getElementById('setoranNominal')?.focus(), 250);
+            if (sel) {
+                sel.value = selectedSaverData.id;
+            }
+            setTimeout(() => {
+                const target = document.getElementById('tab-setoran');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                document.getElementById('setoranNominal')?.focus();
+            }, 100);
         }
 
         function onPenarikanSelectChange() {
@@ -2003,14 +2047,22 @@
             if (!selectedSaverData) return;
             switchTab('tab-penarikan', true);
             const sel = document.getElementById('penarikanNasabahSelect');
-            sel.value = selectedSaverData.id;
+            if (sel) {
+                sel.value = selectedSaverData.id;
+            }
             onPenarikanSelectChange();
-            setTimeout(() => document.getElementById('penarikanNominal')?.focus(), 250);
+            setTimeout(() => {
+                const target = document.getElementById('tab-penarikan');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                document.getElementById('penarikanNominal')?.focus();
+            }, 100);
         }
 
         function selectForResetPin() {
             if (!selectedSaverData) return;
-            switchTab('tab-reset-pin');
+            switchTab('tab-reset-pin', true);
             const sel = document.getElementById('resetPinSelect');
             if (sel) {
                 sel.value = selectedSaverData.id;
@@ -2025,6 +2077,12 @@
                 emailInput.value = selectedSaverData.email;
             }
             goToTabResetPinStep1();
+            setTimeout(() => {
+                const target = document.getElementById('tab-reset-pin');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
         }
 
         // ====================================================
@@ -2224,6 +2282,10 @@
 
             if (!tabResetPinResetToken) {
                 showTabResetPinAlert(2, 'Sesi verifikasi kadaluarsa. Silakan ulangi.', 'error');
+                return;
+            }
+
+            if (!confirm('Konfirmasi Reset PIN:\n\nApakah Anda yakin ingin menyimpan PIN 6-digit baru ini untuk nasabah?')) {
                 return;
             }
 
@@ -2491,6 +2553,10 @@
 
             if (!lupaPinResetToken) {
                 showLupaPinAlert(2, 'Sesi verifikasi kadaluarsa. Silakan ulangi.', 'error');
+                return;
+            }
+
+            if (!confirm('Konfirmasi Reset PIN:\n\nApakah Anda yakin ingin menyimpan PIN 6-digit baru ini untuk nasabah?')) {
                 return;
             }
 
@@ -3198,7 +3264,7 @@
                 <strong style="color: #0f172a; font-size: 1rem; font-variant-numeric: tabular-nums;">Rp {{ number_format($sisaKasLaci, 0, ',', '.') }}</strong>
             </div>
 
-            <form action="{{ route('teller.ajukan-kas') }}" method="POST" id="formAjukanKas" class="prevent-double-submit" autocomplete="off">
+            <form action="{{ route('teller.ajukan-kas') }}" method="POST" id="formAjukanKas" class="prevent-double-submit" autocomplete="off" onsubmit="return confirm('Konfirmasi Pengajuan Kas:\n\nApakah Anda yakin ingin mengajukan tambahan kas sebesar Rp ' + (document.getElementById('inputNominalKas')?.value ? Number(document.getElementById('inputNominalKas').value).toLocaleString('id-ID') : '') + ' ke Administrator?');">
                 @csrf
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label style="font-weight: 700; font-size: 0.85rem; color: #1e293b;">Nominal Tambahan (Rp) <span style="color: #dc2626;">*</span></label>
@@ -3499,15 +3565,26 @@
         // Pastikan saat ada konfirmasi transaksi/laporan, layar langsung fokus di atas
         @if(session('success') || session('error') || $errors->any())
             window.addEventListener('DOMContentLoaded', () => {
-                if (sessionStorage.getItem('teller_stay_antrean') === 'true') {
-                    sessionStorage.removeItem('teller_stay_antrean');
-                    const antreanCard = document.getElementById('cardAntreanTeller');
-                    if (antreanCard) {
-                        antreanCard.scrollIntoView({ behavior: 'instant', block: 'center' });
+                @if(session('error_pin_salah') || (session('error') && str_contains(session('error'), 'PIN')))
+                    switchTab('tab-penarikan');
+                    setTimeout(() => {
+                        const pinInput = document.getElementById('penarikanPin');
+                        if (pinInput) {
+                            pinInput.focus();
+                            pinInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 250);
+                @else
+                    if (sessionStorage.getItem('teller_stay_antrean') === 'true') {
+                        sessionStorage.removeItem('teller_stay_antrean');
+                        const antreanCard = document.getElementById('cardAntreanTeller');
+                        if (antreanCard) {
+                            antreanCard.scrollIntoView({ behavior: 'instant', block: 'center' });
+                        }
+                    } else {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
-                } else {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
+                @endif
             });
         @endif
     </script>
