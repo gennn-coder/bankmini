@@ -41,9 +41,9 @@
             position: relative;
         }
         .admin-sidebar {
-            width: 275px;
-            min-width: 275px;
-            max-width: 275px;
+            width: 220px;
+            min-width: 220px;
+            max-width: 220px;
             background: #ffffff;
             border-right: 1px solid var(--border-color);
             display: flex;
@@ -56,7 +56,7 @@
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar-header {
-            padding: 1.25rem 1.25rem;
+            padding: 1rem 1rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -66,7 +66,7 @@
         }
         .sidebar-brand-title {
             margin: 0;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 800;
             color: #0f172a;
             line-height: 1.2;
@@ -74,7 +74,7 @@
         }
         .sidebar-brand-subtitle {
             margin: 0;
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             font-weight: 600;
         }
@@ -89,56 +89,13 @@
             padding: 0.1rem 0.5rem;
             line-height: 1.2;
         }
-        .sidebar-user-card {
-            margin: 1rem 1rem 0.5rem 1rem;
-            padding: 0.75rem 0.85rem;
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-shrink: 0;
-        }
-        .sidebar-user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: var(--primary-gradient);
-            color: #ffffff;
-            font-weight: 800;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-            flex-shrink: 0;
-        }
-        .sidebar-user-name {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #0f172a;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 140px;
-        }
-        .sidebar-nav-section-title {
-            padding: 0.85rem 1.25rem 0.35rem 1.25rem;
-            font-size: 0.68rem;
-            font-weight: 800;
-            color: #94a3b8;
-            letter-spacing: 0.75px;
-            text-transform: uppercase;
-            flex-shrink: 0;
-        }
         .sidebar-nav {
             flex: 1;
             overflow-y: auto;
-            padding: 0.25rem 0.75rem 1rem 0.75rem;
+            padding: 0.85rem 0.6rem 1rem 0.6rem;
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.3rem;
         }
         .sidebar-nav::-webkit-scrollbar {
             width: 5px;
@@ -150,13 +107,13 @@
         .sidebar-nav-btn {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            justify-content: space-between;
             width: 100%;
-            padding: 0.65rem 0.85rem;
+            padding: 0.6rem 0.8rem;
             border: none;
             background: transparent;
-            border-radius: 10px;
-            font-size: 0.84rem;
+            border-radius: 9px;
+            font-size: 0.82rem;
             font-weight: 700;
             color: #475569;
             cursor: pointer;
@@ -176,20 +133,7 @@
             color: #ffffff !important;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
         }
-        .sidebar-nav-btn.active svg {
-            color: #ffffff !important;
-            stroke: #ffffff !important;
-        }
-        .sidebar-nav-btn svg {
-            color: #64748b;
-            flex-shrink: 0;
-            transition: color 0.18s ease;
-        }
-        .sidebar-nav-btn:hover svg {
-            color: var(--primary-600);
-        }
         .sidebar-nav-btn span.nav-text {
-            flex: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -622,7 +566,7 @@
             <!-- BRAND HEADER -->
             <div class="sidebar-header">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 40px; width: 40px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-color); background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
+                    <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 38px; width: 38px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-color); background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
                     <div>
                         <h2 class="sidebar-brand-title">Bank Mini</h2>
                         <p class="sidebar-brand-subtitle">Administrator Panel</p>
@@ -631,50 +575,29 @@
                 <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Tutup Menu">&times;</button>
             </div>
 
-            <!-- PROFIL ADMIN MINI -->
-            <div class="sidebar-user-card">
-                <div class="sidebar-user-avatar">
-                    {{ strtoupper(substr($user->nama_petugas, 0, 1)) }}
-                </div>
-                <div style="overflow: hidden; flex: 1;">
-                    <div class="sidebar-user-name" title="{{ $user->nama_petugas }}">{{ $user->nama_petugas }}</div>
-                    <div style="display: flex; align-items: center; gap: 4px; margin-top: 3px;">
-                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #16a34a;"></span>
-                        <span style="font-size: 0.7rem; color: #166534; font-weight: 700;">Administrator</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MENU UTAMA -->
-            <div class="sidebar-nav-section-title">MENU UTAMA</div>
             <nav class="sidebar-nav">
                 <!-- 1. Dashboard -->
                 <button type="button" class="tab-btn sidebar-nav-btn active" onclick="switchTab('tab-dashboard')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
                     <span class="nav-text">Dashboard</span>
                 </button>
 
                 <!-- 2. Manajemen User -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-users')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     <span class="nav-text">Manajemen User</span>
                 </button>
 
                 <!-- 3. Data Anggota Siswa -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-members')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                     <span class="nav-text">Data Anggota Siswa</span>
                 </button>
 
                 <!-- 4. Data Penabung -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-savers')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                     <span class="nav-text">Data Penabung</span>
                 </button>
 
                 <!-- 5. Approval Kas & Tutup Kas -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-supervisor')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
                     <span class="nav-text">Approval Kas & Tutup Kas</span>
                     @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
                     @if($pendingKasCount > 0)
@@ -684,25 +607,21 @@
 
                 <!-- 6. Laporan Bulanan -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-laporan-bulanan')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                     <span class="nav-text">Laporan Bulanan</span>
                 </button>
 
                 <!-- 7. Jurnal Akuntansi -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-jurnal')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
                     <span class="nav-text">Jurnal Akuntansi</span>
                 </button>
 
                 <!-- 8. Audit Logs -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-audit')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     <span class="nav-text">Audit Logs</span>
                 </button>
 
                 <!-- 9. Pengaduan Nasabah -->
                 <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-pengaduan')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     <span class="nav-text">Pengaduan Nasabah</span>
                     @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
                     @if($pendingPengaduanCount > 0)
@@ -716,7 +635,6 @@
                 <form action="{{ route('logout') }}" method="POST" style="margin:0; width: 100%;">
                     @csrf
                     <button type="submit" class="sidebar-logout-btn" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                         <span>Keluar Sistem</span>
                     </button>
                 </form>
@@ -737,10 +655,7 @@
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="text-align: right; line-height: 1.3;" class="topbar-user-badge">
-                        <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a;">{{ $user->nama_petugas }}</span>
-                        <div style="font-size: 0.72rem; color: #166534; font-weight: 700;">● Online (Admin)</div>
-                    </div>
+                    <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a;">{{ $user->nama_petugas }}</span>
                     <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                         @csrf
                         <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">Keluar</button>
