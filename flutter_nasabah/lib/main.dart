@@ -13,26 +13,21 @@ class BankMiniApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'E-Teller Bank Mini Sekolah',
+      title: 'Nasabah | E-Teller Bank Mini',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF4F7FE),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2563EB),
           primary: const Color(0xFF2563EB),
-          surface: const Color(0xFFF8FAFC),
+          surface: Colors.white,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF1F5F9),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2563EB),
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF0F172A),
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
         ),
         cardTheme: const CardThemeData(
           elevation: 0,
@@ -45,31 +40,31 @@ class BankMiniApp extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF2563EB),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            elevation: 1,
+            elevation: 0,
             textStyle: const TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -78,7 +73,7 @@ class BankMiniApp extends StatelessWidget {
           backgroundColor: Colors.white,
           selectedItemColor: Color(0xFF2563EB),
           unselectedItemColor: Color(0xFF64748B),
-          selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           unselectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
           type: BottomNavigationBarType.fixed,
           elevation: 8,
@@ -91,7 +86,6 @@ class BankMiniApp extends StatelessWidget {
 
 // Global App Config (IP Server Laravel)
 class ApiConfig {
-  // Default URL Server Live Production (DomaiNesia HTTPS)
   static String baseUrl = 'https://skansabaewallet.web.id/api/nasabah';
 }
 
@@ -199,12 +193,19 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header Brand
+                // Header Brand Modern
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: const Color(0xFF2563EB),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x262563EB),
+                        blurRadius: 16,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: const Column(
                     children: [
@@ -269,8 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.info_outline,
-                                    size: 18, color: Color(0xFFDC2626)),
+                                const Icon(Icons.info_outline, size: 18, color: Color(0xFFDC2626)),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -321,9 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             hintText: 'Masukkan Password Anda',
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
+                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
                                 color: const Color(0xFF64748B),
                                 size: 20,
                               ),
@@ -346,10 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                   )
                                 : const Text('Masuk Sistem'),
                           ),
@@ -519,7 +514,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchDashboardData() async {
     try {
-      // 1. Fetch Dashboard Utama (Profil, Saldo, Antrean, Target, Laporan, Pengaduan)
       final resDash = await http
           .get(Uri.parse('${ApiConfig.baseUrl}/dashboard/$_nasabahId?bulan=$_selectedBulan&tahun=$_selectedTahun'))
           .timeout(const Duration(seconds: 8));
@@ -537,7 +531,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
 
-      // 2. Fetch Mutasi Transaksi
       final resMutasi = await http
           .get(Uri.parse('${ApiConfig.baseUrl}/mutasi/$_nasabahId'))
           .timeout(const Duration(seconds: 8));
@@ -587,9 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // -------------------------------------------------------------------------
   // ACTION: AMBIL ANTREAN LOKET
-  // -------------------------------------------------------------------------
   Future<void> _handleAmbilAntrean() async {
     setState(() => _isTakingAntrean = true);
     try {
@@ -642,9 +633,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // ACTION: SIMPAN / HAPUS TARGET TABUNGAN
-  // -------------------------------------------------------------------------
+  // ACTION: TARGET TABUNGAN DIALOG
   void _showTargetDialog({bool isEdit = false}) {
     final judulCtrl = TextEditingController(text: isEdit ? (_targetTabunganData?['judul_target'] ?? '') : '');
     final nominalCtrl = TextEditingController(text: isEdit ? (_targetTabunganData?['nominal_target']?.toString() ?? '') : '');
@@ -658,7 +647,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               title: Text(
                 isEdit ? 'Perbarui Target Tabungan' : 'Pasang Target Tabungan Baru',
                 style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
@@ -791,6 +780,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Hapus Target Tabungan?'),
         content: const Text('Apakah Anda yakin ingin menghapus target tabungan impian ini?'),
         actions: [
@@ -829,9 +819,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // -------------------------------------------------------------------------
   // ACTION: PENGADUAN NASABAH
-  // -------------------------------------------------------------------------
   void _showPengaduanDialog() {
     String selectedKategori = 'Layanan Teller';
     final judulCtrl = TextEditingController();
@@ -844,7 +832,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               title: const Text('Buat Pengaduan Nasabah', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
               content: SingleChildScrollView(
                 child: Column(
@@ -857,7 +845,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFCBD5E1)),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -955,9 +943,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // -------------------------------------------------------------------------
   // ACTION: GANTI PASSWORD
-  // -------------------------------------------------------------------------
   Future<void> _handleGantiPassword() async {
     final sandiLama = _sandiLamaCtrl.text.trim();
     final sandiBaru = _sandiBaruCtrl.text.trim();
@@ -1034,9 +1020,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // -------------------------------------------------------------------------
   // HELPER FORMAT RUPIAH
-  // -------------------------------------------------------------------------
   String _formatRupiah(num number) {
     final str = number.toStringAsFixed(0);
     final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
@@ -1044,9 +1028,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return 'Rp $result';
   }
 
-  // -------------------------------------------------------------------------
-  // MODAL QR CODE
-  // -------------------------------------------------------------------------
+  // MODAL QR CODE BESAR
   void _showQrModal() {
     final noRek = _nasabahData['no_rekening'] ?? _nasabahData['account_number'] ?? '-';
     final nama = _nasabahData['nama_siswa'] ?? _nasabahData['student_name'] ?? '-';
@@ -1190,6 +1172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Konfirmasi Keluar'),
         content: const Text('Apakah Anda yakin ingin keluar dari akun nasabah?'),
         actions: [
@@ -1214,7 +1197,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // BUILD TAB 0: DASHBOARD
+  // BUILD TAB 0: DASHBOARD (PERSIS SEPERTI NASABAH DI WEB)
   // -------------------------------------------------------------------------
   Widget _buildDashboardTab() {
     final nama = _nasabahData['nama_siswa'] ?? _nasabahData['student_name'] ?? 'Siswa';
@@ -1222,6 +1205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final kelas = _nasabahData['kelas'] ?? _nasabahData['class_grade'] ?? '-';
     final nis = _nasabahData['nis'] ?? '-';
     final saldo = _nasabahData['saldo'] ?? 0;
+    final isAktif = (_nasabahData['status_rekening'] ?? '') == 'aktif' || _nasabahData['is_aktif'] == true;
     final antrean = _nasabahData['antrean'] as Map<String, dynamic>?;
 
     final sedangDilayani = antrean?['sedang_dilayani'] ?? '-';
@@ -1230,111 +1214,150 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final statusSaya = antrean?['status_saya'];
     final sisaAntrean = antrean?['sisa_antrean'] ?? 0;
 
+    final qrThumbUrl = _nasabahData['qr_url'] ??
+        'https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=5&data=$noRek';
+
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. CARD IDENTITAS & REKENING
+          // CARD 1: IDENTITAS PENABUNG (Persis seperti kartu 1 di Web)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'NOMOR REKENING NASABAH',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'AKTIF',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF15803D),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'IDENTITAS PENABUNG',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    noRek,
+                    nama,
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF2563EB),
-                      letterSpacing: 1,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Identitas Siswa',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                          ),
-                          Text(
-                            nama,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            '$kelas (NIS: $nis)',
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                      OutlinedButton(
-                        onPressed: _showQrModal,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFBFDBFE)),
-                          backgroundColor: const Color(0xFFEFF6FF),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text(
-                          'Lihat QR',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF2563EB),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Jurusan: $kelas • NIS: $nis',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // 2. CARD SALDO REAL-TIME
+          // CARD 2: NOMOR REKENING NASABAH (Persis seperti kartu 2 di Web dengan mini QR code)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'NOMOR REKENING NASABAH',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          isAktif ? noRek : 'Belum Aktif',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: isAktif ? const Color(0xFF2563EB) : const Color(0xFFDC2626),
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (isAktif)
+                          InkWell(
+                            onTap: _showQrModal,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                              ),
+                              child: const Text(
+                                'Lihat Kode QR',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          const Text(
+                            'Menunggu aktivasi rekening',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // MINI QR CODE PREVIEW (Seperti di web)
+                  InkWell(
+                    onTap: isAktif ? _showQrModal : null,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      padding: const EdgeInsets.all(3),
+                      child: isAktif
+                          ? Image.network(
+                              qrThumbUrl,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.qr_code, size: 36, color: Color(0xFF2563EB)),
+                            )
+                          : const Center(
+                              child: Text(
+                                'QR Belum\nAda',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // CARD 3: SALDO TABUNGAN REAL-TIME (Persis seperti kartu 3 di Web)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1353,22 +1376,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 6),
                   Text(
                     _formatRupiah(saldo),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF16A34A),
+                      color: isAktif ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Row(
-                    children: [
-                      Icon(Icons.check_circle, size: 14, color: Color(0xFF16A34A)),
-                      SizedBox(width: 4),
-                      Text(
-                        'Status: Rekening Aktif',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF16A34A), fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                  Text(
+                    isAktif ? 'Status: Rekening Aktif' : 'Status: Rekening Belum Aktif',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isAktif ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                    ),
                   ),
                 ],
               ),
@@ -1376,143 +1397,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
 
-          // 3. CARD SISTEM ANTREAN LOKET BANK MINI
+          // CARD 4: SISTEM ANTREAN LOKET BANK MINI (Border kiri biru 5px, persis seperti di web)
           Card(
+            clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.5),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF8FAFC), Color(0xFFEFF6FF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(left: BorderSide(color: Color(0xFF2563EB), width: 5)),
               ),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'SISTEM ANTREAN LOKET BANK MINI',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E40AF),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'Loket Aktif',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E40AF),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'SISTEM ANTREAN LOKET BANK MINI',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       const Text(
                         'Sedang Dilayani: ',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
                       ),
                       Text(
                         sedangDilayani,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF2563EB),
-                        ),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF2563EB)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     'Total antrean yang sedang menunggu hari ini: $totalMenunggu orang',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
-                  // KONDISI: SUDAH AMBIL ANTREAN ATAU BELUM
                   if (nomorSaya != null) ...[
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: statusSaya == 'dilayani'
-                            ? const Color(0xFFDCFCE7)
-                            : const Color(0xFFEFF6FF),
+                        color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: statusSaya == 'dilayani'
-                              ? const Color(0xFF86EFAC)
-                              : const Color(0xFFBFDBFE),
-                        ),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Nomor Antrean Anda',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: statusSaya == 'dilayani'
-                                      ? const Color(0xFF16A34A)
-                                      : const Color(0xFF2563EB),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  statusSaya == 'dilayani'
-                                      ? 'Sedang Dilayani'
-                                      : 'Menunggu Giliran',
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
-                                ),
-                              ),
-                            ],
+                          const Text(
+                            'NOMOR ANTREAN ANDA',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             nomorSaya,
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            statusSaya == 'dilayani'
+                                ? 'Silakan menuju loket Teller sekarang'
+                                : 'Menunggu (Sisa: $sisaAntrean orang sebelum Anda)',
                             style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: statusSaya == 'dilayani'
-                                  ? const Color(0xFF15803D)
-                                  : const Color(0xFF1E40AF),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: statusSaya == 'dilayani' ? const Color(0xFF16A34A) : const Color(0xFF64748B),
                             ),
                           ),
-                          if (statusSaya == 'menunggu')
-                            Text(
-                              sisaAntrean > 0
-                                  ? 'Sisa antrean di depan Anda: $sisaAntrean orang'
-                                  : 'Giliran Anda berikutnya! Silakan bersiap di loket.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: sisaAntrean > 0 ? const Color(0xFF475569) : const Color(0xFF16A34A),
-                              ),
-                            ),
                         ],
                       ),
                     ),
@@ -1524,15 +1485,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           backgroundColor: const Color(0xFF2563EB),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _isTakingAntrean ? null : _handleAmbilAntrean,
                         child: _isTakingAntrean
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text('Ambil Nomor Antrean Hari Ini'),
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Ambil Nomor Antrean Hari Ini', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],
@@ -1542,153 +1500,114 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 4. TOMBOL TAMPILKAN KODE QR KARTU DIGITAL
-          ElevatedButton(
-            onPressed: _showQrModal,
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: const Text('Tampilkan Kode QR Kartu Digital Nasabah', textAlign: TextAlign.center),
-          ),
-          const SizedBox(height: 20),
-
-          // 5. RIWAYAT MUTASI REKENING (Sesuai instruksi: berada di Dashboard)
-          const Text(
-            'Riwayat Mutasi Rekening',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Daftar seluruh transaksi setoran dan penarikan yang pernah dilakukan.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 12),
-
-          // FILTER & SEARCH BAR MUTASI
-          if (_mutasiList.isNotEmpty) ...[
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+          // CARD 5: RIWAYAT MUTASI REKENING (Persis seperti di Web)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFilterChip(
-                    label: 'Semua (${_mutasiList.length})',
-                    isSelected: _filterMutasi == 'all',
-                    selectedColor: const Color(0xFF0F172A),
-                    onSelected: () => setState(() => _filterMutasi = 'all'),
+                  const Text(
+                    'Riwayat Mutasi Rekening',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: 'Setoran (${_mutasiList.where((m) => m['jenis_trans'] == 'setoran').length})',
-                    isSelected: _filterMutasi == 'setoran',
-                    selectedColor: const Color(0xFF16A34A),
-                    onSelected: () => setState(() => _filterMutasi = 'setoran'),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Daftar seluruh transaksi setoran dan penarikan yang pernah dilakukan.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: 'Penarikan (${_mutasiList.where((m) => m['jenis_trans'] == 'penarikan').length})',
-                    isSelected: _filterMutasi == 'penarikan',
-                    selectedColor: const Color(0xFFDC2626),
-                    onSelected: () => setState(() => _filterMutasi = 'penarikan'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
+                  const SizedBox(height: 14),
 
-            TextField(
-              controller: _searchMutasiController,
-              onChanged: (val) => setState(() => _mutasiSearchQuery = val),
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Cari No Transaksi, Tanggal, Nominal...',
-                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF64748B)),
-                suffixIcon: _mutasiSearchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16, color: Color(0xFF94A3B8)),
-                        onPressed: () {
-                          _searchMutasiController.clear();
-                          setState(() => _mutasiSearchQuery = '');
-                        },
-                      )
-                    : null,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-
-          if (_mutasiList.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(28),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.receipt_long_outlined, size: 40, color: Color(0xFF94A3B8)),
-                      SizedBox(height: 8),
-                      Text(
-                        'Belum ada riwayat transaksi mutasi pada rekening ini.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else if (_filteredMutasiList.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(Icons.filter_alt_off_outlined, size: 36, color: Color(0xFF94A3B8)),
-                      SizedBox(height: 8),
-                      Text(
-                        'Tidak ada transaksi yang cocok dengan pencarian.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _filteredMutasiList.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final item = _filteredMutasiList[index];
-                final isSetoran = item['jenis_trans'] == 'setoran';
-                final nominal = item['nominal'] ?? 0;
-                final noTrans = item['no_transaksi'] ?? '-';
-                final tgl = item['tanggal'] ?? '-';
-                final ket = item['keterangan'] ?? '-';
-
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
+                  // FILTER BUTTONS ROW (Semua, Setoran, Penarikan)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isSetoran ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            isSetoran ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: isSetoran ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
-                            size: 20,
-                          ),
+                        _buildFilterButton(
+                          label: 'Semua (${_mutasiList.length})',
+                          isActive: _filterMutasi == 'all',
+                          onTap: () => setState(() => _filterMutasi = 'all'),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
+                        const SizedBox(width: 6),
+                        _buildFilterButton(
+                          label: 'Setoran (${_mutasiList.where((m) => m['jenis_trans'] == 'setoran').length})',
+                          isActive: _filterMutasi == 'setoran',
+                          onTap: () => setState(() => _filterMutasi = 'setoran'),
+                        ),
+                        const SizedBox(width: 6),
+                        _buildFilterButton(
+                          label: 'Penarikan (${_mutasiList.where((m) => m['jenis_trans'] == 'penarikan').length})',
+                          isActive: _filterMutasi == 'penarikan',
+                          onTap: () => setState(() => _filterMutasi = 'penarikan'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // SEARCH INPUT
+                  TextField(
+                    controller: _searchMutasiController,
+                    onChanged: (val) => setState(() => _mutasiSearchQuery = val),
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Cari No Transaksi, Tanggal...',
+                      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF64748B)),
+                      suffixIcon: _mutasiSearchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 16, color: Color(0xFF94A3B8)),
+                              onPressed: () {
+                                _searchMutasiController.clear();
+                                setState(() => _mutasiSearchQuery = '');
+                              },
+                            )
+                          : null,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // LIST MUTASI
+                  if (_mutasiList.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          'Belum ada riwayat transaksi mutasi pada rekening ini.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ),
+                    )
+                  else if (_filteredMutasiList.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          'Tidak ada transaksi yang cocok dengan pencarian.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _filteredMutasiList.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      itemBuilder: (context, index) {
+                        final item = _filteredMutasiList[index];
+                        final isSetoran = item['jenis_trans'] == 'setoran';
+                        final nominal = item['nominal'] ?? 0;
+                        final noTrans = item['no_transaksi'] ?? '-';
+                        final tgl = item['tanggal'] ?? '-';
+                        final ket = item['keterangan'] ?? '-';
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1713,7 +1632,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               Text(
                                 noTrans,
                                 style: const TextStyle(
@@ -1731,23 +1650,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               if (ket.isNotEmpty && ket != '-') ...[
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Ket: $ket',
+                                  ket,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    fontStyle: FontStyle.italic,
                                     color: Color(0xFF64748B),
                                   ),
                                 ),
                               ],
                             ],
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
-                );
-              },
+                ],
+              ),
             ),
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -1755,7 +1673,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // BUILD TAB 1: LAPORAN BULANAN & TARGET
+  // BUILD TAB 1: LAPORAN BULANAN & TARGET (Persis seperti di Web)
   // -------------------------------------------------------------------------
   Widget _buildLaporanTargetTab() {
     final saldo = _nasabahData['saldo'] ?? 0;
@@ -1770,11 +1688,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. RINGKASAN KEUANGAN BULANAN
+          // 1. RINGKASAN KEUANGAN BULANAN (Persis seperti di web)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1787,12 +1705,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 2),
                   const Text(
-                    'Rekapitulasi tabungan siswa per bulan',
+                    'Rangkuman mutasi keuangan tabungan Anda per periode bulan.',
                     style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 14),
 
-                  // FILTER BULAN & TAHUN
+                  // DROPDOWN BULAN & TAHUN
                   Row(
                     children: [
                       Expanded(
@@ -1854,24 +1772,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (_isLoadingLaporan)
                     const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
                   else ...[
-                    // 4 BOX RINGKASAN
+                    // 4 BOX RINGKASAN PERSIS SEPERTI DI WEB
                     Row(
                       children: [
                         Expanded(
                           child: _buildMetricCard(
-                            label: 'Saldo Awal',
+                            label: 'Saldo Awal Bulan',
                             value: _formatRupiah(saldoAwal),
-                            color: const Color(0xFF475569),
-                            bgColor: const Color(0xFFF1F5F9),
+                            color: const Color(0xFF1E293B),
+                            bgColor: const Color(0xFFF8FAFC),
+                            borderColor: const Color(0xFFE2E8F0),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: _buildMetricCard(
-                            label: 'Total Setoran',
+                            label: 'Total Setoran Masuk (+)',
                             value: '+ ${_formatRupiah(totalSetoran)}',
-                            color: const Color(0xFF16A34A),
-                            bgColor: const Color(0xFFDCFCE7),
+                            color: const Color(0xFF15803D),
+                            bgColor: const Color(0xFFF0FDF4),
+                            borderColor: const Color(0xFFBBF7D0),
                           ),
                         ),
                       ],
@@ -1881,19 +1801,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Expanded(
                           child: _buildMetricCard(
-                            label: 'Total Penarikan',
+                            label: 'Total Penarikan Keluar (-)',
                             value: '- ${_formatRupiah(totalPenarikan)}',
-                            color: const Color(0xFFDC2626),
-                            bgColor: const Color(0xFFFEE2E2),
+                            color: const Color(0xFFB91C1C),
+                            bgColor: const Color(0xFFFEF2F2),
+                            borderColor: const Color(0xFFFECACA),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: _buildMetricCard(
-                            label: 'Saldo Akhir',
+                            label: 'Saldo Akhir Bulan',
                             value: _formatRupiah(saldoAkhir),
                             color: const Color(0xFF2563EB),
-                            bgColor: const Color(0xFFDBEAFE),
+                            bgColor: const Color(0xFFEFF6FF),
+                            borderColor: const Color(0xFFBFDBFE),
                           ),
                         ),
                       ],
@@ -1903,9 +1825,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // 2. TARGET TABUNGAN SAYA (Sesuai instruksi: berada di Laporan Bulanan)
+          // 2. TARGET TABUNGAN SAYA (Persis seperti di Web)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1925,7 +1847,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Kelola target tabungan untuk memotivasi keuangan.',
+                              'Kelola target tabungan untuk memotivasi perencanaan keuangan Anda.',
                               style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                             ),
                           ],
@@ -1939,7 +1861,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                         onPressed: () => _showTargetDialog(isEdit: target != null),
-                        child: Text(target != null ? 'Ubah' : 'Pasang Baru'),
+                        child: Text(target != null ? 'Perbarui Target' : 'Pasang Target Baru'),
                       ),
                     ],
                   ),
@@ -1951,19 +1873,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Column(
-                        children: [
-                          Icon(Icons.savings_outlined, size: 36, color: Color(0xFF94A3B8)),
-                          SizedBox(height: 8),
-                          Text(
-                            'Belum ada target tabungan yang dipasang.\nPasang target tabungan untuk memantau perkembangan impian Anda.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
-                          ),
-                        ],
+                      child: const Center(
+                        child: Text(
+                          'Belum ada target tabungan yang dipasang. Pasang target tabungan untuk memantau perkembangan impian Anda.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                        ),
                       ),
                     ),
                   ] else ...[
@@ -1971,7 +1889,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: Column(
@@ -1982,52 +1900,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               Text(
                                 target['judul_target'] ?? 'Target Tabungan',
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: (target['persen'] ?? 0) >= 100
                                       ? const Color(0xFFDCFCE7)
-                                      : const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(12),
+                                      : const Color(0xFFDBEAFE),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  (target['persen'] ?? 0) >= 100 ? 'Tercapai' : 'Dalam Proses',
+                                  (target['persen'] ?? 0) >= 100 ? 'Target Tercapai' : 'Sedang Berjalan (${target['persen'] ?? 0}%)',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: (target['persen'] ?? 0) >= 100
-                                        ? const Color(0xFF16A34A)
-                                        : const Color(0xFF2563EB),
+                                        ? const Color(0xFF15803D)
+                                        : const Color(0xFF1D4ED8),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Target: ${_formatRupiah(target['nominal_target'] ?? 0)}',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
-                              ),
-                              if (target['target_tanggal'] != null)
-                                Text(
-                                  'Batas: ${target['target_tanggal']}',
-                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
 
-                          // Progress Bar
+                          // PROGRESS BAR ELEGAN
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(999),
                             child: LinearProgressIndicator(
                               value: ((target['persen'] ?? 0) / 100).clamp(0.0, 1.0),
-                              minHeight: 10,
+                              minHeight: 12,
                               backgroundColor: const Color(0xFFE2E8F0),
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 (target['persen'] ?? 0) >= 100
@@ -2036,17 +1939,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Terkumpul: ${_formatRupiah(saldo)} (${target['persen'] ?? 0}%)',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                              Expanded(
+                                child: Text(
+                                  'Saldo: ${_formatRupiah(saldo)} / Target: ${_formatRupiah(target['nominal_target'] ?? 0)}',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
                               ),
                               Text(
-                                'Sisa: ${_formatRupiah(target['sisa'] ?? 0)}',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFDC2626)),
+                                (target['sisa'] ?? 0) > 0
+                                    ? 'Sisa: ${_formatRupiah(target['sisa'] ?? 0)}'
+                                    : 'Tercapai!',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: (target['sisa'] ?? 0) > 0 ? const Color(0xFFB91C1C) : const Color(0xFF16A34A),
+                                ),
                               ),
                             ],
                           ),
@@ -2061,10 +1973,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              TextButton.icon(
-                                icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
-                                label: const Text('Hapus Target', style: TextStyle(color: Color(0xFFDC2626), fontSize: 12)),
+                              TextButton(
                                 onPressed: _handleHapusTarget,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFDC2626),
+                                  backgroundColor: const Color(0xFFF1F5F9),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  ),
+                                ),
+                                child: const Text('Hapus Target', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                               ),
                             ],
                           ),
@@ -2083,7 +2003,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // BUILD TAB 2: PROFIL & PENGADUAN
+  // BUILD TAB 2: PROFIL & PENGADUAN (Persis seperti di Web)
   // -------------------------------------------------------------------------
   Widget _buildProfilPengaduanTab() {
     final nama = _nasabahData['nama_siswa'] ?? _nasabahData['student_name'] ?? '-';
@@ -2096,11 +2016,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. DATA RESMI SISWA
+          // 1. DATA IDENTITAS RESMI SISWA
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -2144,7 +2064,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // 2. GANTI KATA SANDI MANDIRI
           Card(
@@ -2222,7 +2142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // 3. LAYANAN PENGADUAN NASABAH
           Card(
@@ -2271,16 +2191,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Column(
-                        children: [
-                          Icon(Icons.chat_bubble_outline, size: 36, color: Color(0xFF94A3B8)),
-                          SizedBox(height: 8),
-                          Text(
-                            'Belum ada riwayat pengaduan nasabah yang diajukan.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          ),
-                        ],
+                      child: const Center(
+                        child: Text(
+                          'Belum ada riwayat pengaduan nasabah yang diajukan.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
                       ),
                     ),
                   ] else ...[
@@ -2336,7 +2252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         color: status == 'selesai'
                                             ? const Color(0xFF15803D)
                                             : status == 'proses'
-                                                ? const Color(0xFF1E40AF)
+                                                ? const Color(0xFF1D4ED8)
                                                 : const Color(0xFFB45309),
                                       ),
                                     ),
@@ -2359,7 +2275,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                               ),
 
-                              // TANGGAPAN ADMIN
                               if (p['tanggapan_admin'] != null && (p['tanggapan_admin'] as String).isNotEmpty) ...[
                                 const SizedBox(height: 8),
                                 Container(
@@ -2410,6 +2325,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // -------------------------------------------------------------------------
   // REUSABLE HELPER WIDGETS
   // -------------------------------------------------------------------------
+  Widget _buildFilterButton({required String label, required bool isActive, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF0F172A) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isActive ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isActive ? Colors.white : const Color(0xFF334155),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProfileRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2437,17 +2375,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String value,
     required Color color,
     required Color bgColor,
+    required Color borderColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text(
             value,
@@ -2460,53 +2400,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFilterChip({
-    required String label,
-    required bool isSelected,
-    required Color selectedColor,
-    required VoidCallback onSelected,
-  }) {
-    return GestureDetector(
-      onTap: onSelected,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedColor : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? selectedColor : const Color(0xFFCBD5E1),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: isSelected ? Colors.white : const Color(0xFF475569),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final nama = _nasabahData['nama_siswa'] ?? _nasabahData['student_name'] ?? 'Siswa';
     final statusLayanan = (_nasabahData['status_layanan'] ?? 'buka').toString().toLowerCase();
 
     return Scaffold(
+      // NAVBAR PUTIH BERSIH PERSIS SEPERTI DI WEB
       appBar: AppBar(
-        title: Column(
+        titleSpacing: 14,
+        title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Portal Nasabah Siswa',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            Text(
+              'Nasabah',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
             ),
             Text(
-              'Halo, $nama',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+              'E-Teller Bank Mini Sekolah',
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -2517,14 +2438,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 const Text(
                   'Teller = ',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: statusLayanan == 'buka'
                         ? const Color(0xFFDCFCE7)
@@ -2532,15 +2449,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ? const Color(0xFFFEF3C7)
                             : const Color(0xFFFEE2E2),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: statusLayanan == 'buka'
+                          ? const Color(0xFFBBF7D0)
+                          : statusLayanan == 'istirahat'
+                              ? const Color(0xFFFDE68A)
+                              : const Color(0xFFFECACA),
+                    ),
                   ),
                   child: Text(
-                    statusLayanan == 'buka'
-                        ? 'Buka'
-                        : statusLayanan == 'istirahat'
-                            ? 'Istirahat'
-                            : 'Tutup',
+                    statusLayanan == 'buka' ? 'Buka' : statusLayanan == 'istirahat' ? 'Istirahat' : 'Tutup',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: statusLayanan == 'buka'
                           ? const Color(0xFF15803D)
@@ -2550,16 +2470,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 6),
+                Text(
+                  'Halo, $nama',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _handleLogout,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Keluar',
+                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
               ],
             ),
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            tooltip: 'Keluar',
-            icon: const Icon(Icons.logout),
-            onPressed: _handleLogout,
-          ),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _fetchDashboardData,
@@ -2574,14 +2514,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
       ),
-      // BOTTOM NAVIGATION BAR: Tetap berada di bawah saat halaman di-scroll
+      // BOTTOM NAVIGATION BAR TETAP PERMANEN DI BAWAH PADA MOBILE
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, -2),
+              color: Color(0x0D0F172A),
+              blurRadius: 10,
+              offset: Offset(0, -3),
             ),
           ],
         ),
@@ -2599,8 +2541,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              activeIcon: Icon(Icons.account_balance_wallet_rounded),
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart_rounded),
               label: 'Laporan & Target',
             ),
             BottomNavigationBarItem(
@@ -2616,7 +2558,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// 3. DIALOG PEMULIHAN SANDI AKUN VIA OTP GMAIL (STEP 1 & STEP 2)
+// 3. DIALOG PEMULIHAN SANDI AKUN VIA OTP GMAIL
 // ---------------------------------------------------------------------------
 class _LupaSandiOtpDialog extends StatefulWidget {
   const _LupaSandiOtpDialog();
@@ -2875,15 +2817,15 @@ class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
       ),
     );
@@ -2892,7 +2834,7 @@ class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: SingleChildScrollView(
@@ -3003,7 +2945,7 @@ class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _isSendingOtp ? null : _handleKirimOtp,
                     child: _isSendingOtp
@@ -3050,7 +2992,7 @@ class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
                       backgroundColor: const Color(0xFF059669),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _isVerifyingOtp ? null : _handleVerifikasiOtp,
                     child: _isVerifyingOtp
@@ -3071,7 +3013,7 @@ class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFBFDBFE)),
                   ),
                   child: Column(
@@ -3148,7 +3090,7 @@ class _LupaSandiOtpDialogState extends State<_LupaSandiOtpDialog> {
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _isSavingPassword ? null : _handleSimpanSandi,
                     child: _isSavingPassword
