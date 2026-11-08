@@ -749,6 +749,12 @@
             <button class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
             <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
             <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
+            <button class="tab-btn" onclick="switchTab('tab-perjanjian')">
+                Perjanjian H-1 (> 1 Juta)
+                @if(isset($totalPerjanjianPending) && $totalPerjanjianPending > 0)
+                    <span style="background: #f59e0b; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">{{ $totalPerjanjianPending }}</span>
+                @endif
+            </button>
             <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
             <button class="tab-btn" onclick="switchTab('tab-laporan')">
                 Penutupan Kas & Laporan
@@ -1157,21 +1163,43 @@
                         <select name="id_nasabah" id="penarikanNasabahSelect" class="form-control" required onchange="onPenarikanSelectChange()">
                             <option value="">-- Pilih Penabung --</option>
                             @foreach($savers as $s)
-                                <option value="{{ $s->id }}" {{ old('id_nasabah') == $s->id ? 'selected' : '' }} data-saldo="{{ $s->rekening->saldo ?? 0 }}" data-name="{{ $s->student_name }}" data-norek="{{ $s->account_number }}" data-nis="{{ $s->nis }}" data-email="{{ $s->email ?? '' }}">
+                                @php
+                                    $penarikanHariIni = (int) ($s->transaksi ? $s->transaksi->sum('nominal') : 0);
+                                    $perjanjianArr = ($s->perjanjianPenarikan ?? collect())->map(fn($p) => [
+                                        'id' => $p->id,
+                                        'nominal' => (int)$p->nominal,
+                                        'status' => $p->status,
+                                        'alasan' => $p->alasan,
+                                        'tanggal_rencana' => date('Y-m-d', strtotime($p->tanggal_rencana)),
+                                        'diajukan_pada' => date('d/m/Y H:i', strtotime($p->diajukan_pada ?? $p->created_at))
+                                    ])->values()->all();
+                                @endphp
+                                <option value="{{ $s->id }}" {{ old('id_nasabah') == $s->id ? 'selected' : '' }} 
+                                    data-saldo="{{ $s->rekening->saldo ?? 0 }}" 
+                                    data-name="{{ $s->student_name }}" 
+                                    data-norek="{{ $s->account_number }}" 
+                                    data-nis="{{ $s->nis }}" 
+                                    data-email="{{ $s->email ?? '' }}"
+                                    data-penarikan-hari-ini="{{ $penarikanHariIni }}"
+                                    data-perjanjian="{{ json_encode($perjanjianArr) }}">
                                     {{ $s->account_number }} - {{ $s->student_name }} (Saldo: Rp {{ number_format($s->rekening->saldo ?? 0) }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div id="penarikanInfoBox" style="display: {{ old('id_nasabah') ? 'block' : 'none' }}; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <div id="penarikanInfoBox" style="display: {{ old('id_nasabah') ? 'block' : 'none' }}; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                             <span style="color: #64748b;">Saldo Tabungan Saat Ini:</span>
-                            <strong id="penarikanInfoSaldo" style="color: #16a34a;">Rp 0</strong>
+                            <strong id="penarikanInfoSaldo" style="color: #16a34a; font-size: 0.95rem;">Rp 0</strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <span style="color: #64748b;">Batas Penarikan Maksimal (Sisa Rp 10.000):</span>
-                            <strong id="penarikanInfoMaksimal" style="color: #dc2626;">Rp 0</strong>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #64748b;">Batas Penarikan Reguler Hari Ini (Maks Rp 1 Juta & Wajib Sisa Rp 10.000):</span>
+                            <strong id="penarikanInfoMaksimal" style="color: #dc2626; font-size: 0.95rem;">Rp 0</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; border-top: 1px dashed #bfdbfe; padding-top: 5px; margin-top: 4px;">
+                            <span style="color: #64748b;">Total Penarikan Nasabah Hari Ini:</span>
+                            <span id="penarikanInfoHariIni" style="color: #475569; font-weight: 700;">Rp 0</span>
                         </div>
                     </div>
 
@@ -1179,6 +1207,33 @@
                         <label>Nominal Penarikan (Rp)</label>
                         <input type="number" name="nominal" id="penarikanNominal" class="form-control" required min="10000" step="1000" placeholder="Minimal Rp 10.000" value="{{ old('nominal') }}" oninput="validatePenarikanNominalRealtime()">
                         <div id="penarikanWarningMsg" style="display: none; margin-top: 6px; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; line-height: 1.4;"></div>
+                    </div>
+
+                    <!-- KOTAK VALIDASI PERJANJIAN H-1 KHUSUS NOMINAL > 1 JUTA -->
+                    <div id="boxPerjanjianH1" style="display: none; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem;">
+                            <span style="background: #f59e0b; color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; flex-shrink: 0;">!</span>
+                            <strong style="color: #92400e; font-size: 0.88rem;">Penarikan Khusus di Atas Rp 1.000.000 (Wajib Perjanjian Minimal H-1)</strong>
+                        </div>
+                        <p style="margin: 0 0 0.65rem 0; color: #78350f; font-size: 0.8rem; line-height: 1.4;">
+                            Sesuai aturan bank sekolah, penarikan di atas Rp 1.000.000 wajib melakukan perjanjian dengan teller minimal 1 hari sebelumnya agar uang kas fisik dapat disiapkan di loket.
+                        </p>
+
+                        <div id="perjanjianTerdaftarWrap" style="display: none; margin-bottom: 0.65rem;">
+                            <label style="font-weight: 700; color: #166534; font-size: 0.82rem; display: block; margin-bottom: 3px;">
+                                ✓ Pilih Reservasi Penarikan H-1 Terdaftar Hari Ini:
+                            </label>
+                            <select name="id_perjanjian" id="selectPerjanjianH1" class="form-control" style="font-size: 0.85rem; border-color: #86efac; background: #f0fdf4;" onchange="validatePenarikanNominalRealtime()">
+                                <option value="">-- Pilih Reservasi H-1 --</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; align-items: flex-start; gap: 0.5rem; background: #ffffff; border: 1px solid #fef3c7; border-radius: 8px; padding: 0.6rem 0.75rem;">
+                            <input type="checkbox" name="konfirmasi_perjanjian_h1" id="checkPerjanjianManual" value="1" style="margin-top: 3px; cursor: pointer;" onchange="validatePenarikanNominalRealtime()">
+                            <label for="checkPerjanjianManual" style="font-size: 0.8rem; color: #92400e; font-weight: 700; cursor: pointer; line-height: 1.35; margin: 0;">
+                                Konfirmasi Perjanjian Manual H-1: Nasabah telah janjian penarikan ini minimal 1 hari sebelumnya (secara lisan / WhatsApp ke loket Teller).
+                            </label>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Verifikasi PIN 6-Digit Keamanan Penabung</label>
@@ -1209,6 +1264,101 @@
                         Proses Penarikan & Simpan Jurnal
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- TAB: PERJANJIAN PENARIKAN H-1 (> 1 JUTA) -->
+        <div id="tab-perjanjian" class="tab-content">
+            <div class="card" style="box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <h3 style="margin: 0; color: #1e293b; font-size: 1.25rem; font-weight: 800;">
+                            Daftar Perjanjian Penarikan H-1 (> Rp 1.000.000)
+                        </h3>
+                        <p style="margin: 3px 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                            Reservasi penarikan khusus dana besar oleh nasabah siswa untuk dipersiapkan fisik kasnya oleh Teller.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">No</th>
+                                <th>Tgl Pengajuan</th>
+                                <th>Rencana Ambil</th>
+                                <th>Nasabah & Rekening</th>
+                                <th>Nominal</th>
+                                <th>Alasan / Keperluan</th>
+                                <th>Status</th>
+                                <th style="text-align: center;">Aksi Teller</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($perjanjianList as $idx => $pj)
+                                <tr>
+                                    <td style="text-align: center;">{{ $idx + 1 }}</td>
+                                    <td>{{ date('d/m/Y H:i', strtotime($pj->diajukan_pada ?? $pj->created_at)) }}</td>
+                                    <td>
+                                        <strong style="color: #2563eb;">{{ date('d F Y', strtotime($pj->tanggal_rencana)) }}</strong>
+                                        @if(date('Y-m-d', strtotime($pj->tanggal_rencana)) === date('Y-m-d'))
+                                            <span style="background: #dcfce7; color: #166534; font-size: 0.72rem; padding: 2px 6px; border-radius: 999px; font-weight: 800; margin-left: 4px;">HARI INI</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <strong>{{ $pj->saver->student_name ?? '-' }}</strong><br>
+                                        <small style="color: #64748b;">Rek: {{ $pj->saver->account_number ?? '-' }} (Saldo: Rp {{ number_format($pj->saver->rekening->saldo ?? 0) }})</small>
+                                    </td>
+                                    <td style="font-weight: 800; font-size: 1rem; color: #dc2626;">
+                                        Rp {{ number_format($pj->nominal, 0, ',', '.') }}
+                                    </td>
+                                    <td style="max-width: 200px; white-space: normal; font-size: 0.82rem; color: #475569;">
+                                        {{ $pj->alasan ?: '-' }}
+                                    </td>
+                                    <td>
+                                        @if($pj->status === 'menunggu')
+                                            <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">MENUNGGU</span>
+                                        @elseif($pj->status === 'disetujui')
+                                            <span class="badge" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;">DISETUJUI</span>
+                                        @elseif($pj->status === 'selesai')
+                                            <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">SELESAI</span>
+                                        @else
+                                            <span class="badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;">DITOLAK</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <div style="display: inline-flex; gap: 0.4rem; align-items: center;">
+                                            @if($pj->status === 'menunggu')
+                                                <form action="{{ route('teller.perjanjian.approve', $pj->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Konfirmasi ACC:\n\nApakah Anda menyetujui reservasi penarikan Rp {{ number_format($pj->nominal) }} untuk nasabah {{ addslashes($pj->saver->student_name ?? '') }} pada tanggal {{ date('d F Y', strtotime($pj->tanggal_rencana)) }}?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">
+                                                        ✓ ACC
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn-danger" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 8px;" onclick="openTolakPerjanjianModal({{ $pj->id }}, '{{ addslashes($pj->saver->student_name ?? '') }}', '{{ number_format($pj->nominal) }}')">
+                                                    Tolak
+                                                </button>
+                                            @elseif($pj->status === 'disetujui')
+                                                <button type="button" class="btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 8px; background: linear-gradient(135deg, #0ea5e9, #2563eb);" onclick="selectPerjanjianForPenarikan({{ $pj->saver_id }}, {{ $pj->nominal }}, {{ $pj->id }})">
+                                                    Proses di Loket &rarr;
+                                                </button>
+                                            @else
+                                                <span style="color: #94a3b8; font-size: 0.8rem;">-</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                        Belum ada permohonan perjanjian penarikan H-1 (> 1 Juta).
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1963,16 +2113,48 @@
         function onPenarikanSelectChange() {
             const sel = document.getElementById('penarikanNasabahSelect');
             const box = document.getElementById('penarikanInfoBox');
+            const selectPj = document.getElementById('selectPerjanjianH1');
+            const wrapPj = document.getElementById('perjanjianTerdaftarWrap');
             if (!box || !sel) return;
             const opt = sel.options[sel.selectedIndex];
             if (sel.value && opt) {
                 const saldo = parseInt(opt.getAttribute('data-saldo') || '0', 10);
-                const maxTarik = Math.max(0, saldo - 10000);
+                const penarikanHariIni = parseInt(opt.getAttribute('data-penarikan-hari-ini') || '0', 10);
+                const maxSaldoTarik = Math.max(0, saldo - 10000);
+                const sisaLimitReguler = Math.max(0, 1000000 - penarikanHariIni);
+                const maxRegulerTarik = Math.min(sisaLimitReguler, maxSaldoTarik);
+
                 document.getElementById('penarikanInfoSaldo').innerText = 'Rp ' + saldo.toLocaleString('id-ID');
-                document.getElementById('penarikanInfoMaksimal').innerText = 'Rp ' + maxTarik.toLocaleString('id-ID');
+                document.getElementById('penarikanInfoMaksimal').innerText = 'Rp ' + maxRegulerTarik.toLocaleString('id-ID');
+                const elHariIni = document.getElementById('penarikanInfoHariIni');
+                if (elHariIni) {
+                    elHariIni.innerText = 'Rp ' + penarikanHariIni.toLocaleString('id-ID') + (penarikanHariIni > 0 ? ' (Sisa jatah reguler: Rp ' + sisaLimitReguler.toLocaleString('id-ID') + ')' : '');
+                }
                 box.style.display = 'block';
+
+                // Populate active reservations for today if any
+                if (selectPj && wrapPj) {
+                    selectPj.innerHTML = '<option value="">-- Pilih Reservasi H-1 --</option>';
+                    try {
+                        const pjList = JSON.parse(opt.getAttribute('data-perjanjian') || '[]');
+                        if (pjList && pjList.length > 0) {
+                            pjList.forEach(p => {
+                                const optPj = document.createElement('option');
+                                optPj.value = p.id;
+                                optPj.text = `Rp ${Number(p.nominal).toLocaleString('id-ID')} (${p.status.toUpperCase()} - ${p.alasan || 'Penarikan Khusus'})`;
+                                selectPj.appendChild(optPj);
+                            });
+                            wrapPj.style.display = 'block';
+                        } else {
+                            wrapPj.style.display = 'none';
+                        }
+                    } catch(e) {
+                        wrapPj.style.display = 'none';
+                    }
+                }
             } else {
                 box.style.display = 'none';
+                if (wrapPj) wrapPj.style.display = 'none';
             }
             validatePenarikanNominalRealtime();
         }
@@ -1982,21 +2164,27 @@
             const nominalInput = document.getElementById('penarikanNominal');
             const warnBox = document.getElementById('penarikanWarningMsg');
             const submitBtn = document.getElementById('penarikanSubmitBtn');
+            const boxH1 = document.getElementById('boxPerjanjianH1');
+            const selectPj = document.getElementById('selectPerjanjianH1');
+            const checkManual = document.getElementById('checkPerjanjianManual');
             if (!nominalInput || !warnBox) return true;
 
             const val = parseInt(nominalInput.value || '0', 10);
             const opt = (sel && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex] : null;
             const hasSaver = Boolean(sel && sel.value && opt);
             const saldo = hasSaver ? parseInt(opt.getAttribute('data-saldo') || '0', 10) : null;
-            const maxTarik = (saldo !== null) ? Math.max(0, saldo - 10000) : null;
+            const penarikanHariIni = hasSaver ? parseInt(opt.getAttribute('data-penarikan-hari-ini') || '0', 10) : 0;
+            const maxSaldoTarik = (saldo !== null) ? Math.max(0, saldo - 10000) : null;
             const kasLaci = {{ (int)$sisaKasLaci }};
 
-            if (val > 0 && maxTarik !== null && val > maxTarik) {
+            // 1. Cek saldo mengendap minimal Rp 10.000
+            if (val > 0 && maxSaldoTarik !== null && val > maxSaldoTarik) {
+                if (boxH1) boxH1.style.display = 'none';
                 warnBox.style.display = 'block';
                 warnBox.style.background = '#fef2f2';
                 warnBox.style.borderColor = '#fecaca';
                 warnBox.style.color = '#dc2626';
-                warnBox.innerHTML = `⚠️ <strong>Nominal Melebihi Batas Saldo!</strong> Nasabah hanya bisa menarik maksimal <strong>Rp ${maxTarik.toLocaleString('id-ID')}</strong> (Saldo saat ini Rp ${saldo.toLocaleString('id-ID')}, wajib sisa mengendap Rp 10.000).`;
+                warnBox.innerHTML = `⚠️ <strong>Nominal Melebihi Batas Saldo!</strong> Nasabah hanya bisa menarik maksimal <strong>Rp ${maxSaldoTarik.toLocaleString('id-ID')}</strong> (Saldo saat ini Rp ${saldo.toLocaleString('id-ID')}, wajib sisa mengendap minimal Rp 10.000).`;
                 nominalInput.style.borderColor = '#dc2626';
                 if (submitBtn) {
                     submitBtn.disabled = true;
@@ -2004,7 +2192,11 @@
                     submitBtn.style.cursor = 'not-allowed';
                 }
                 return false;
-            } else if (val > 0 && val > kasLaci) {
+            }
+
+            // 2. Cek kas laci
+            if (val > 0 && val > kasLaci) {
+                if (boxH1) boxH1.style.display = 'none';
                 warnBox.style.display = 'block';
                 warnBox.style.background = '#fffbeb';
                 warnBox.style.borderColor = '#fde68a';
@@ -2017,7 +2209,11 @@
                     submitBtn.style.cursor = 'not-allowed';
                 }
                 return false;
-            } else if (val > 0 && val < 10000) {
+            }
+
+            // 3. Cek minimal Rp 10.000
+            if (val > 0 && val < 10000) {
+                if (boxH1) boxH1.style.display = 'none';
                 warnBox.style.display = 'block';
                 warnBox.style.background = '#fef2f2';
                 warnBox.style.borderColor = '#fecaca';
@@ -2030,17 +2226,97 @@
                     submitBtn.style.cursor = 'not-allowed';
                 }
                 return false;
-            } else {
-                warnBox.style.display = 'none';
-                warnBox.innerHTML = '';
-                nominalInput.style.borderColor = '';
-                if (submitBtn && (!submitBtn.closest('form') || submitBtn.closest('form').dataset.submitting !== 'true')) {
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
-                    submitBtn.style.cursor = 'pointer';
-                }
-                return true;
             }
+
+            // 4. Cek aturan penarikan di atas Rp 1.000.000 (Wajib Perjanjian Minimal H-1)
+            const isOverLimit = (val > 1000000) || ((penarikanHariIni + val) > 1000000);
+            if (val > 0 && isOverLimit) {
+                if (boxH1) boxH1.style.display = 'block';
+
+                const hasPjSelected = Boolean(selectPj && selectPj.value);
+                const hasManualCheck = Boolean(checkManual && checkManual.checked);
+
+                if (!hasPjSelected && !hasManualCheck) {
+                    warnBox.style.display = 'block';
+                    warnBox.style.background = '#fffbeb';
+                    warnBox.style.borderColor = '#fde68a';
+                    warnBox.style.color = '#92400e';
+                    warnBox.innerHTML = `⚠️ <strong>Wajib Perjanjian H-1:</strong> Penarikan di atas Rp 1.000.000 (atau akumulasi hari ini melebihi Rp 1 Juta) wajib diverifikasi perjanjian H-1. Silakan pilih nomor reservasi H-1 atau centang konfirmasi perjanjian manual.`;
+                    nominalInput.style.borderColor = '#f59e0b';
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                    return false;
+                } else {
+                    warnBox.style.display = 'none';
+                    warnBox.innerHTML = '';
+                    nominalInput.style.borderColor = '#16a34a';
+                    if (submitBtn && (!submitBtn.closest('form') || submitBtn.closest('form').dataset.submitting !== 'true')) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                    }
+                    return true;
+                }
+            } else {
+                if (boxH1) boxH1.style.display = 'none';
+            }
+
+            // Valid normal
+            warnBox.style.display = 'none';
+            warnBox.innerHTML = '';
+            nominalInput.style.borderColor = '';
+            if (submitBtn && (!submitBtn.closest('form') || submitBtn.closest('form').dataset.submitting !== 'true')) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+            return true;
+        }
+
+        function selectPerjanjianForPenarikan(saverId, nominal, idPj) {
+            switchTab('tab-penarikan', true);
+            const sel = document.getElementById('penarikanNasabahSelect');
+            if (sel) {
+                sel.value = saverId;
+            }
+            const nom = document.getElementById('penarikanNominal');
+            if (nom) {
+                nom.value = nominal;
+            }
+            onPenarikanSelectChange();
+
+            setTimeout(() => {
+                const selectPj = document.getElementById('selectPerjanjianH1');
+                if (selectPj) {
+                    selectPj.value = idPj;
+                }
+                const checkManual = document.getElementById('checkPerjanjianManual');
+                if (checkManual) {
+                    checkManual.checked = true;
+                }
+                validatePenarikanNominalRealtime();
+                const target = document.getElementById('tab-penarikan');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                document.getElementById('penarikanPin')?.focus();
+            }, 150);
+        }
+
+        function openTolakPerjanjianModal(idPj, nama, nominal) {
+            const form = document.getElementById('rejectPerjanjianForm');
+            if (form) form.action = '/teller/perjanjian/' + idPj + '/reject';
+            document.getElementById('rejectPjNasabah').innerText = nama;
+            document.getElementById('rejectPjNominal').innerText = 'Rp ' + nominal;
+            document.getElementById('rejectPjCatatanInput').value = '';
+            document.getElementById('rejectPerjanjianModal').style.display = 'flex';
+        }
+
+        function closeTolakPerjanjianModal() {
+            document.getElementById('rejectPerjanjianModal').style.display = 'none';
         }
 
         function selectForPenarikan() {
@@ -3588,5 +3864,30 @@
             });
         @endif
     </script>
+    <!-- MODAL PENOLAKAN PERJANJIAN H-1 -->
+    <div id="rejectPerjanjianModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+        <div class="card" style="max-width: 440px; width: 100%; background: #ffffff; border-radius: 20px; padding: 1.5rem; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin:0;">Tolak Perjanjian Penarikan</h3>
+                <button type="button" onclick="closeTolakPerjanjianModal()" style="background: none; border: none; font-size: 1.4rem; color: #64748b; cursor: pointer; font-weight: 700; line-height: 1;">&times;</button>
+            </div>
+
+            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 1rem; line-height: 1.5;">
+                Nasabah: <strong id="rejectPjNasabah">-</strong> &bull; Nominal: <strong id="rejectPjNominal" style="color: #dc2626;">-</strong>
+            </div>
+
+            <form id="rejectPerjanjianForm" method="POST" onsubmit="return confirm('Konfirmasi: Apakah Anda yakin ingin MENOLAK permohonan perjanjian penarikan ini?');">
+                @csrf
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 700; font-size: 0.85rem;">Alasan Penolakan <span style="color: #dc2626;">*</span></label>
+                    <input type="text" name="catatan_teller" id="rejectPjCatatanInput" class="form-control" required placeholder="Contoh: Ketersediaan kas laci belum mencukupi / jadwal bentrok...">
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button type="button" onclick="closeTolakPerjanjianModal()" class="btn-logout" style="background: #e2e8f0; color: #475569; flex: 1; padding: 0.65rem; border-radius: 10px; font-weight: 700; border: none; cursor: pointer;">Batal</button>
+                    <button type="submit" class="btn-danger" style="flex: 1.5; padding: 0.65rem; border-radius: 10px; font-weight: 700;">Tolak Permohonan</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

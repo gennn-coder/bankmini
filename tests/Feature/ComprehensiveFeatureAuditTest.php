@@ -52,7 +52,7 @@ class ComprehensiveFeatureAuditTest extends TestCase
 
     private function createTellerUser($suffix = null)
     {
-        $suffix = $suffix ?: rand(1000, 9999);
+        $suffix = $suffix ?: (uniqid() . rand(100, 999));
         return User::create([
             'username' => 'teller_' . $suffix,
             'nama_petugas' => 'Teller ' . $suffix,
@@ -65,7 +65,7 @@ class ComprehensiveFeatureAuditTest extends TestCase
 
     private function createNasabahUser($nis = null, $name = 'Siswa Audit')
     {
-        $nis = $nis ?: 'NIS_' . rand(10000, 99999);
+        $nis = $nis ?: ('NIS_' . uniqid() . rand(100, 999));
         $user = User::create([
             'username' => $nis,
             'nama_petugas' => $name,

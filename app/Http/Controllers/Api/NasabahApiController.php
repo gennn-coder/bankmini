@@ -14,6 +14,7 @@ use App\Models\TargetTabungan;
 use App\Models\Antrean;
 use App\Models\Pengaduan;
 use App\Models\Pengaturan;
+use App\Models\PerjanjianPenarikan;
 
 class NasabahApiController extends Controller
 {
@@ -237,6 +238,19 @@ class NasabahApiController extends Controller
             ];
         }) : [];
 
+        // Perjanjian Penarikan H-1 (> 1 Juta)
+        $perjanjianList = $saver ? PerjanjianPenarikan::where('saver_id', $saver->id)->orderBy('created_at', 'desc')->get()->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'nominal' => (int)$p->nominal,
+                'tanggal_rencana' => $p->tanggal_rencana,
+                'alasan' => $p->alasan,
+                'status' => $p->status,
+                'catatan_teller' => $p->catatan_teller,
+                'created_at' => $p->created_at ? $p->created_at->format('d M Y H:i') : '-',
+            ];
+        }) : [];
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -276,6 +290,12 @@ class NasabahApiController extends Controller
                     'is_aktif' => ($saver && $statusRekening === 'aktif'),
                 ],
                 'pengaduan_list' => $pengaduanList,
+                'perjanjian_list' => $perjanjianList,
+                'aturan_penarikan' => [
+                    'max_reguler_harian' => 1000000,
+                    'min_sisa_saldo' => 10000,
+                    'min_nominal_perjanjian' => 1000001,
+                ],
             ]
         ]);
     }
@@ -602,6 +622,82 @@ class NasabahApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Permintaan reset PIN diterima. Silakan kunjungi Teller Bank Mini untuk verifikasi identitas dan pengaturan PIN 6-digit baru Anda.',
+        ]);
+    }
+
+    /**
+     * API Riwayat Perjanjian Penarikan H-1 Mobile
+     */
+    public function listPerjanjian(Request $request, $id)
+    {
+        [$user, $saver, $member] = $this->resolveUserAndSaver($id);
+        if (!$saver) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rekening penabung belum aktif atau tidak ditemukan.',
+            ], 404);
+        }
+
+        $list = PerjanjianPenarikan::where('saver_id', $saver->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $list,
+            'aturan' => [
+                'max_reguler_harian' => 1000000,
+                'min_sisa_saldo' => 10000,
+                'min_nominal_perjanjian' => 1000001,
+            ]
+        ]);
+    }
+
+    /**
+     * API Simpan Perjanjian Penarikan H-1 (> 1 Juta) Mobile
+     */
+    public function simpanPerjanjian(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required',
+            'nominal' => 'required|integer|min:1000001',
+            'tanggal_rencana' => 'required|date|after_or_equal:tomorrow',
+            'alasan' => 'required|string|max:255',
+        ], [
+            'nominal.min' => 'Perjanjian H-1 khusus untuk penarikan di atas Rp 1.000.000 (minimal Rp 1.000.001). Untuk penarikan Rp 1.000.000 ke bawah, silakan langsung datang ke loket Teller.',
+            'tanggal_rencana.after_or_equal' => 'Tanggal rencana penarikan wajib minimal H-1 (besok atau hari selanjutnya).',
+        ]);
+
+        [$user, $saver, $member] = $this->resolveUserAndSaver($request->user_id);
+        if (!$saver || !$saver->rekening) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rekening tabungan tidak ditemukan atau belum aktif.',
+            ], 400);
+        }
+
+        // Validasi saldo mengendap minimal Rp 10.000
+        if (($saver->rekening->saldo - $request->nominal) < 10000) {
+            $maksimalTarik = max(0, $saver->rekening->saldo - 10000);
+            return response()->json([
+                'success' => false,
+                'message' => 'Saldo tidak mencukupi. Penarikan harus menyisakan saldo minimal Rp 10.000 di rekening. Maksimal yang dapat ditarik: Rp ' . number_format($maksimalTarik, 0, ',', '.'),
+            ], 422);
+        }
+
+        $pj = PerjanjianPenarikan::create([
+            'saver_id' => $saver->id,
+            'nominal' => $request->nominal,
+            'tanggal_rencana' => $request->tanggal_rencana,
+            'alasan' => $request->alasan,
+            'status' => 'menunggu',
+            'diajukan_pada' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permohonan perjanjian penarikan berhasil diajukan ke Teller.',
+            'data' => $pj,
         ]);
     }
 }

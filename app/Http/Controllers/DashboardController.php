@@ -17,6 +17,7 @@ use App\Models\Pengaturan;
 use App\Models\TargetTabungan;
 use App\Models\Antrean;
 use App\Models\Pengaduan;
+use App\Models\PerjanjianPenarikan;
 use Illuminate\Support\Facades\Hash;
 
 class DashboardController extends Controller
@@ -141,7 +142,11 @@ class DashboardController extends Controller
         $totalSetoran = $transaksiHariIni->where('jenis_trans', 'setoran')->sum('nominal');
         $totalPenarikan = $transaksiHariIni->where('jenis_trans', 'penarikan')->sum('nominal');
 
-        $savers = Saver::with('rekening')->orderBy('student_name', 'asc')->get();
+        $savers = Saver::with([
+            'rekening',
+            'transaksi' => fn($q) => $q->whereDate('tanggal', date('Y-m-d'))->where('jenis_trans', 'penarikan'),
+            'perjanjianPenarikan' => fn($q) => $q->whereDate('tanggal_rencana', date('Y-m-d'))->whereIn('status', ['disetujui', 'menunggu'])
+        ])->orderBy('student_name', 'asc')->get();
         $membersUnactivated = Member::where('status', 'rekening tidak aktif')->orderBy('student_name', 'asc')->get();
 
         $laporanHariIni = LaporanHarian::where('user_id', $user->id)
@@ -190,13 +195,21 @@ class DashboardController extends Controller
         $antreanSedangDilayani = $antreanHariIni->where('status', 'dilayani')->first();
         $totalAntreanMenunggu = $antreanHariIni->where('status', 'menunggu')->count();
 
+        // Perjanjian Penarikan H-1 (> 1 Juta) untuk Teller
+        $perjanjianList = PerjanjianPenarikan::with(['saver' => fn($q) => $q->withTrashed()])
+            ->orderBy('tanggal_rencana', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $totalPerjanjianPending = $perjanjianList->where('status', 'menunggu')->count();
+
         return view('teller.dashboard', compact(
             'user', 'transaksiHariIni', 'totalSetoran', 'totalPenarikan',
             'savers', 'membersUnactivated', 'laporanHariIni',
             'modalAwal', 'isModalAwalSet', 'tambahanKasHariIni', 'tambahanKasApproved', 'sisaKasLaci',
             'isLaporanSubmitted', 'isLaporanApproved',
             'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
-            'statusLayanan', 'antreanHariIni', 'antreanSedangDilayani', 'totalAntreanMenunggu'
+            'statusLayanan', 'antreanHariIni', 'antreanSedangDilayani', 'totalAntreanMenunggu',
+            'perjanjianList', 'totalPerjanjianPending'
         ));
     }
 
@@ -300,12 +313,54 @@ class DashboardController extends Controller
         // 4. Riwayat Pengaduan Nasabah
         $pengaduanList = Pengaduan::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
 
+        // 5. Riwayat Perjanjian Penarikan H-1 (> 1 Juta) Nasabah
+        $perjanjianSaya = $saver
+            ? PerjanjianPenarikan::where('saver_id', $saver->id)->orderBy('created_at', 'desc')->get()
+            : collect();
+
         return view('nasabah.dashboard', compact(
             'user', 'saver', 'nasabah', 'member', 'transaksi', 'statusLayanan',
             'targetTabungan', 'antreanSaya', 'antreanSedangDilayani', 'totalAntreanMenunggu', 'antreanSebelumSaya',
             'selectedBulan', 'selectedTahun', 'saldoAwalBulan', 'saldoAkhirBulan', 'totalSetoranBulanIni', 'totalPenarikanBulanIni',
-            'pengaduanList'
+            'pengaduanList', 'perjanjianSaya'
         ));
+    }
+
+    public function simpanPerjanjianPenarikan(Request $request)
+    {
+        $user = Auth::user();
+        $saver = Saver::where('user_id', $user->id)->with('rekening')->first();
+        if (!$saver || !$saver->rekening) {
+            return back()->with('error', 'Rekening penabung Anda belum aktif atau tidak ditemukan.');
+        }
+
+        $request->validate([
+            'nominal' => 'required|integer|min:1000001',
+            'tanggal_rencana' => 'required|date|after_or_equal:tomorrow',
+            'alasan' => 'required|string|max:255',
+        ], [
+            'nominal.required' => 'Nominal penarikan wajib diisi.',
+            'nominal.min' => 'Perjanjian H-1 khusus untuk penarikan di atas Rp 1.000.000 (minimal Rp 1.000.001). Untuk penarikan Rp 1.000.000 ke bawah, silakan langsung datang ke loket Teller tanpa perlu perjanjian.',
+            'tanggal_rencana.required' => 'Tanggal rencana penarikan wajib diisi.',
+            'tanggal_rencana.after_or_equal' => 'Tanggal rencana penarikan wajib minimal H-1 (besok atau hari selanjutnya).',
+            'alasan.required' => 'Keperluan atau alasan penarikan dana wajib diisi.',
+        ]);
+
+        // Cek kecukupan saldo rekening (saldo - nominal >= 10000)
+        if (($saver->rekening->saldo - $request->nominal) < 10000) {
+            return back()->withInput()->with('error', 'Saldo tabungan tidak mencukupi untuk rencana penarikan ini. Saldo saat ini: Rp ' . number_format($saver->rekening->saldo, 0, ',', '.') . ', wajib menyisakan saldo minimal Rp 10.000 (maksimal yang bisa ditarik: Rp ' . number_format(max(0, $saver->rekening->saldo - 10000), 0, ',', '.') . ').');
+        }
+
+        PerjanjianPenarikan::create([
+            'saver_id' => $saver->id,
+            'nominal' => $request->nominal,
+            'tanggal_rencana' => $request->tanggal_rencana,
+            'alasan' => $request->alasan,
+            'status' => 'menunggu',
+            'diajukan_pada' => now(),
+        ]);
+
+        return back()->with('success', 'Permohonan perjanjian penarikan Rp ' . number_format($request->nominal, 0, ',', '.') . ' untuk tanggal ' . date('d F Y', strtotime($request->tanggal_rencana)) . ' berhasil diajukan! Pihak teller akan mempersiapkan fisik dana kas di loket.');
     }
 
     public function simpanTargetTabungan(Request $request)

@@ -53,6 +53,11 @@ class Saver extends Model
         return $this->hasMany(Transaksi::class, 'saver_id');
     }
 
+    public function perjanjianPenarikan()
+    {
+        return $this->hasMany(PerjanjianPenarikan::class, 'saver_id');
+    }
+
     // Indonesian attribute backward compatibility
     public function getGraduationYearAttribute()
     {

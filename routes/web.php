@@ -57,6 +57,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/teller/ajukan-kas', [TellerController::class, 'ajukanTambahanKas'])->name('teller.ajukan-kas');
     Route::post('/teller/setoran', [TellerController::class, 'setoran'])->name('teller.setoran');
     Route::post('/teller/penarikan', [TellerController::class, 'penarikan'])->name('teller.penarikan');
+    Route::post('/teller/perjanjian/{id}/approve', [TellerController::class, 'approvePerjanjian'])->name('teller.perjanjian.approve');
+    Route::post('/teller/perjanjian/{id}/reject', [TellerController::class, 'rejectPerjanjian'])->name('teller.perjanjian.reject');
     Route::post('/teller/reset-pin', [TellerController::class, 'resetPin'])->name('teller.reset-pin');
     Route::post('/teller/laporan-harian', [TellerController::class, 'submitLaporanHarian'])->name('teller.laporan-harian');
     Route::post('/teller/status-layanan', [TellerController::class, 'updateStatusLayanan'])->name('teller.status-layanan');
@@ -72,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/nasabah/target-tabungan/{id}/delete', [DashboardController::class, 'hapusTargetTabungan'])->name('nasabah.target-tabungan.delete');
     Route::post('/nasabah/ambil-antrean', [DashboardController::class, 'ambilAntrean'])->name('nasabah.ambil-antrean');
     Route::get('/nasabah/status-antrean', [DashboardController::class, 'statusAntrean'])->name('nasabah.status-antrean');
+    Route::post('/nasabah/perjanjian-penarikan', [DashboardController::class, 'simpanPerjanjianPenarikan'])->name('nasabah.perjanjian-penarikan.store');
     Route::post('/nasabah/pengaduan', [DashboardController::class, 'kirimPengaduan'])->name('nasabah.pengaduan.store');
     Route::post('/nasabah/ganti-password', [DashboardController::class, 'gantiPassword'])->name('nasabah.ganti-password');
 });

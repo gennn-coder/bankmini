@@ -454,14 +454,21 @@
             $currentSaldo = (int)($nasabah->rekening->saldo ?? 0);
         @endphp
 
-        <!-- NAVIGATION 3 TAB UTAMA (PERMANEN DI BAWAH PADA TAMPILAN MOBILE) -->
+        <!-- NAVIGATION 4 TAB UTAMA (PERMANEN DI BAWAH PADA TAMPILAN MOBILE) -->
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" id="btn-tab-dashboard" onclick="switchNasabahTab('tab-dashboard')">Dashboard</button>
+            <button type="button" class="tab-btn" id="btn-tab-perjanjian" onclick="switchNasabahTab('tab-perjanjian')">
+                <span class="tab-label-full">Janji Tarik (>1 Jt)</span>
+                <span class="tab-label-short">Janji Tarik</span>
+            </button>
             <button type="button" class="tab-btn" id="btn-tab-mutasi" onclick="switchNasabahTab('tab-mutasi')">
                 <span class="tab-label-full">Laporan Bulanan & Target</span>
-                <span class="tab-label-short">Laporan & Target</span>
+                <span class="tab-label-short">Laporan</span>
             </button>
-            <button type="button" class="tab-btn" id="btn-tab-profil" onclick="switchNasabahTab('tab-profil')">Profil & Pengaduan</button>
+            <button type="button" class="tab-btn" id="btn-tab-profil" onclick="switchNasabahTab('tab-profil')">
+                <span class="tab-label-full">Profil & Pengaduan</span>
+                <span class="tab-label-short">Profil</span>
+            </button>
         </div>
 
         <!-- ========================================== -->
@@ -514,6 +521,29 @@
                         @else
                             <span style="color: #ef4444;">Status: Rekening Belum Aktif</span>
                         @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- BANNER INFO KETENTUAN PENARIKAN & JANJI TARIK (> 1 JT) -->
+            <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #bfdbfe; border-left: 5px solid #2563eb;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #2563eb; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 6px;">INFO PENARIKAN</span>
+                            <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">Aturan Kas Teller</span>
+                        </div>
+                        <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-top: 0.3rem;">
+                            Tarik s/d Rp 1.000.000 Langsung di Loket &bull; Di atas Rp 1 Juta Wajib Perjanjian H-1
+                        </div>
+                        <div style="font-size: 0.84rem; color: #475569; margin-top: 0.25rem;">
+                            Penarikan &le; Rp 1.000.000 tidak butuh izin admin/perjanjian. Sisa saldo tabungan wajib mengendap minimal Rp 10.000.
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" onclick="switchNasabahTab('tab-perjanjian')" class="btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.88rem; font-weight: 700; white-space: nowrap;">
+                            Ajukan Janji Tarik (>1 Jt) &rarr;
+                        </button>
                     </div>
                 </div>
             </div>
@@ -631,8 +661,194 @@
             </div>
         </div>
 
+        <!-- ======================================================== -->
+        <!-- TAB 2: PERJANJIAN PENARIKAN H-1 (> 1 JUTA)               -->
+        <!-- ======================================================== -->
+        <div id="tab-perjanjian" class="tab-content">
+            <!-- PANDUAN DAN ATURAN PENARIKAN SALDO -->
+            <div class="card" style="margin-bottom: 1.5rem; border-left: 5px solid #2563eb;">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                    <div style="max-width: 820px; width: 100%;">
+                        <h3 style="margin: 0 0 0.5rem; font-size: 1.2rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #eff6ff; color: #2563eb; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;">📋</span>
+                            Ketentuan Penarikan Saldo Tabungan Bank Mini
+                        </h3>
+                        <p style="margin: 0 0 1rem; font-size: 0.88rem; color: #475569; line-height: 1.6;">
+                            Untuk menjaga ketersediaan fisik uang kas di laci Teller sekolah dan menjamin kelancaran transaksi seluruh nasabah, mohon perhatikan ketentuan penarikan berikut:
+                        </p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                            <!-- Box 1: Reguler <= 1jt -->
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
+                                    <span style="background: #dcfce7; color: #166534; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem;">REGULER</span>
+                                    <strong style="color: #0f172a; font-size: 0.92rem;">Maksimal Rp 1.000.000 / Hari</strong>
+                                </div>
+                                <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
+                                    Penarikan s/d <strong>Rp 1.000.000</strong> dapat dilakukan secara <strong>langsung di loket</strong> tanpa perlu izin admin dan tanpa perlu perjanjian. Cukup bawa PIN 6-digit Anda.
+                                </p>
+                            </div>
+
+                            <!-- Box 2: Saldo Mengendap -->
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
+                                    <span style="background: #fef3c7; color: #92400e; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem;">SALDO MINIMUM</span>
+                                    <strong style="color: #0f172a; font-size: 0.92rem;">Sisa Mengendap Rp 10.000</strong>
+                                </div>
+                                <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
+                                    Setiap penarikan wajib menyisakan saldo minimal <strong>Rp 10.000</strong> di rekening. (Contoh: jika saldo Anda pas Rp 1.000.000, maksimal yang bisa ditarik adalah <strong>Rp 990.000</strong>).
+                                </p>
+                            </div>
+
+                            <!-- Box 3: > 1jt Wajib H-1 -->
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
+                                    <span style="background: #fee2e2; color: #991b1b; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem;">WAJIB H-1</span>
+                                    <strong style="color: #0f172a; font-size: 0.92rem;">Penarikan di Atas Rp 1 Juta</strong>
+                                </div>
+                                <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
+                                    Penarikan <strong>&gt; Rp 1.000.000</strong> (misal: bayar PKL/laptop) <strong>wajib membuat perjanjian dengan Teller minimal 1 hari sebelumnya (H-1)</strong> agar uang tunai disiapkan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM AJUKAN PERJANJIAN H-1 & DAFTAR STATUS PERJANJIAN -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; align-items: start;">
+                <!-- FORM PENGAJUAN -->
+                <div class="card">
+                    <h3 style="margin-top:0; margin-bottom: 0.5rem; font-size: 1.15rem; color: #1e293b;">
+                        Form Pengajuan Janji Tarik (> Rp 1 Juta)
+                    </h3>
+                    <p style="margin: 0 0 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Isi formulir ini jika Anda berencana menarik saldo lebih dari Rp 1.000.000 di loket Teller.
+                    </p>
+
+                    @if(!$isAktif)
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; color: #b91c1c; font-size: 0.88rem; margin-bottom: 1rem;">
+                            Rekening Anda belum aktif. Aktivasi rekening terlebih dahulu di loket Teller untuk dapat mengajukan penarikan.
+                        </div>
+                    @else
+                        @php
+                            $maxTarikNasabah = max(0, $currentSaldo - 10000);
+                        @endphp
+                        
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+                            <div style="font-size: 0.8rem; color: #166534; font-weight: 700;">INFORMASI SALDO ANDA</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.35rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <div>Saldo Saat Ini: <strong style="color: #15803d; font-size: 1.05rem;">Rp {{ number_format($currentSaldo, 0, ',', '.') }}</strong></div>
+                                <div>Maksimal Bisa Ditarik: <strong style="color: #0f172a; font-size: 1.05rem;">Rp {{ number_format($maxTarikNasabah, 0, ',', '.') }}</strong></div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #166534; margin-top: 0.35rem;">* Sudah memperhitungkan sisa saldo wajib mengendap Rp 10.000.</div>
+                        </div>
+
+                        <form action="{{ route('nasabah.perjanjian-penarikan.store') }}" method="POST" onsubmit="try{ sessionStorage.setItem('nasabah_active_tab', 'tab-perjanjian'); }catch(e){} return confirm('Konfirmasi: Ajukan permohonan perjanjian penarikan saldo ini ke pihak Teller Bank Mini?');">
+                            @csrf
+                            <div class="form-group">
+                                <label>Nominal Penarikan (Rp) <span style="color: #dc2626;">*</span></label>
+                                <input type="number" name="nominal" id="inputPjNominal" class="form-control" required min="1000001" placeholder="Contoh: 1500000 (Min. Rp 1.000.001)" value="{{ old('nominal') }}">
+                                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
+                                    Wajib di atas Rp 1.000.000 (minimal Rp 1.000.001).
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Tanggal Rencana Pengambilan di Loket <span style="color: #dc2626;">*</span></label>
+                                <input type="date" name="tanggal_rencana" id="inputPjTanggal" class="form-control" required min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ old('tanggal_rencana', date('Y-m-d', strtotime('+1 day'))) }}">
+                                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
+                                    Terkunci otomatis minimal besok (H-1) sesuai kebijakan ketersediaan kas fisik.
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Keperluan / Alasan Penarikan <span style="color: #dc2626;">*</span></label>
+                                <textarea name="alasan" id="inputPjAlasan" class="form-control" rows="3" required placeholder="Contoh: Biaya sertifikasi kompetensi, pembelian laptop praktik, keperluan sekolah...">{{ old('alasan') }}</textarea>
+                            </div>
+
+                            <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.95rem; font-weight: 700;">
+                                Ajukan Perjanjian ke Teller
+                            </button>
+                        </form>
+                    @endif
+                </div>
+
+                <!-- DAFTAR RIWAYAT PERJANJIAN PENARIKAN SAYA -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Riwayat Janji Tarik H-1</h3>
+                            <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--text-muted);">Status permohonan penarikan dana di atas 1 juta rupiah.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal Rencana</th>
+                                    <th>Nominal</th>
+                                    <th>Alasan</th>
+                                    <th>Status</th>
+                                    <th>Catatan / Arahan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($perjanjianSaya as $pj)
+                                    <tr>
+                                        <td>
+                                            <strong>{{ date('d M Y', strtotime($pj->tanggal_rencana)) }}</strong>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted);">Diajukan: {{ $pj->created_at->format('d/m/Y H:i') }}</div>
+                                        </td>
+                                        <td>
+                                            <strong style="color: #dc2626; font-size: 0.95rem;">Rp {{ number_format($pj->nominal, 0, ',', '.') }}</strong>
+                                        </td>
+                                        <td>
+                                            <div style="font-size: 0.85rem; max-width: 180px; word-break: break-word;">{{ $pj->alasan }}</div>
+                                        </td>
+                                        <td>
+                                            @if($pj->status === 'disetujui')
+                                                <span class="badge" style="background: #dcfce7; color: #166534; font-weight: 800;">DISETUJUI</span>
+                                                <div style="font-size: 0.72rem; color: #16a34a; margin-top: 0.25rem;">Siap cair di loket</div>
+                                            @elseif($pj->status === 'selesai')
+                                                <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 800;">SELESAI</span>
+                                                <div style="font-size: 0.72rem; color: #4338ca; margin-top: 0.25rem;">Telah ditarik</div>
+                                            @elseif($pj->status === 'ditolak')
+                                                <span class="badge" style="background: #fee2e2; color: #991b1b; font-weight: 800;">DITOLAK</span>
+                                            @else
+                                                <span class="badge" style="background: #fef3c7; color: #92400e; font-weight: 800;">MENUNGGU</span>
+                                                <div style="font-size: 0.72rem; color: #b45309; margin-top: 0.25rem;">Menunggu teller</div>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($pj->catatan_teller)
+                                                <div style="background: #f8fafc; border: 1px solid var(--border-color); padding: 0.35rem 0.6rem; border-radius: 8px; font-size: 0.82rem; color: #334155;">
+                                                    {{ $pj->catatan_teller }}
+                                                </div>
+                                            @elseif($pj->status === 'disetujui')
+                                                <span style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">Silakan datang ke loket pada {{ date('d M Y', strtotime($pj->tanggal_rencana)) }}</span>
+                                            @else
+                                                <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                            Belum ada pengajuan perjanjian penarikan dana.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- ========================================== -->
-        <!-- TAB 2: LAPORAN BULANAN & TARGET TABUNGAN   -->
+        <!-- TAB 3: LAPORAN BULANAN & TARGET TABUNGAN   -->
         <!-- ========================================== -->
         <div id="tab-mutasi" class="tab-content">
             <!-- LAPORAN KEUANGAN BULANAN (RINGKASAN AKHIR BULAN) -->
@@ -1053,6 +1269,10 @@
             try {
                 @if(session('success_password') || session('error_password'))
                     switchNasabahTab('tab-profil');
+                    return;
+                @endif
+                @if(old('nominal') || (session('success') && str_contains(session('success'), 'perjanjian')))
+                    switchNasabahTab('tab-perjanjian');
                     return;
                 @endif
                 const urlParams = new URLSearchParams(window.location.search);

@@ -12,6 +12,7 @@ use App\Models\LaporanHarian;
 use App\Models\AuditLog;
 use App\Models\PengajuanKas;
 use App\Models\Pengaturan;
+use App\Models\PerjanjianPenarikan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
@@ -89,6 +90,18 @@ class TellerController extends Controller
             ]);
         }
 
+        $totalTarikHariIni = (int) Transaksi::where(function($q) use ($saver) {
+                $q->where('saver_id', $saver->id)->orWhere('id_nasabah', $saver->id);
+            })
+            ->where('jenis_trans', 'penarikan')
+            ->whereDate('tanggal', date('Y-m-d'))
+            ->sum('nominal');
+
+        $perjanjianHariIni = PerjanjianPenarikan::where('saver_id', $saver->id)
+            ->whereDate('tanggal_rencana', date('Y-m-d'))
+            ->whereIn('status', ['disetujui', 'menunggu'])
+            ->get(['id', 'nominal', 'status', 'alasan', 'diajukan_pada', 'tanggal_rencana']);
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -100,6 +113,9 @@ class TellerController extends Controller
                 'email' => $saver->email ?? ($saver->member->email ?? ''),
                 'saldo' => (int) ($saver->rekening->saldo ?? 0),
                 'status' => $saver->rekening->status ?? 'aktif',
+                'total_penarikan_hari_ini' => $totalTarikHariIni,
+                'sisa_limit_reguler' => max(0, 1000000 - $totalTarikHariIni),
+                'perjanjian_hari_ini' => $perjanjianHariIni,
             ]
         ]);
     }
@@ -552,6 +568,51 @@ class TellerController extends Controller
                 return back()->withInput($request->except('pin'))->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
             }
 
+            // Validasi Batas Penarikan Harian:
+            // 1. Maksimal penarikan reguler harian per nasabah = Rp 1.000.000 (tidak butuh izin admin & tanpa perjanjian).
+            // 2. Penarikan di atas Rp 1.000.000 (atau akumulasi hari ini > Rp 1.000.000) WAJIB perjanjian minimal H-1.
+            $totalPenarikanNasabahHariIni = (int) Transaksi::where(function($q) use ($saver) {
+                    $q->where('saver_id', $saver->id)
+                      ->orWhere('id_nasabah', $saver->id);
+                })
+                ->where('jenis_trans', 'penarikan')
+                ->whereDate('tanggal', date('Y-m-d'))
+                ->sum('nominal');
+
+            $isOverDailyRegularLimit = ($request->nominal > 1000000) || (($totalPenarikanNasabahHariIni + $request->nominal) > 1000000);
+            $perjanjianValid = null;
+
+            if ($isOverDailyRegularLimit) {
+                // Cari perjanjian yang dipilih dari form
+                if ($request->filled('id_perjanjian')) {
+                    $perjanjianValid = PerjanjianPenarikan::where('id', $request->id_perjanjian)
+                        ->where('saver_id', $saver->id)
+                        ->whereIn('status', ['disetujui', 'menunggu'])
+                        ->first();
+                }
+
+                // Jika tidak dipilih manual, cari otomatis reservasi H-1 nasabah ini untuk hari ini yang diajukan minimal H-1
+                if (!$perjanjianValid) {
+                    $perjanjianValid = PerjanjianPenarikan::where('saver_id', $saver->id)
+                        ->whereDate('tanggal_rencana', date('Y-m-d'))
+                        ->whereIn('status', ['disetujui', 'menunggu'])
+                        ->whereDate('created_at', '<', date('Y-m-d'))
+                        ->first();
+                }
+
+                // Cek verifikasi manual teller jika perjanjian dilakukan lisan/WA H-1
+                $isManualVerified = $request->boolean('konfirmasi_perjanjian_h1');
+
+                if (!$perjanjianValid && !$isManualVerified) {
+                    DB::rollBack();
+                    if ($tokenTransaksi) {
+                        Cache::forget($cacheKey);
+                    }
+                    return back()->withInput($request->except('pin'))->with('error', 
+                        'Transaksi Ditolak: Batas penarikan reguler tanpa perjanjian adalah maksimal Rp 1.000.000 per hari (Penarikan hari ini: Rp ' . number_format($totalPenarikanNasabahHariIni, 0, ',', '.') . ', Permintaan: Rp ' . number_format($request->nominal, 0, ',', '.') . '). Penarikan di atas Rp 1.000.000 wajib melakukan perjanjian dengan pihak teller minimal H-1.');
+                }
+            }
+
             $saldoSebelum = $rekening->saldo;
 
             // Create Transaksi (Trigger Database MySQL otomatis meng-update pengurangan saldo)
@@ -601,6 +662,15 @@ class TellerController extends Controller
                 'detail' => 'Penarikan Rp ' . number_format($request->nominal) . ' dari No Rek ' . $saver->account_number . ' (' . $saver->student_name . ')',
                 'ip_address' => $request->ip(),
             ]);
+
+            if ($perjanjianValid) {
+                $perjanjianValid->update([
+                    'status' => 'selesai',
+                    'selesai_pada' => now(),
+                    'teller_id' => auth()->id(),
+                    'catatan_teller' => $request->keterangan ?? 'Penarikan di atas Rp 1.000.000 selesai diproses di loket teller',
+                ]);
+            }
 
             DB::commit();
             return back()->with('success', 'Penarikan tunai Rp ' . number_format($request->nominal) . ' berhasil diproses. No Transaksi: ' . $noTrans)
@@ -899,5 +969,30 @@ class TellerController extends Controller
         }
 
         return back()->with('success', 'Antrean ' . $antrean->nomor_antrean . ' berhasil diselesaikan.');
+    }
+
+    public function approvePerjanjian($id)
+    {
+        $perjanjian = PerjanjianPenarikan::with('saver')->findOrFail($id);
+        $perjanjian->update([
+            'status' => 'disetujui',
+            'disetujui_pada' => now(),
+            'teller_id' => auth()->id(),
+        ]);
+
+        return back()->with('success', 'Perjanjian penarikan Rp ' . number_format($perjanjian->nominal, 0, ',', '.') . ' untuk nasabah ' . ($perjanjian->saver->student_name ?? 'Nasabah') . ' pada tanggal ' . date('d F Y', strtotime($perjanjian->tanggal_rencana)) . ' BERHASIL DISETUJUI. Teller siap melayani pada hari H.');
+    }
+
+    public function rejectPerjanjian(Request $request, $id)
+    {
+        $request->validate(['catatan_teller' => 'required|string|max:255']);
+        $perjanjian = PerjanjianPenarikan::with('saver')->findOrFail($id);
+        $perjanjian->update([
+            'status' => 'ditolak',
+            'teller_id' => auth()->id(),
+            'catatan_teller' => $request->catatan_teller,
+        ]);
+
+        return back()->with('success', 'Perjanjian penarikan untuk nasabah ' . ($perjanjian->saver->student_name ?? 'Nasabah') . ' telah ditolak.');
     }
 }

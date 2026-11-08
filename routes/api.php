@@ -24,6 +24,10 @@ Route::prefix('nasabah')->group(function () {
     // Laporan Bulanan Mobile
     Route::get('/laporan-bulanan/{id}', [NasabahApiController::class, 'laporanBulanan']);
 
+    // Perjanjian Penarikan H-1 Mobile
+    Route::get('/perjanjian/{id}', [NasabahApiController::class, 'listPerjanjian']);
+    Route::post('/perjanjian', [NasabahApiController::class, 'simpanPerjanjian']);
+
     // Pengaduan Mobile
     Route::post('/pengaduan', [NasabahApiController::class, 'kirimPengaduan']);
 
