@@ -88,6 +88,9 @@ class TargetAntreanPengaduanTest extends TestCase
             'status' => 'aktif',
         ]);
 
+        // Pastikan tidak ada antrean pending sebelumnya hari ini
+        Antrean::where('tanggal', date('Y-m-d'))->where('status', 'menunggu')->update(['status' => 'selesai']);
+
         // Siswa ambil antrean
         $resAmbil = $this->actingAs($siswa)->post(route('nasabah.ambil-antrean'));
         $resAmbil->assertSessionHas('success');

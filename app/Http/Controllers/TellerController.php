@@ -358,6 +358,7 @@ class TellerController extends Controller
             $rekening = Rekening::where('saver_id', $saver->id)->lockForUpdate()->first();
 
             if (!$rekening || $rekening->status !== 'aktif') {
+                DB::rollBack();
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
@@ -522,6 +523,7 @@ class TellerController extends Controller
             $rekening = Rekening::where('saver_id', $saver->id)->lockForUpdate()->first();
 
             if (!$rekening || $rekening->status !== 'aktif') {
+                DB::rollBack();
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
@@ -530,6 +532,7 @@ class TellerController extends Controller
 
             // Verifikasi PIN 6 Digit
             if (!Hash::check($request->pin, $saver->security_pin)) {
+                DB::rollBack();
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
@@ -542,6 +545,7 @@ class TellerController extends Controller
             // Validasi Saldo Minimum Mengendap Rp 10.000
             $saldoSetelahPenarikan = $rekening->saldo - $request->nominal;
             if ($saldoSetelahPenarikan < 10000) {
+                DB::rollBack();
                 if ($tokenTransaksi) {
                     Cache::forget($cacheKey);
                 }
