@@ -309,14 +309,52 @@
             .container {
                 padding: 0 1rem;
                 margin: 1rem auto 2rem;
+                padding-bottom: 5.5rem !important; /* Ruang agar konten terbawah tidak tertutup bottom navbar */
             }
             .card {
                 padding: 1.25rem;
                 border-radius: 14px;
             }
-            .tab-btn {
-                padding: 0.55rem 0.95rem;
-                font-size: 0.85rem;
+            /* BOTTOM NAVIGATION BAR PERMANEN DI MOBILE */
+            .nav-tabs {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-top: 1px solid var(--border-color);
+                border-bottom: none;
+                margin: 0;
+                padding: 0.45rem 0.65rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+                box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .nav-tabs .tab-btn {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 0.55rem 0.25rem;
+                font-size: 0.76rem;
+                font-weight: 700;
+                text-align: center;
+                white-space: normal;
+                line-height: 1.2;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 42px;
+            }
+            .nav-tabs .tab-btn.active {
+                color: #ffffff;
+                background: var(--primary-600);
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
             }
             .filter-mutasi-bar {
                 flex-direction: column;
@@ -343,6 +381,7 @@
             }
             .container {
                 padding: 0 0.75rem;
+                padding-bottom: 5.75rem !important;
             }
             .card {
                 padding: 1rem;
@@ -361,6 +400,11 @@
             .modal-card {
                 padding: 1.25rem;
                 border-radius: 16px;
+            }
+            .nav-tabs .tab-btn {
+                font-size: 0.72rem;
+                padding: 0.45rem 0.15rem;
+                min-height: 38px;
             }
         }
     </style>
@@ -931,7 +975,7 @@
     </div>
 
     <script>
-        function switchNasabahTab(tabId) {
+        function switchNasabahTab(tabId, scrollUp = true) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
@@ -940,6 +984,10 @@
 
             if (targetBtn) targetBtn.classList.add('active');
             if (targetContent) targetContent.classList.add('active');
+
+            if (scrollUp && window.innerWidth <= 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
 
             try {
                 sessionStorage.setItem('nasabah_active_tab', tabId);
@@ -950,12 +998,12 @@
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.has('bulan') || urlParams.has('tahun')) {
-                    switchNasabahTab('tab-mutasi');
+                    switchNasabahTab('tab-mutasi', false);
                     return;
                 }
                 const savedTab = sessionStorage.getItem('nasabah_active_tab');
                 if (savedTab && document.getElementById(savedTab)) {
-                    switchNasabahTab(savedTab);
+                    switchNasabahTab(savedTab, false);
                 }
             } catch(e) {}
         });
