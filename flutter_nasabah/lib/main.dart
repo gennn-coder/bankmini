@@ -494,6 +494,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchStatusSilent() async {
     try {
+      // 1. Sinkronisasi real-time saldo, antrean loket, status teller, target & pengaduan
       final res = await http
           .get(Uri.parse('${ApiConfig.baseUrl}/dashboard/$_nasabahId?bulan=$_selectedBulan&tahun=$_selectedTahun'))
           .timeout(const Duration(seconds: 4));
@@ -506,6 +507,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _laporanBulananData = dataDash['data']['laporan_bulanan'];
             _profilData = dataDash['data']['profil'];
             _pengaduanList = dataDash['data']['pengaduan_list'] ?? [];
+          });
+        }
+      }
+
+      // 2. Sinkronisasi real-time riwayat transaksi mutasi
+      final resMutasi = await http
+          .get(Uri.parse('${ApiConfig.baseUrl}/mutasi/$_nasabahId'))
+          .timeout(const Duration(seconds: 4));
+      if (resMutasi.statusCode == 200 && mounted) {
+        final dataMutasi = jsonDecode(resMutasi.body);
+        if (dataMutasi['success'] == true && dataMutasi['data'] != null) {
+          setState(() {
+            _mutasiList = dataMutasi['data'] ?? [];
           });
         }
       }
