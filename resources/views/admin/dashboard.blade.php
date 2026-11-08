@@ -33,28 +33,314 @@
             margin: 0;
             overflow-x: hidden;
         }
-        .navbar {
+        /* ADMIN SIDEBAR & TOPBAR LAYOUT */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background: var(--bg-primary);
+            position: relative;
+        }
+        .admin-sidebar {
+            width: 275px;
+            min-width: 275px;
+            max-width: 275px;
+            background: #ffffff;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-header {
+            padding: 1.25rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+        .sidebar-brand-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+        }
+        .sidebar-brand-subtitle {
+            margin: 0;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .sidebar-close-btn {
+            display: none;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.3rem;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.1rem 0.5rem;
+            line-height: 1.2;
+        }
+        .sidebar-user-card {
+            margin: 1rem 1rem 0.5rem 1rem;
+            padding: 0.75rem 0.85rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        .sidebar-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--primary-gradient);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+            flex-shrink: 0;
+        }
+        .sidebar-user-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+        .sidebar-nav-section-title {
+            padding: 0.85rem 1.25rem 0.35rem 1.25rem;
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #94a3b8;
+            letter-spacing: 0.75px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.25rem 0.75rem 1rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .sidebar-nav::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+        .sidebar-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.18s ease;
+            position: relative;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .sidebar-nav-btn:hover {
+            background: #f1f5f9;
+            color: var(--primary-600);
+            transform: translateX(2px);
+        }
+        .sidebar-nav-btn.active {
+            background: var(--primary-600);
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+        }
+        .sidebar-nav-btn.active svg {
+            color: #ffffff !important;
+            stroke: #ffffff !important;
+        }
+        .sidebar-nav-btn svg {
+            color: #64748b;
+            flex-shrink: 0;
+            transition: color 0.18s ease;
+        }
+        .sidebar-nav-btn:hover svg {
+            color: var(--primary-600);
+        }
+        .sidebar-nav-btn span.nav-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar-badge {
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .sidebar-badge-danger {
+            background: #ef4444;
+            color: #ffffff;
+        }
+        .sidebar-badge-warning {
+            background: #f59e0b;
+            color: #ffffff;
+        }
+        .sidebar-footer {
+            padding: 0.85rem 1rem;
+            border-top: 1px solid var(--border-color);
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+        .sidebar-logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .sidebar-logout-btn:hover {
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+        .admin-main {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+        .admin-topbar {
             position: sticky;
             top: 0;
             z-index: 900;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.15rem 2rem;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
-            width: 100%;
-            flex-wrap: wrap;
+            padding: 0.85rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
             gap: 1rem;
         }
-        .container {
-            max-width: 1380px;
+        .topbar-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+        }
+        .topbar-subtitle {
+            margin: 0;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .sidebar-toggle-btn {
+            display: none;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 8px;
+            color: #334155;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        .admin-content-body {
+            flex: 1;
+            padding: 1.75rem 2rem 3rem 2rem;
+            max-width: 1440px;
             width: 100%;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+        }
+        @media (max-width: 992px) {
+            .admin-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-backdrop.active {
+                display: block;
+            }
+            .sidebar-close-btn {
+                display: block;
+            }
+            .sidebar-toggle-btn {
+                display: inline-flex;
+            }
+            .admin-topbar {
+                padding: 0.75rem 1rem;
+            }
+            .admin-content-body {
+                padding: 1.25rem 1rem 2.5rem 1rem;
+            }
+        }
+        .navbar {
+            display: none;
+        }
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
         }
         .grid {
             display: grid;
@@ -327,75 +613,169 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 44px; width: 44px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-color); background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
-            <div>
-                <h2 style="margin:0; font-size: 1.25rem; font-weight: 800; line-height: 1.2;">Administrator</h2>
-                <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
-            </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <span>Halo, <strong>{{ $user->nama_petugas }}</strong> <span class="badge badge-aktif">ADMIN</span></span>
-            <form action="{{ route('logout') }}" method="POST" style="margin:0;">
-                @csrf
-                <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">Keluar</button>
-            </form>
-        </div>
-    </nav>
+    <div class="admin-layout">
+        <!-- BACKDROP FOR MOBILE SIDEBAR -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
 
-    <div class="container">
-        <!-- NOTIFIKASI SUKSES / ERROR (LANGSUNG TAMPIL DI PALING ATAS DENGAN DESAIN MODERN) -->
-        @if(session('success'))
-            <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12); border-left: 5px solid #16a34a;">
+        <!-- SIDEBAR KIRI -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <!-- BRAND HEADER -->
+            <div class="sidebar-header">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="background: #16a34a; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✓</div>
+                    <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 40px; width: 40px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-color); background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
                     <div>
-                        <div style="font-weight: 800; color: #15803d; font-size: 0.95rem;">Berhasil Dikonfirmasi</div>
-                        <div style="font-size: 0.88rem; color: #166534; margin-top: 2px;">{{ session('success') }}</div>
+                        <h2 class="sidebar-brand-title">Bank Mini</h2>
+                        <p class="sidebar-brand-subtitle">Administrator Panel</p>
                     </div>
                 </div>
-                <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #15803d; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+                <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Tutup Menu">&times;</button>
             </div>
-        @endif
 
-        @if(session('error'))
-            <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="background: #dc2626; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">!</div>
-                    <div>
-                        <div style="font-weight: 800; color: #b91c1c; font-size: 0.95rem;">Pemberitahuan Sistem</div>
-                        <div style="font-size: 0.88rem; color: #991b1b; margin-top: 2px;">{{ session('error') }}</div>
+            <!-- PROFIL ADMIN MINI -->
+            <div class="sidebar-user-card">
+                <div class="sidebar-user-avatar">
+                    {{ strtoupper(substr($user->nama_petugas, 0, 1)) }}
+                </div>
+                <div style="overflow: hidden; flex: 1;">
+                    <div class="sidebar-user-name" title="{{ $user->nama_petugas }}">{{ $user->nama_petugas }}</div>
+                    <div style="display: flex; align-items: center; gap: 4px; margin-top: 3px;">
+                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #16a34a;"></span>
+                        <span style="font-size: 0.7rem; color: #166534; font-weight: 700;">Administrator</span>
                     </div>
                 </div>
-                <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #b91c1c; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
             </div>
-        @endif
 
-        <!-- NAVIGATION TABS -->
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('tab-users')">Manajemen User</button>
-            <button class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa</button>
-            <button class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung</button>
-            <button class="tab-btn" onclick="switchTab('tab-supervisor')">
-                Approval Kas & Tutup Kas
-                @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
-                @if($pendingKasCount > 0)
-                    <span style="background: #dc2626; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{{ $pendingKasCount }}</span>
+            <!-- MENU UTAMA -->
+            <div class="sidebar-nav-section-title">MENU UTAMA</div>
+            <nav class="sidebar-nav">
+                <!-- 1. Dashboard -->
+                <button type="button" class="tab-btn sidebar-nav-btn active" onclick="switchTab('tab-dashboard')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                    <span class="nav-text">Dashboard</span>
+                </button>
+
+                <!-- 2. Manajemen User -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-users')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span class="nav-text">Manajemen User</span>
+                </button>
+
+                <!-- 3. Data Anggota Siswa -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-members')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    <span class="nav-text">Data Anggota Siswa</span>
+                </button>
+
+                <!-- 4. Data Penabung -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-savers')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    <span class="nav-text">Data Penabung</span>
+                </button>
+
+                <!-- 5. Approval Kas & Tutup Kas -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-supervisor')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span class="nav-text">Approval Kas & Tutup Kas</span>
+                    @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
+                    @if($pendingKasCount > 0)
+                        <span class="sidebar-badge sidebar-badge-danger">{{ $pendingKasCount }}</span>
+                    @endif
+                </button>
+
+                <!-- 6. Laporan Bulanan -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-laporan-bulanan')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    <span class="nav-text">Laporan Bulanan</span>
+                </button>
+
+                <!-- 7. Jurnal Akuntansi -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-jurnal')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+                    <span class="nav-text">Jurnal Akuntansi</span>
+                </button>
+
+                <!-- 8. Audit Logs -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-audit')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span class="nav-text">Audit Logs</span>
+                </button>
+
+                <!-- 9. Pengaduan Nasabah -->
+                <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-pengaduan')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span class="nav-text">Pengaduan Nasabah</span>
+                    @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
+                    @if($pendingPengaduanCount > 0)
+                        <span class="sidebar-badge sidebar-badge-warning">{{ $pendingPengaduanCount }}</span>
+                    @endif
+                </button>
+            </nav>
+
+            <!-- FOOTER SIDEBAR: LOGOUT -->
+            <div class="sidebar-footer">
+                <form action="{{ route('logout') }}" method="POST" style="margin:0; width: 100%;">
+                    @csrf
+                    <button type="submit" class="sidebar-logout-btn" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                        <span>Keluar Sistem</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- AREA KANAN: TOPBAR & KONTEN -->
+        <div class="admin-main">
+            <!-- TOPBAR HEADER -->
+            <header class="admin-topbar">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Buka Menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                    </button>
+                    <div>
+                        <h2 class="topbar-title" id="activeTabTitle">Dashboard Administrator</h2>
+                        <p class="topbar-subtitle" id="activeTabDesc">Ringkasan operasional dan statistik Bank Mini</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="text-align: right; line-height: 1.3;" class="topbar-user-badge">
+                        <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a;">{{ $user->nama_petugas }}</span>
+                        <div style="font-size: 0.72rem; color: #166534; font-weight: 700;">● Online (Admin)</div>
+                    </div>
+                    <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                        @csrf
+                        <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">Keluar</button>
+                    </form>
+                </div>
+            </header>
+
+            <!-- KONTEN UTAMA -->
+            <main class="admin-content-body">
+                <!-- NOTIFIKASI SUKSES / ERROR (LANGSUNG TAMPIL DI PALING ATAS DENGAN DESAIN MODERN) -->
+                @if(session('success'))
+                    <div class="alert alert-success" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.12); border-left: 5px solid #16a34a;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="background: #16a34a; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">✓</div>
+                            <div>
+                                <div style="font-weight: 800; color: #15803d; font-size: 0.95rem;">Berhasil Dikonfirmasi</div>
+                                <div style="font-size: 0.88rem; color: #166534; margin-top: 2px;">{{ session('success') }}</div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #15803d; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+                    </div>
                 @endif
-            </button>
-            <button class="tab-btn" onclick="switchTab('tab-laporan-bulanan')">Laporan Bulanan</button>
-            <button class="tab-btn" onclick="switchTab('tab-jurnal')">Jurnal Akuntansi</button>
-            <button class="tab-btn" onclick="switchTab('tab-audit')">Audit Logs</button>
-            <button class="tab-btn" onclick="switchTab('tab-pengaduan')">
-                Pengaduan Nasabah
-                @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
-                @if($pendingPengaduanCount > 0)
-                    <span style="background: #d97706; color: white; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; margin-left: 4px;">{{ $pendingPengaduanCount }}</span>
+
+                @if(session('error'))
+                    <div class="alert alert-error" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.12); border-left: 5px solid #dc2626;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="background: #dc2626; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0;">!</div>
+                            <div>
+                                <div style="font-weight: 800; color: #b91c1c; font-size: 0.95rem;">Pemberitahuan Sistem</div>
+                                <div style="font-size: 0.88rem; color: #991b1b; margin-top: 2px;">{{ session('error') }}</div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="this.parentElement.style.display='none'" style="background: none; border: none; font-size: 1.4rem; color: #b91c1c; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+                    </div>
                 @endif
-            </button>
-        </div>
 
         <!-- TAB 0: DASHBOARD ADMINISTRATOR -->
         <div id="tab-dashboard" class="tab-content active">
@@ -1588,6 +1968,8 @@
                 </div>
             </div>
         </div>
+            </main>
+        </div>
     </div>
 
     <!-- MODAL EDIT MEMBER -->
@@ -1664,12 +2046,24 @@
             history.scrollRestoration = 'manual';
         }
 
+        const adminTabTitles = {
+            'tab-dashboard': { title: 'Dashboard Administrator', desc: 'Ringkasan operasional dan statistik Bank Mini' },
+            'tab-users': { title: 'Manajemen User & Petugas', desc: 'Kelola akun Admin, Supervisor, dan Teller' },
+            'tab-members': { title: 'Data Master Anggota Siswa', desc: 'Basis data siswa dan aktivasi rekening penabung' },
+            'tab-savers': { title: 'Data Penabung & Rekening', desc: 'Daftar penabung aktif dan informasi saldo rekening' },
+            'tab-supervisor': { title: 'Approval Kas & Tutup Kas Teller', desc: 'Validasi pengajuan modal awal dan tutup buku harian' },
+            'tab-laporan-bulanan': { title: 'Laporan Keuangan Bulanan', desc: 'Rekapitulasi transaksi bulanan dan pembagian hasil' },
+            'tab-jurnal': { title: 'Buku Jurnal Umum Akuntansi', desc: 'Pencatatan debet & kredit sistem berstandar akuntansi' },
+            'tab-audit': { title: 'Audit Trail & Rekam Jejak Sistem', desc: 'Log aktivitas keamanan dan transaksi semua pengguna' },
+            'tab-pengaduan': { title: 'Pengaduan & Aspirasi Nasabah', desc: 'Tindak lanjuti pesan dan keluhan dari nasabah siswa' }
+        };
+
         function switchTab(tabId) {
             if (!tabId) return;
             const targetContent = document.getElementById(tabId);
             if (!targetContent) return;
 
-            document.querySelectorAll('.nav-tabs > .tab-btn').forEach(btn => {
+            document.querySelectorAll('.tab-btn, .sidebar-nav-btn').forEach(btn => {
                 btn.classList.remove('active');
                 const oc = btn.getAttribute('onclick');
                 if (oc && oc.includes("'" + tabId + "'")) {
@@ -1679,6 +2073,13 @@
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
             targetContent.classList.add('active');
+
+            if (adminTabTitles[tabId]) {
+                const titleEl = document.getElementById('activeTabTitle');
+                const descEl = document.getElementById('activeTabDesc');
+                if (titleEl) titleEl.textContent = adminTabTitles[tabId].title;
+                if (descEl) descEl.textContent = adminTabTitles[tabId].desc;
+            }
 
             try {
                 sessionStorage.setItem('admin_active_tab', tabId);
@@ -1690,6 +2091,29 @@
                     window.history.replaceState(null, null, window.location.pathname + window.location.search);
                 }
             } catch (e) {}
+
+            if (window.innerWidth <= 992) {
+                toggleSidebar(false);
+            }
+        }
+
+        function toggleSidebar(forceState) {
+            const sidebar = document.getElementById('adminSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (!sidebar || !backdrop) return;
+
+            const isOpen = sidebar.classList.contains('open');
+            const shouldOpen = (forceState !== undefined) ? forceState : !isOpen;
+
+            if (shouldOpen) {
+                sidebar.classList.add('open');
+                backdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         }
 
         function switchSubFilter(subId) {
