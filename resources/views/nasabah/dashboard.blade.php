@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Nasabah | E-Teller Bank Mini</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_bank_mini.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -418,9 +419,12 @@
 </head>
 <body>
     <nav class="navbar">
-        <div>
-            <h2 style="margin:0; font-size: 1.25rem; font-weight: 800;">Nasabah</h2>
-            <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 44px; width: 44px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-color); background: #fff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
+            <div>
+                <h2 style="margin:0; font-size: 1.25rem; font-weight: 800; line-height: 1.2;">Nasabah</h2>
+                <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.45rem;">

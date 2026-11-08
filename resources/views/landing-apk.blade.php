@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unduh Aplikasi Nasabah | E-Teller Bank Mini Sekolah</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_bank_mini.png') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -680,6 +681,7 @@
     <header class="navbar">
         <div class="nav-container">
             <a href="{{ route('home') }}" class="brand-box">
+                <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="width: 38px; height: 38px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border-color); background: #fff; padding: 2px;">
                 <span class="brand-title">E-Teller Bank Mini</span>
                 <span class="brand-badge">Aplikasi Siswa</span>
             </a>

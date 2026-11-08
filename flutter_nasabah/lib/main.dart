@@ -193,9 +193,9 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header Brand Modern
+                // Header Brand Modern dengan Logo Bank Mini
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
                     color: const Color(0xFF2563EB),
                     borderRadius: BorderRadius.circular(18),
@@ -207,9 +207,37 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Text(
+                      Container(
+                        width: 72,
+                        height: 72,
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x20000000),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            'assets/images/logo_bank_mini.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Image.network(
+                              'https://skansabaewallet.web.id/images/logo_bank_mini.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
                         'E-TELLER BANK MINI SEKOLAH',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -219,8 +247,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           letterSpacing: 0.5,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Portal Nasabah Siswa',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -2420,28 +2448,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final statusLayanan = (_nasabahData['status_layanan'] ?? 'buka').toString().toLowerCase();
 
     return Scaffold(
-      // NAVBAR PUTIH BERSIH PERSIS SEPERTI DI WEB
+      // NAVBAR PUTIH BERSIH PERSIS SEPERTI DI WEB DENGAN LOGO BANK MINI
       appBar: AppBar(
-        titleSpacing: 14,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        titleSpacing: 12,
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Nasabah',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+            Container(
+              width: 38,
+              height: 38,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0A0F172A),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  'assets/images/logo_bank_mini.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Image.network(
+                    'https://skansabaewallet.web.id/images/logo_bank_mini.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
             ),
-            Text(
-              'E-Teller Bank Mini Sekolah',
-              style: TextStyle(
-                fontSize: 11,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
+            const SizedBox(width: 8),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Nasabah',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                Text(
+                  'E-Teller Bank Mini',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
