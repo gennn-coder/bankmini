@@ -750,7 +750,7 @@
             <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
             <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
             <button class="tab-btn" onclick="switchTab('tab-perjanjian')">
-                Perjanjian H-1 (> 1 Juta)
+                Perjanjian
                 @if(isset($totalPerjanjianPending) && $totalPerjanjianPending > 0)
                     <span style="background: #f59e0b; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">{{ $totalPerjanjianPending }}</span>
                 @endif
@@ -1273,7 +1273,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
                         <h3 style="margin: 0; color: #1e293b; font-size: 1.25rem; font-weight: 800;">
-                            Daftar Perjanjian Penarikan H-1 (> Rp 1.000.000)
+                            Daftar Perjanjian Penarikan
                         </h3>
                         <p style="margin: 3px 0 0; font-size: 0.85rem; color: var(--text-muted);">
                             Reservasi penarikan khusus dana besar oleh nasabah siswa untuk dipersiapkan fisik kasnya oleh Teller.
@@ -1352,7 +1352,7 @@
                             @empty
                                 <tr>
                                     <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                                        Belum ada permohonan perjanjian penarikan H-1 (> 1 Juta).
+                                        Belum ada permohonan perjanjian penarikan.
                                     </td>
                                 </tr>
                             @endforelse
@@ -1863,14 +1863,17 @@
                 pinConfirmInp.type = 'password';
             }
 
+            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
             const btnToggle1 = document.getElementById('btnTogglePinAktivasi');
             if (btnToggle1) {
-                btnToggle1.textContent = 'Lihat';
+                btnToggle1.innerHTML = eyeSvg;
+                btnToggle1.title = 'Lihat PIN';
                 btnToggle1.style.color = '#64748b';
             }
             const btnToggle2 = document.getElementById('btnTogglePinConfirmAktivasi');
             if (btnToggle2) {
-                btnToggle2.textContent = 'Lihat';
+                btnToggle2.innerHTML = eyeSvg;
+                btnToggle2.title = 'Lihat PIN';
                 btnToggle2.style.color = '#64748b';
             }
 

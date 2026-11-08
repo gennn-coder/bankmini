@@ -330,27 +330,27 @@
             font-size: 0.88rem;
         }
 
-        /* Text Toggle Password (NO ICONS) */
+        /* Icon Toggle Password */
         .btn-text-toggle-pwd {
             position: absolute;
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #475569;
+            background: none;
+            border: none;
+            color: #64748b;
             cursor: pointer;
-            padding: 4px 10px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 6px;
             transition: all 0.15s ease;
-            font-family: inherit;
         }
 
         .btn-text-toggle-pwd:hover {
             color: #1e293b;
-            background: #e2e8f0;
+            background: #f1f5f9;
         }
 
         /* Row: Remember Me & Reset Password */
@@ -782,8 +782,8 @@
                 <div class="form-group">
                     <label class="form-label" for="passwordInput">Password</label>
                     <div class="form-input-wrapper">
-                        <input type="password" name="password" id="passwordInput" class="form-control-custom" required placeholder="Masukkan kata sandi" style="padding-right: 5.5rem;">
-                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('passwordInput', this)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Lihat</button>
+                        <input type="password" name="password" id="passwordInput" class="form-control-custom" required placeholder="Masukkan kata sandi" style="padding-right: 2.75rem;">
+                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('passwordInput', this)" title="Lihat Password"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
                     </div>
                 </div>
 
@@ -871,16 +871,16 @@
                 <div class="form-group">
                     <label class="form-label" for="resetNewPassword">Sandi Baru</label>
                     <div class="form-input-wrapper">
-                        <input type="password" id="resetNewPassword" class="form-control-custom" placeholder="Masukkan kata sandi baru (min. 6 karakter)" style="padding-right: 5.5rem;">
-                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('resetNewPassword', this)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Lihat</button>
+                        <input type="password" id="resetNewPassword" class="form-control-custom" placeholder="Masukkan kata sandi baru (min. 6 karakter)" style="padding-right: 2.75rem;">
+                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('resetNewPassword', this)" title="Lihat Sandi Baru"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="resetNewPasswordConfirm">Konfirmasi Sandi Baru</label>
                     <div class="form-input-wrapper">
-                        <input type="password" id="resetNewPasswordConfirm" class="form-control-custom" placeholder="Ulangi kata sandi baru" style="padding-right: 5.5rem;">
-                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('resetNewPasswordConfirm', this)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Lihat</button>
+                        <input type="password" id="resetNewPasswordConfirm" class="form-control-custom" placeholder="Ulangi kata sandi baru" style="padding-right: 2.75rem;">
+                        <button type="button" class="btn-text-toggle-pwd" onclick="togglePasswordVisibility('resetNewPasswordConfirm', this)" title="Lihat Konfirmasi Sandi"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
                     </div>
                 </div>
 
@@ -904,10 +904,11 @@
             if (!input) return;
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
-            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
-            const eyeOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
-            btn.innerHTML = isPassword ? (eyeOffSvg + 'Sembunyikan') : (eyeSvg + 'Lihat');
-            btn.style.color = isPassword ? '#4361ee' : '#475569';
+            const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            const eyeOffSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+            btn.innerHTML = isPassword ? eyeOffSvg : eyeSvg;
+            btn.title = isPassword ? 'Sembunyikan' : 'Lihat';
+            btn.style.color = isPassword ? '#2563eb' : '#64748b';
         }
 
         function getCsrfToken() {

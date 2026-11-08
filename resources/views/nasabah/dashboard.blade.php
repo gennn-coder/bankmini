@@ -458,8 +458,8 @@
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" id="btn-tab-dashboard" onclick="switchNasabahTab('tab-dashboard')">Dashboard</button>
             <button type="button" class="tab-btn" id="btn-tab-perjanjian" onclick="switchNasabahTab('tab-perjanjian')">
-                <span class="tab-label-full">Janji Tarik (>1 Jt)</span>
-                <span class="tab-label-short">Janji Tarik</span>
+                <span class="tab-label-full">Perjanjian</span>
+                <span class="tab-label-short">Perjanjian</span>
             </button>
             <button type="button" class="tab-btn" id="btn-tab-mutasi" onclick="switchNasabahTab('tab-mutasi')">
                 <span class="tab-label-full">Laporan Bulanan & Target</span>
@@ -542,7 +542,7 @@
                     </div>
                     <div>
                         <button type="button" onclick="switchNasabahTab('tab-perjanjian')" class="btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.88rem; font-weight: 700; white-space: nowrap;">
-                            Ajukan Janji Tarik (>1 Jt) &rarr;
+                            Ajukan Perjanjian &rarr;
                         </button>
                     </div>
                 </div>
@@ -662,65 +662,15 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- TAB 2: PERJANJIAN PENARIKAN H-1 (> 1 JUTA)               -->
+        <!-- TAB 2: PERJANJIAN PENARIKAN                              -->
         <!-- ======================================================== -->
         <div id="tab-perjanjian" class="tab-content">
-            <!-- PANDUAN DAN ATURAN PENARIKAN SALDO -->
-            <div class="card" style="margin-bottom: 1.5rem; border-left: 5px solid #2563eb;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                    <div style="max-width: 820px; width: 100%;">
-                        <h3 style="margin: 0 0 0.5rem; font-size: 1.2rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                            <span style="background: #eff6ff; color: #2563eb; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;">📋</span>
-                            Ketentuan Penarikan Saldo Tabungan Bank Mini
-                        </h3>
-                        <p style="margin: 0 0 1rem; font-size: 0.88rem; color: #475569; line-height: 1.6;">
-                            Untuk menjaga ketersediaan fisik uang kas di laci Teller sekolah dan menjamin kelancaran transaksi seluruh nasabah, mohon perhatikan ketentuan penarikan berikut:
-                        </p>
-                        
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
-                            <!-- Box 1: Reguler <= 1jt -->
-                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
-                                    <span style="background: #dcfce7; color: #166534; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem;">REGULER</span>
-                                    <strong style="color: #0f172a; font-size: 0.92rem;">Maksimal Rp 1.000.000 / Hari</strong>
-                                </div>
-                                <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
-                                    Penarikan s/d <strong>Rp 1.000.000</strong> dapat dilakukan secara <strong>langsung di loket</strong> tanpa perlu izin admin dan tanpa perlu perjanjian. Cukup bawa PIN 6-digit Anda.
-                                </p>
-                            </div>
-
-                            <!-- Box 2: Saldo Mengendap -->
-                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
-                                    <span style="background: #fef3c7; color: #92400e; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem;">SALDO MINIMUM</span>
-                                    <strong style="color: #0f172a; font-size: 0.92rem;">Sisa Mengendap Rp 10.000</strong>
-                                </div>
-                                <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
-                                    Setiap penarikan wajib menyisakan saldo minimal <strong>Rp 10.000</strong> di rekening. (Contoh: jika saldo Anda pas Rp 1.000.000, maksimal yang bisa ditarik adalah <strong>Rp 990.000</strong>).
-                                </p>
-                            </div>
-
-                            <!-- Box 3: > 1jt Wajib H-1 -->
-                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem;">
-                                    <span style="background: #fee2e2; color: #991b1b; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem;">WAJIB H-1</span>
-                                    <strong style="color: #0f172a; font-size: 0.92rem;">Penarikan di Atas Rp 1 Juta</strong>
-                                </div>
-                                <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.5;">
-                                    Penarikan <strong>&gt; Rp 1.000.000</strong> (misal: bayar PKL/laptop) <strong>wajib membuat perjanjian dengan Teller minimal 1 hari sebelumnya (H-1)</strong> agar uang tunai disiapkan.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FORM AJUKAN PERJANJIAN H-1 & DAFTAR STATUS PERJANJIAN -->
+            <!-- FORM AJUKAN PERJANJIAN & DAFTAR STATUS PERJANJIAN -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; align-items: start;">
                 <!-- FORM PENGAJUAN -->
                 <div class="card">
                     <h3 style="margin-top:0; margin-bottom: 0.5rem; font-size: 1.15rem; color: #1e293b;">
-                        Form Pengajuan Janji Tarik (> Rp 1 Juta)
+                        Form Pengajuan Perjanjian
                     </h3>
                     <p style="margin: 0 0 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
                         Isi formulir ini jika Anda berencana menarik saldo lebih dari Rp 1.000.000 di loket Teller.
@@ -778,7 +728,7 @@
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                         <div>
-                            <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Riwayat Janji Tarik H-1</h3>
+                            <h3 style="margin:0; font-size: 1.15rem; color: #1e293b;">Daftar Perjanjian Penarikan</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--text-muted);">Status permohonan penarikan dana di atas 1 juta rupiah.</p>
                         </div>
                     </div>
