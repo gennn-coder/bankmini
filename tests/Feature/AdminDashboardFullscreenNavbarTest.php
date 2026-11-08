@@ -72,4 +72,32 @@ class AdminDashboardFullscreenNavbarTest extends TestCase
         // Verifikasi tidak ada tag <svg> di dalam horizontal nav-tabs
         $this->assertStringNotContainsString('<svg', $navTabsHtml, 'Nav-tabs must NOT contain any SVG icons!');
     }
+
+    public function test_tab_members_has_inline_form_and_import_box_underneath()
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+
+        $response->assertStatus(200);
+
+        // 1. Box Tambah Anggota Siswa Baru inline (seperti box Tambah User)
+        $response->assertSee('Tambah Anggota Siswa Baru', false);
+        $response->assertSee('name="student_name"', false);
+        $response->assertSee('name="nis"', false);
+        $response->assertSee('name="class_grade"', false);
+        $response->assertSee('name="graduation_year"', false);
+        $response->assertSee('adminMemberPasswordInline', false);
+        $response->assertSee('adminMemberPinInline', false);
+        $response->assertSee('Simpan Data Anggota', false);
+
+        // 2. Box Impor Data Anggota tepat di bawah box Tambah Anggota
+        $response->assertSee('Impor Data Anggota', false);
+        $response->assertSee('Template Excel (.xlsx)', false);
+        $response->assertSee('Template CSV', false);
+        $response->assertSee('name="file"', false);
+        $response->assertSee('Unggah &amp; Impor Anggota', false);
+
+        // 3. Box Daftar Anggota Siswa (Members) dengan tabel
+        $response->assertSee('Daftar Anggota Siswa (Members)', false);
+        $response->assertSee('tableMemberBody', false);
+    }
 }
