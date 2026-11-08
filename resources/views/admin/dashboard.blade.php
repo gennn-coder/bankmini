@@ -34,235 +34,162 @@
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--canvas-bg);
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
-            color: var(--text-navy);
+            background: #f4f7fe;
+            color: var(--text-navy, #0f172a);
             margin: 0;
-            padding: 1.25rem;
+            padding: 0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: stretch;
             overflow-x: hidden;
-        }
-
-        /* FLOATING APP CONTAINER (CRYPTOWALL WINDOW) */
-        .cryptowall-app {
             width: 100%;
-            max-width: 1540px;
-            background: #ffffff;
-            border-radius: 36px;
-            box-shadow: var(--window-shadow);
-            display: flex;
-            min-height: calc(100vh - 2.5rem);
-            position: relative;
-            overflow: hidden;
         }
 
-        /* 1. LEFT SIDEBAR */
-        .sidebar-col {
-            width: 235px;
-            min-width: 235px;
-            max-width: 235px;
-            background: #ffffff;
-            border-right: 1px solid var(--border-soft);
-            padding: 1.75rem 1.15rem 1.5rem 1.15rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            z-index: 100;
-            flex-shrink: 0;
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            padding-left: 0.35rem;
-            margin-bottom: 1.75rem;
-        }
-        .brand-icon-wrap {
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #00c6ff 0%, #2563eb 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.28);
-            flex-shrink: 0;
-        }
-        .brand-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #0f172a;
-            line-height: 1.15;
-            letter-spacing: -0.3px;
-            display: block;
-        }
-        .brand-subtitle {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            display: block;
-        }
-
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 1.5rem;
-            padding-right: 2px;
-        }
-        .sidebar-nav::-webkit-scrollbar { width: 4px; }
-        .sidebar-nav::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-
-        .sidebar-nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.7rem 0.95rem;
-            border: none;
-            background: transparent;
-            border-radius: 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #94a3b8;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: inherit;
-            text-decoration: none;
-        }
-        .sidebar-nav-btn:hover {
-            background: #f8fafc;
-            color: var(--primary-blue);
-            transform: translateX(2px);
-        }
-        .sidebar-nav-btn.active {
-            background: var(--primary-blue) !important;
-            color: #ffffff !important;
-            font-weight: 700;
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.32);
-        }
-        .sidebar-nav-btn svg {
-            flex-shrink: 0;
-            transition: stroke 0.2s;
-        }
-        .sidebar-nav-btn.active svg {
-            stroke: #ffffff !important;
-        }
-        .sidebar-nav-btn .nav-text {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
-        }
-        .sidebar-badge {
-            padding: 0.18rem 0.55rem;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            line-height: 1;
-            flex-shrink: 0;
-        }
-        .sidebar-badge-danger { background: #ef4444; color: #ffffff; }
-        .sidebar-badge-warning { background: #f59e0b; color: #ffffff; }
-
-        /* SIDEBAR PROMO / SAFE WIDGET (DISCOVER PRO STYLE) */
-        .sidebar-promo-card {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            border-radius: 22px;
-            padding: 1.25rem 1rem;
-            color: #ffffff;
-            text-align: center;
-            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
-            position: relative;
-            overflow: hidden;
-        }
-        .sidebar-promo-card::before {
-            content: '';
-            position: absolute;
-            top: -30px;
-            right: -30px;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-        }
-        .promo-illustration {
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: center;
-        }
-        .promo-title {
-            font-size: 0.95rem;
-            font-weight: 800;
-            margin-bottom: 2px;
-            letter-spacing: -0.2px;
-        }
-        .promo-sub {
-            font-size: 0.72rem;
-            opacity: 0.85;
-            margin-bottom: 0.85rem;
-        }
-        .btn-promo-action {
-            background: #ffffff;
-            color: #1d4ed8;
-            font-weight: 800;
-            font-size: 0.82rem;
-            border-radius: 9999px;
-            padding: 0.55rem 1rem;
-            width: 100%;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-        .btn-promo-action:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-        }
-
-        /* 2. CENTER CONTENT COLUMN */
-        .main-col {
-            flex: 1;
-            min-width: 0;
-            padding: 1.75rem 2rem 2.5rem 2rem;
-            overflow-y: auto;
-            max-height: calc(100vh - 2.5rem);
-            background: #ffffff;
-        }
-        .main-col::-webkit-scrollbar { width: 6px; }
-        .main-col::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-
-        .center-topbar {
+        /* 1. TOP NAVBAR (STICKY FULL-WIDTH) */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 950;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            padding: 0.95rem 2rem;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-light, #e2e8f0);
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+            width: 100%;
+            flex-wrap: wrap;
             gap: 1rem;
         }
-        .topbar-left {
+        .navbar-brand {
             display: flex;
             align-items: center;
             gap: 0.85rem;
+            text-decoration: none;
         }
-        .sidebar-mobile-toggle {
-            display: none;
-            background: #f8fafc;
-            border: 1px solid var(--border-light);
-            padding: 0.5rem;
-            border-radius: 10px;
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        /* 2. HORIZONTAL NAVIGATION TABS (NO ICONS AS REQUESTED BY USER) */
+        .nav-tabs-bar {
+            background: #ffffff;
+            border-bottom: 2px solid var(--border-light, #e2e8f0);
+            padding: 0.65rem 2rem;
+            width: 100%;
+            position: sticky;
+            top: 67px;
+            z-index: 900;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+        }
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 0.4rem;
+            width: 100%;
+            max-width: 1540px;
+            margin: 0 auto;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .nav-tabs::-webkit-scrollbar { height: 4px; }
+        .nav-tabs::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.6rem 1.15rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-slate, #475569);
             cursor: pointer;
-            color: #334155;
+            border-radius: 12px;
+            white-space: nowrap;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--primary-blue, #2563eb);
+            background: #eff6ff;
+        }
+        .tab-btn.active {
+            background: var(--primary-blue, #2563eb) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28) !important;
+        }
+        .tab-badge {
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-left: 3px;
+        }
+        .tab-badge-danger { background: #ef4444; color: #ffffff; }
+        .tab-badge-warning { background: #f59e0b; color: #ffffff; }
+
+        /* 3. MAIN FULL-SCREEN CONTENT CONTAINER */
+        .container {
+            max-width: 1540px;
+            width: 100%;
+            margin: 1.75rem auto 3.5rem;
+            padding: 0 1.75rem;
+            box-sizing: border-box;
+        }
+        .tab-content {
+            display: none;
+            width: 100%;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 1.5rem 1.75rem;
+            border: 1px solid var(--border-light, #e2e8f0);
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+            border-color: #cbd5e1;
+        }
+        .stat-card-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 0.35rem;
+        }
+        .stat-card-value.text-blue { color: #2563eb; }
+        .stat-card-value.text-indigo { color: #6366f1; }
+        .stat-card-value.text-emerald { color: #16a34a; }
+        .stat-card-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
         }
         .topbar-greeting {
             font-size: 0.82rem;
@@ -691,23 +618,21 @@
             color: #ffffff;
         }
 
-        /* 3. RIGHT SIDEBAR COLUMN */
-        .right-col {
-            width: 320px;
-            min-width: 320px;
-            max-width: 320px;
-            background: #ffffff;
-            border-left: 1px solid var(--border-soft);
-            padding: 1.75rem 1.5rem 1.5rem 1.5rem;
+        /* DASHBOARD BOTTOM GRID & WIDGETS */
+        .dashboard-bottom-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1.15fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            align-items: start;
+            width: 100%;
+        }
+        .dashboard-widgets-col {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-            overflow-y: auto;
-            max-height: calc(100vh - 2.5rem);
-            flex-shrink: 0;
+            width: 100%;
         }
-        .right-col::-webkit-scrollbar { width: 4px; }
-        .right-col::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 
         .user-profile-header {
             display: flex;
@@ -1257,54 +1182,23 @@
             position: relative;
         }
 
-        .sidebar-backdrop {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(2px);
-            z-index: 999;
-        }
-
         /* RESPONSIVE BREAKPOINTS */
-        @media (max-width: 1280px) {
-            .right-col {
-                display: none; /* Can be viewed via toggle or responsive layout */
+        @media (max-width: 1024px) {
+            .dashboard-bottom-grid {
+                grid-template-columns: 1fr;
             }
         }
         @media (max-width: 992px) {
-            body {
-                padding: 0;
+            .navbar {
+                padding: 0.85rem 1.25rem;
             }
-            .cryptowall-app {
-                border-radius: 0;
-                min-height: 100vh;
+            .nav-tabs-bar {
+                padding: 0.5rem 1rem;
+                top: 65px;
             }
-            .sidebar-col {
-                position: fixed;
-                top: 0;
-                left: 0;
-                bottom: 0;
-                height: 100vh;
-                transform: translateX(-100%);
-                z-index: 1001;
-                box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
-                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            .sidebar-col.open {
-                transform: translateX(0);
-            }
-            .sidebar-backdrop.active {
-                display: block;
-            }
-            .sidebar-mobile-toggle {
-                display: inline-flex;
-            }
-            .main-col {
-                padding: 1.25rem 1rem 2rem 1rem;
+            .container {
+                padding: 0 1rem;
+                margin: 1.25rem auto 2.5rem;
             }
             .grid-split {
                 grid-template-columns: 1fr;
@@ -1321,142 +1215,61 @@
     </style>
 </head>
 <body>
-    <div class="cryptowall-app">
-        <!-- BACKDROP UNTUK MOBILE SIDEBAR -->
-        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
-
-        <!-- 1. LEFT SIDEBAR (CRYPTOWALL STYLE) -->
-        <aside class="sidebar-col admin-sidebar" id="adminSidebar">
+    <!-- TOP NAVBAR (FULL-WIDTH STICKY) -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <img src="{{ asset('images/logo_bank_mini.png') }}" alt="Logo Bank Mini" style="height: 44px; width: 44px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border-light, #e2e8f0); background: #ffffff; padding: 2px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);">
             <div>
-                <!-- BRAND LOGO & TITLE -->
-                <div class="sidebar-brand">
-                    <div class="brand-icon-wrap">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 21h18"/>
-                            <path d="M3 10h18"/>
-                            <path d="M5 6l7-3 7 3"/>
-                            <path d="M4 10v11"/>
-                            <path d="M20 10v11"/>
-                            <path d="M8 14v4"/>
-                            <path d="M12 14v4"/>
-                            <path d="M16 14v4"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="brand-title">Bank Mini</span>
-                        <span class="brand-subtitle">Administrator Panel</span>
-                    </div>
-                </div>
-
-                <!-- NAVIGATION BUTTONS WITH SVG ICONS -->
-                <nav class="sidebar-nav">
-                    <!-- 1. Dashboard -->
-                    <button type="button" class="tab-btn sidebar-nav-btn active" onclick="switchTab('tab-dashboard')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <span class="nav-text">Dashboard</span>
-                    </button>
-
-                    <!-- 2. Manajemen User -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-users')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <span class="nav-text">Manajemen User</span>
-                    </button>
-
-                    <!-- 3. Data Anggota Siswa -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-members')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                        <span class="nav-text">Data Anggota Siswa</span>
-                    </button>
-
-                    <!-- 4. Data Penabung -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-savers')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-                        <span class="nav-text">Data Penabung</span>
-                    </button>
-
-                    <!-- 5. Approval Kas & Tutup Kas -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-supervisor')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-                        <span class="nav-text">Approval Kas & Tutup Kas</span>
-                        @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
-                        @if($pendingKasCount > 0)
-                            <span class="sidebar-badge sidebar-badge-danger">{{ $pendingKasCount }}</span>
-                        @endif
-                    </button>
-
-                    <!-- 6. Laporan Bulanan -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-laporan-bulanan')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
-                        <span class="nav-text">Laporan Bulanan</span>
-                    </button>
-
-                    <!-- 7. Jurnal Akuntansi -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-jurnal')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
-                        <span class="nav-text">Jurnal Akuntansi</span>
-                    </button>
-
-                    <!-- 8. Audit Logs -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-audit')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <span class="nav-text">Audit Logs</span>
-                    </button>
-
-                    <!-- 9. Pengaduan Nasabah -->
-                    <button type="button" class="tab-btn sidebar-nav-btn" onclick="switchTab('tab-pengaduan')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        <span class="nav-text">Pengaduan Nasabah</span>
-                        @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
-                        @if($pendingPengaduanCount > 0)
-                            <span class="sidebar-badge sidebar-badge-warning">{{ $pendingPengaduanCount }}</span>
-                        @endif
-                    </button>
-                </nav>
+                <h2 style="margin:0; font-size: 1.25rem; font-weight: 800; line-height: 1.2; color: #0f172a;">Administrator</h2>
+                <p style="margin:0; font-size: 0.8rem; color: var(--text-muted, #64748b); font-weight: 600;">E-Teller Bank Mini Sekolah</p>
             </div>
+        </div>
 
-            <!-- PROMO / SAFE WIDGET (DISCOVER PRO STYLE) -->
-            <div class="sidebar-promo-card">
-                <div class="promo-illustration">
-                    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-                        <rect x="4" y="6" width="36" height="26" rx="6" fill="#1e40af" stroke="#93c5fd" stroke-width="2"/>
-                        <rect x="9" y="11" width="14" height="6" rx="2" fill="#38bdf8"/>
-                        <circle cx="29" cy="14" r="3" fill="#facc15"/>
-                        <rect x="9" y="21" width="26" height="4" rx="2" fill="#93c5fd" opacity="0.8"/>
-                        <path d="M16 32L12 40H32L28 32" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <div class="promo-title">Bank Mini Safe</div>
-                <div class="promo-sub">E-Teller Sekolah v2.0</div>
-                <form action="{{ route('logout') }}" method="POST" style="margin: 0; width: 100%;">
-                    @csrf
-                    <button type="submit" class="btn-promo-action" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">
-                        Keluar Sistem
-                    </button>
-                </form>
+        <div class="navbar-right">
+            <div class="search-pill-box" style="margin: 0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+                <input type="text" id="globalSearchInput" placeholder="Cari data / fitur..." oninput="handleGlobalSearch(this.value)">
             </div>
-        </aside>
+            <div style="font-size: 0.92rem; color: #334155; white-space: nowrap;">
+                Halo, <strong>{{ $user->nama_petugas }}</strong> 
+                <span class="badge" style="background:#dcfce7; color:#166534; font-weight:800; font-size:0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px; margin-left: 4px;">ADMIN</span>
+            </div>
+            <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                @csrf
+                <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('admin_active_tab');localStorage.removeItem('admin_active_tab');}catch(e){}">Keluar</button>
+            </form>
+        </div>
+    </nav>
 
-        <!-- 2. CENTER CONTENT COLUMN -->
-        <main class="main-col admin-main" id="adminCenter">
-            <!-- TOPBAR HEADER -->
-            <header class="center-topbar">
-                <div class="topbar-left">
-                    <button type="button" class="sidebar-mobile-toggle" onclick="toggleSidebar()" aria-label="Buka Menu">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-                    </button>
-                    <div>
-                        <div class="topbar-greeting">Administrator</div>
-                        <h1 class="topbar-page-title" id="activeTabTitle">Dashboard</h1>
-                        <p id="activeTabDesc" style="display: none;">Ringkasan operasional dan statistik Bank Mini</p>
-                    </div>
-                </div>
-                <div class="topbar-right">
-                    <div class="search-pill-box">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-                        <input type="text" id="globalSearchInput" placeholder="Cari data / fitur..." oninput="handleGlobalSearch(this.value)">
-                    </div>
-                </div>
-            </header>
+    <!-- HORIZONTAL NAV TABS (TEXT ONLY - STRICTLY NO ICONS) -->
+    <div class="nav-tabs-bar">
+        <div class="nav-tabs">
+            <button type="button" class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-users')">Manajemen User</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-supervisor')">
+                Approval Kas & Tutup Kas
+                @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
+                @if($pendingKasCount > 0)
+                    <span class="tab-badge tab-badge-danger">{{ $pendingKasCount }}</span>
+                @endif
+            </button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-laporan-bulanan')">Laporan Bulanan</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-jurnal')">Jurnal Akuntansi</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-audit')">Audit Logs</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-pengaduan')">
+                Pengaduan Nasabah
+                @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
+                @if($pendingPengaduanCount > 0)
+                    <span class="tab-badge tab-badge-warning">{{ $pendingPengaduanCount }}</span>
+                @endif
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER (FULL WIDTH, NO MARGINS / NO OUTER FRAMES) -->
+    <div class="container">
 
             <!-- NOTIFIKASI SUKSES / ERROR SISTEM -->
             @if(session('success'))
@@ -1531,188 +1344,174 @@
                     </div>
                 @endif
 
-                <!-- HERO BANNER (EASY TO MANAGE YOUR MINI BANK SYSTEM) -->
-                <div class="hero-banner">
-                    <div class="hero-content">
-                        <h2 class="hero-heading">Easy to Manage Your Mini Bank System</h2>
-                        <p class="hero-subtext">Pantau kas teller, verifikasi setoran & penarikan, serta kelola akun nasabah secara aman dan real-time.</p>
-                        <button type="button" class="hero-btn" onclick="switchTab('tab-supervisor')">
-                            Detail Transaksi &rarr;
-                        </button>
+                <!-- 4 STAT METRICS CARDS (MATCHING IMAGE 2 EXACTLY) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <!-- 1. TOTAL PENGGUNA -->
+                    <div class="stat-card" onclick="switchTab('tab-users')">
+                        <div class="stat-card-label">TOTAL PENGGUNA</div>
+                        <div class="stat-card-value text-blue">{{ $totalUsers }}</div>
+                        <div class="stat-card-sub">Admin, Supervisor &amp; Teller &rarr;</div>
                     </div>
-                    <div class="hero-illustration">
-                        <div class="mockup-phone">
-                            <div class="phone-chip-pill"></div>
-                            <div class="phone-receipt-card">
-                                <div class="receipt-icon">🪙</div>
-                                <div class="receipt-lines">
-                                    <div class="r-line r-line-short"></div>
-                                    <div class="r-line"></div>
+
+                    <!-- 2. TOTAL ANGGOTA SISWA -->
+                    <div class="stat-card" onclick="switchTab('tab-members')">
+                        <div class="stat-card-label">TOTAL ANGGOTA SISWA</div>
+                        <div class="stat-card-value text-indigo">{{ $totalMembers }}</div>
+                        <div class="stat-card-sub">Siswa terdaftar di sekolah &rarr;</div>
+                    </div>
+
+                    <!-- 3. TOTAL PENABUNG AKTIF -->
+                    <div class="stat-card" onclick="switchTab('tab-savers')">
+                        <div class="stat-card-label">TOTAL PENABUNG AKTIF</div>
+                        <div class="stat-card-value text-emerald">{{ $totalSavers }}</div>
+                        <div class="stat-card-sub">Rekening aktif menabung &rarr;</div>
+                    </div>
+
+                    <!-- 4. TOTAL SALDO PENABUNG -->
+                    <div class="stat-card" onclick="switchTab('tab-jurnal')">
+                        <div class="stat-card-label">TOTAL SALDO PENABUNG</div>
+                        <div class="stat-card-value text-blue">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                        <div class="stat-card-sub">Total dana tabungan siswa &rarr;</div>
+                    </div>
+                </div>
+
+                <!-- 2 OPERASIONAL ALERTS CARDS (MATCHING IMAGE 2) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <!-- KARTU PENGADUAN SISWA MENUNGGU RESPON -->
+                    <div class="op-card" style="background: #ffffff; border-radius: 20px; padding: 1.5rem 1.75rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">PENGADUAN SISWA MENUNGGU RESPON</h4>
+                            <button type="button" onclick="switchTab('tab-pengaduan')" style="background: #dcfce7; color: #166534; font-weight: 800; font-size: 0.78rem; padding: 0.35rem 0.85rem; border-radius: 999px; border: none; cursor: pointer;">
+                                Lihat Semua &rarr;
+                            </button>
+                        </div>
+                        @php $pendingPengaduan = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->take(3) : collect(); @endphp
+                        @forelse($pendingPengaduan as $pg)
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <strong style="font-size: 0.88rem; color: #0f172a;">{{ $pg->nama_pengadu }}</strong>
+                                    <span style="font-size: 0.72rem; color: #64748b;">{{ date('d/m H:i', strtotime($pg->created_at)) }}</span>
+                                </div>
+                                <div style="font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 2px;">{{ $pg->judul ?? $pg->subjek }}</div>
+                                <div style="font-size: 0.8rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ $pg->isi_pesan ?? $pg->pesan }}
                                 </div>
                             </div>
-                            <div class="floating-glass-card">
-                                <div class="g-line"></div>
+                        @empty
+                            <div style="text-align: center; color: #64748b; padding: 1.75rem 0; font-size: 0.88rem;">
+                                ✓ Semua pengaduan nasabah telah ditanggapi.
                             </div>
-                            <div class="floating-glass-card">
-                                <div class="g-line g-line-full"></div>
-                            </div>
-                            <div class="phone-btn-bar"></div>
-                        </div>
-                        <div class="phone-float-badge">✦ Bank Mini</div>
+                        @endforelse
                     </div>
-                </div>
 
-                <!-- "MY PORTOFOLIO" METRIC ROW -->
-                <div class="portfolio-section">
-                    <div class="section-header-flex">
-                        <h3 class="section-title">My Portofolio</h3>
-                        <div class="pagination-arrows">
-                            <button type="button" class="arrow-btn" onclick="switchTab('tab-users')">&lsaquo;</button>
-                            <button type="button" class="arrow-btn" onclick="switchTab('tab-savers')">&rsaquo;</button>
+                    <!-- KARTU LAPORAN TUTUP KAS TELLER PENDING -->
+                    <div class="op-card" style="background: #ffffff; border-radius: 20px; padding: 1.5rem 1.75rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">LAPORAN TUTUP KAS TELLER PENDING</h4>
+                            <button type="button" onclick="switchTab('tab-supervisor')" style="background: #dcfce7; color: #166534; font-weight: 800; font-size: 0.78rem; padding: 0.35rem 0.85rem; border-radius: 999px; border: none; cursor: pointer;">
+                                Buka Approval &rarr;
+                            </button>
                         </div>
-                    </div>
-                    <div class="portfolio-grid">
-                        <!-- 1. Total Pengguna -->
-                        <div class="portfolio-card" onclick="switchTab('tab-users')">
-                            <div class="p-card-icon icon-cyan">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            </div>
-                            <div>
-                                <div class="p-card-label">Total Pengguna</div>
-                                <div class="p-card-val">{{ $totalUsers }}</div>
-                                <div class="p-card-sub text-cyan">Admin, Spv & Teller &rarr;</div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Total Anggota Siswa -->
-                        <div class="portfolio-card" onclick="switchTab('tab-members')">
-                            <div class="p-card-icon icon-purple">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                            </div>
-                            <div>
-                                <div class="p-card-label">Total Anggota</div>
-                                <div class="p-card-val" style="color: #6366f1;">{{ $totalMembers }}</div>
-                                <div class="p-card-sub text-purple">Siswa Terdaftar &rarr;</div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Total Penabung Aktif -->
-                        <div class="portfolio-card" onclick="switchTab('tab-savers')">
-                            <div class="p-card-icon icon-emerald">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-                            </div>
-                            <div>
-                                <div class="p-card-label">Penabung Aktif</div>
-                                <div class="p-card-val" style="color: #10b981;">{{ $totalSavers }}</div>
-                                <div class="p-card-sub text-emerald">Rekening Aktif &rarr;</div>
-                            </div>
-                        </div>
-
-                        <!-- 4. Total Saldo Penabung -->
-                        <div class="portfolio-card" onclick="switchTab('tab-jurnal')">
-                            <div class="p-card-icon icon-blue">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            </div>
-                            <div>
-                                <div class="p-card-label">Total Saldo</div>
-                                <div class="p-card-val font-sm-balance">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
-                                <div class="p-card-sub text-blue">Dana Tabungan &rarr;</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TOTAL PORTOFOLIO CHART & OPERASIONAL CARDS -->
-                <div class="chart-and-status-grid">
-                    <!-- SINE WAVE CURVE GRAPH CARD -->
-                    <div class="chart-card">
-                        <div class="chart-card-header">
-                            <div class="chart-title-wrap">
-                                <span class="chart-icon-box">📊</span>
+                        @forelse($laporanPending->take(3) as $lpDash)
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <h4 class="chart-title">Total Portofolio & Aliran Kas</h4>
-                                    <p class="chart-sub">Pergerakan transaksi kas dan pertumbuhan tabungan sekolah</p>
+                                    <strong style="font-size: 0.88rem; color: #0f172a;">{{ $lpDash->teller->nama_petugas ?? 'Teller' }}</strong>
+                                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
+                                        Tgl: {{ date('d/m/Y', strtotime($lpDash->tanggal)) }} &bull; Fisik: Rp {{ number_format($lpDash->uang_fisik) }}
+                                    </div>
                                 </div>
+                                <button type="button" onclick="openRiwayatModal({{ $lpDash->id }})" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; border-radius: 8px;">
+                                    Cek Mutasi
+                                </button>
                             </div>
-                            <div class="chart-badge-pill">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                        @empty
+                            <div style="text-align: center; color: #64748b; padding: 1.75rem 0; font-size: 0.88rem;">
+                                ✓ Tidak ada laporan tutup kas teller yang menunggu persetujuan.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- TRANSAKSI TERKINI & KARTU KAS BANK MINI -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.25rem;">
+                    <!-- RECENT TRANSACTIONS -->
+                    <div class="recent-trans-widget" style="margin: 0; background: #ffffff; border-radius: 20px; padding: 1.5rem 1.75rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 class="widget-title" style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Transaksi Terkini (Recent Transactions)</h4>
+                            <button type="button" onclick="switchTab('tab-jurnal')" style="background: none; border: none; color: #2563eb; font-weight: 700; font-size: 0.8rem; cursor: pointer;">Lihat Semua &rarr;</button>
                         </div>
-                        <div class="chart-visual-box">
-                            <svg class="trend-wave-svg" viewBox="0 0 600 140" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22"/>
-                                        <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0"/>
-                                    </linearGradient>
-                                </defs>
-                                <path d="M0,95 C70,110 130,70 190,85 C250,100 310,40 370,30 C430,22 470,80 530,95 C560,102 585,100 600,98 L600,140 L0,140 Z" fill="url(#waveGrad)"/>
-                                <path d="M0,95 C70,110 130,70 190,85 C250,100 310,40 370,30 C430,22 470,80 530,95 C560,102 585,100 600,98" fill="none" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round"/>
-                                <circle cx="370" cy="30" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="3"/>
-                                <line x1="370" y1="36" x2="370" y2="140" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6"/>
-                            </svg>
-                            <div class="chart-floating-tag">
-                                <span class="tag-label">Saldo:</span>
-                                <span class="tag-val">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="chart-x-axis">
-                                <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
-                            </div>
+                        <div class="trans-list">
+                            @forelse($jurnals->take(5) as $trxJurnal)
+                                @php
+                                    $isKredit = ($trxJurnal->kredit > 0);
+                                    $trxNominal = $isKredit ? $trxJurnal->kredit : $trxJurnal->debet;
+                                    $isSetoran = str_contains(strtolower($trxJurnal->keterangan), 'setoran') || (!$isKredit && str_contains(strtolower($trxJurnal->akun->nama_akun ?? ''), 'kas'));
+                                @endphp
+                                <div class="trans-item">
+                                    <div class="trans-icon {{ $isSetoran ? 't-icon-setoran' : 't-icon-penarikan' }}">
+                                        @if($isSetoran)
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                                        @else
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                                        @endif
+                                    </div>
+                                    <div class="trans-meta">
+                                        <div class="trans-desc">{{ $trxJurnal->keterangan ?: ($isSetoran ? 'Setoran Nasabah' : 'Penarikan Nasabah') }}</div>
+                                        <div class="trans-time">{{ date('d M Y, H:i', strtotime($trxJurnal->created_at)) }}</div>
+                                    </div>
+                                    <div class="trans-amount {{ $isSetoran ? 'amount-green' : 'amount-red' }}">
+                                        {{ $isSetoran ? '+' : '-' }}Rp {{ number_format($trxNominal, 0, ',', '.') }}
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="empty-trans-text">Belum ada transaksi hari ini</div>
+                            @endforelse
                         </div>
                     </div>
 
-                    <!-- RINGKASAN CEPAT OPERASIONAL ADMIN -->
-                    <div class="operations-grid">
-                        <!-- KARTU PENGADUAN SISWA TERBARU -->
-                        <div class="op-card">
-                            <div class="op-card-header">
-                                <h4 class="op-card-title">Pengaduan Siswa Menunggu Respon</h4>
-                                <button type="button" onclick="switchTab('tab-pengaduan')" class="btn-op-pill">
-                                    Lihat Semua &rarr;
+                    <!-- KARTU KAS & STATUS LOKET TELLER -->
+                    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                        <div class="my-cards-widget" style="margin: 0; background: #ffffff; border-radius: 20px; padding: 1.5rem 1.75rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
+                            <div class="widget-heading-row" style="margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                                <h4 class="widget-title" style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Kartu Kas &amp; Likuiditas Sekolah</h4>
+                                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 999px;">Real-Time</span>
+                            </div>
+                            <div class="debit-card-blue">
+                                <div class="card-top-row">
+                                    <div class="card-balance-lbl">Balance (Kas Utama Bank Mini)</div>
+                                    <div class="card-chip-symbol">
+                                        <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+                                            <rect width="28" height="20" rx="4" fill="rgba(255,255,255,0.2)"/>
+                                            <circle cx="9" cy="10" r="5" fill="#facc15" opacity="0.9"/>
+                                            <circle cx="19" cy="10" r="5" fill="#ef4444" opacity="0.9"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="card-balance-amount">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
+                                <div class="card-bottom-row">
+                                    <div>
+                                        <div class="card-sub-lbl">Monthly Volume</div>
+                                        <div class="card-sub-val">Rp {{ number_format($monthlySetoran + $monthlyPenarikan, 0, ',', '.') }}</div>
+                                    </div>
+                                    <div class="card-growth-pill">▲ Aktif</div>
+                                </div>
+                            </div>
+                            <div class="card-actions-row" style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+                                <button type="button" class="btn-card-action btn-card-request" onclick="switchTab('tab-supervisor')" title="Buka Approval Tambahan Kas" style="flex: 1; justify-content: center;">
+                                    <span>Request Tambahan Kas</span>
+                                </button>
+                                <button type="button" class="btn-card-action btn-card-transfer" onclick="switchTab('tab-supervisor')" title="Buka Approval Tutup Kas" style="flex: 1; justify-content: center;">
+                                    <span>Tutup Kas Teller</span>
                                 </button>
                             </div>
-                            @php $pendingPengaduan = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->take(3) : collect(); @endphp
-                            @forelse($pendingPengaduan as $pg)
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                        <strong style="font-size: 0.88rem; color: #0f172a;">{{ $pg->nama_pengadu }}</strong>
-                                        <span style="font-size: 0.72rem; color: #64748b;">{{ date('d/m H:i', strtotime($pg->created_at)) }}</span>
-                                    </div>
-                                    <div style="font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 2px;">{{ $pg->judul ?? $pg->subjek }}</div>
-                                    <div style="font-size: 0.8rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        {{ $pg->isi_pesan ?? $pg->pesan }}
-                                    </div>
-                                </div>
-                            @empty
-                                <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.85rem;">
-                                    ✓ Semua pengaduan nasabah telah ditanggapi.
-                                </div>
-                            @endforelse
                         </div>
 
-                        <!-- KARTU TUTUP KAS & LAPORAN TELLER HARI INI -->
-                        <div class="op-card">
-                            <div class="op-card-header">
-                                <h4 class="op-card-title">Laporan Tutup Kas Teller Pending</h4>
-                                <button type="button" onclick="switchTab('tab-supervisor')" class="btn-op-pill">
-                                    Buka Approval &rarr;
-                                </button>
+                        <div class="loket-quick-status" style="margin: 0; background: #ffffff; border-radius: 20px; padding: 1.25rem 1.5rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
+                            <div class="l-status-header">
+                                <span class="l-dot-online"></span>
+                                <span class="l-status-title">Loket Teller Online</span>
                             </div>
-                            @forelse($laporanPending->take(3) as $lpDash)
-                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <strong style="font-size: 0.88rem; color: #0f172a;">{{ $lpDash->teller->nama_petugas ?? 'Teller' }}</strong>
-                                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
-                                            Tgl: {{ date('d/m/Y', strtotime($lpDash->tanggal)) }} &bull; Fisik: Rp {{ number_format($lpDash->uang_fisik) }}
-                                        </div>
-                                    </div>
-                                    <button type="button" onclick="openRiwayatModal({{ $lpDash->id }})" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; border-radius: 8px;">
-                                        Cek Mutasi
-                                    </button>
-                                </div>
-                            @empty
-                                <div style="text-align: center; color: #64748b; padding: 1.5rem 0; font-size: 0.85rem;">
-                                    ✓ Tidak ada laporan tutup kas teller yang menunggu persetujuan.
-                                </div>
-                            @endforelse
+                            <div class="l-status-desc">Sistem terhubung ke database dan siap melayani transaksi keuangan seluruh siswa.</div>
                         </div>
                     </div>
                 </div>
@@ -2750,117 +2549,7 @@
                 </div>
             </div>
         </div>
-        </main>
-
-        <!-- 3. RIGHT SIDEBAR COLUMN (CRYPTOWALL PANEL) -->
-        <aside class="right-col" id="adminRightPanel">
-            <!-- USER PROFILE HEADER -->
-            <div class="user-profile-header">
-                <button type="button" class="btn-notification" onclick="switchTab('tab-pengaduan')" title="Notifikasi & Pengaduan">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                    @php $totalNotif = ($pendingPengaduanCount ?? 0) + ($pendingKasTop ? $pendingKasTop->count() : 0); @endphp
-                    @if($totalNotif > 0)
-                        <span class="notif-dot"></span>
-                    @endif
-                </button>
-                <div class="user-meta-wrap">
-                    <div class="user-avatar-circle">
-                        {{ strtoupper(substr($user->nama_petugas, 0, 1)) }}
-                    </div>
-                    <div class="user-name-box">
-                        <span class="user-name-text">{{ $user->nama_petugas }}</span>
-                        <span class="user-role-badge">Administrator</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- "MY CARDS" WIDGET (KAS UTAMA & BRANKAS SEKOLAH) -->
-            <div class="my-cards-widget">
-                <div class="widget-heading-row">
-                    <h4 class="widget-title">My Cards</h4>
-                    <div class="card-dots">
-                        <span class="dot active"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                    </div>
-                </div>
-
-                <div class="debit-card-blue">
-                    <div class="card-top-row">
-                        <div class="card-balance-lbl">Balance (Kas Utama)</div>
-                        <div class="card-chip-symbol">
-                            <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-                                <rect width="28" height="20" rx="4" fill="rgba(255,255,255,0.2)"/>
-                                <circle cx="9" cy="10" r="5" fill="#facc15" opacity="0.9"/>
-                                <circle cx="19" cy="10" r="5" fill="#ef4444" opacity="0.9"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="card-balance-amount">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
-                    <div class="card-bottom-row">
-                        <div>
-                            <div class="card-sub-lbl">Monthly Volume</div>
-                            <div class="card-sub-val">Rp {{ number_format($monthlySetoran + $monthlyPenarikan, 0, ',', '.') }}</div>
-                        </div>
-                        <div class="card-growth-pill">▲ +10%</div>
-                    </div>
-                </div>
-
-                <!-- ACTION BUTTONS: REQUEST & TRANSFER -->
-                <div class="card-actions-row">
-                    <button type="button" class="btn-card-action btn-card-request" onclick="switchTab('tab-supervisor')" title="Buka Approval Tambahan Kas">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-                        <span>Request</span>
-                    </button>
-                    <button type="button" class="btn-card-action btn-card-transfer" onclick="switchTab('tab-supervisor')" title="Buka Approval Tutup Kas">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                        <span>Transfer</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- "RECENT TRANSACTION" WIDGET -->
-            <div class="recent-trans-widget">
-                <h4 class="widget-title">Recent Transaction</h4>
-                <div class="trans-list">
-                    @forelse($jurnals->take(5) as $trxJurnal)
-                        @php
-                            $isKredit = ($trxJurnal->kredit > 0);
-                            $trxNominal = $isKredit ? $trxJurnal->kredit : $trxJurnal->debet;
-                            $isSetoran = str_contains(strtolower($trxJurnal->keterangan), 'setoran') || (!$isKredit && str_contains(strtolower($trxJurnal->akun->nama_akun ?? ''), 'kas'));
-                        @endphp
-                        <div class="trans-item">
-                            <div class="trans-icon {{ $isSetoran ? 't-icon-setoran' : 't-icon-penarikan' }}">
-                                @if($isSetoran)
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="5" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-                                @else
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                                @endif
-                            </div>
-                            <div class="trans-meta">
-                                <div class="trans-desc">{{ $trxJurnal->keterangan ?: ($isSetoran ? 'Setoran Nasabah' : 'Penarikan Nasabah') }}</div>
-                                <div class="trans-time">{{ date('d M, H:i', strtotime($trxJurnal->created_at)) }}</div>
-                            </div>
-                            <div class="trans-amount {{ $isSetoran ? 'amount-green' : 'amount-red' }}">
-                                {{ $isSetoran ? '+' : '-' }}Rp {{ number_format($trxNominal, 0, ',', '.') }}
-                            </div>
-                        </div>
-                    @empty
-                        <div class="empty-trans-text">Belum ada transaksi hari ini</div>
-                    @endforelse
-                </div>
-            </div>
-
-            <!-- QUICK LOKET STATUS -->
-            <div class="loket-quick-status">
-                <div class="l-status-header">
-                    <span class="l-dot-online"></span>
-                    <span class="l-status-title">Loket Teller Online</span>
-                </div>
-                <div class="l-status-desc">Sistem terhubung ke database dan siap melayani transaksi siswa.</div>
-            </div>
-        </aside>
-    </div>
+    </div> <!-- END .container -->
 
 <!-- MODAL TAMBAH ANGGOTA SISWA BARU -->
     <div class="modal-overlay" id="modalTambahMember">
@@ -3043,28 +2732,11 @@
                 }
             } catch (e) {}
 
-            if (window.innerWidth <= 992) {
-                toggleSidebar(false);
-            }
+            // Top navbar active
         }
 
         function toggleSidebar(forceState) {
-            const sidebar = document.getElementById('adminSidebar');
-            const backdrop = document.getElementById('sidebarBackdrop');
-            if (!sidebar || !backdrop) return;
-
-            const isOpen = sidebar.classList.contains('open');
-            const shouldOpen = (forceState !== undefined) ? forceState : !isOpen;
-
-            if (shouldOpen) {
-                sidebar.classList.add('open');
-                backdrop.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            } else {
-                sidebar.classList.remove('open');
-                backdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            }
+            // No-op: Sidebar has been transitioned to sticky top navbar
         }
 
         function switchSubFilter(subId) {
