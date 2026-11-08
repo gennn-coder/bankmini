@@ -962,89 +962,52 @@
 
         <!-- TAB 2: DATA ANGGOTA SISWA (MEMBERS) - CRUD -->
         <div id="tab-members" class="tab-content">
-            <!-- DUA KARTU DI ATAS: FORM TAMBAH ANGGOTA & IMPOR DATA ANGGOTA -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; margin-bottom: 1.75rem; align-items: start;">
-                <!-- KARTU 1: TAMBAH ANGGOTA SISWA BARU -->
-                <div class="card">
-                    <h3 style="margin-top:0; margin-bottom: 0.5rem; color: #2563eb;">Tambah Anggota Siswa Baru</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Tabel Anggota digunakan untuk menambah anggota</p>
-                    
-                    <form action="{{ route('admin.members.store') }}" method="POST">
-                        @csrf
-                        <div class="form-group">
-                            <label>Nama Siswa</label>
-                            <input type="text" name="student_name" class="form-control" required placeholder="Contoh: Budi Pratama">
-                        </div>
-                        <div class="form-group">
-                            <label>NIS (Nomor Induk Siswa)</label>
-                            <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
-                        </div>
-                        <div class="form-group">
-                            <label>Alamat Gmail Siswa</label>
-                            <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Jurusan</label>
-                            <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
-                        </div>
-                        <div class="form-group">
-                            <label>Tahun Kelulusan</label>
-                            <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
-                        </div>
-                        <div class="form-group">
-                            <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
-                            <div style="position: relative;">
-                                <input type="password" name="password" id="adminMemberPassword" class="form-control" required minlength="6" placeholder="Masukkan kata sandi login (min. 6 karakter)" style="padding-right: 2.75rem;">
-                                <button type="button" onclick="togglePasswordVisibility('adminMemberPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
-                            <div style="position: relative;">
-                                <input type="password" name="pin" id="adminMemberPin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)" style="padding-right: 2.75rem;">
-                                <button type="button" onclick="togglePasswordVisibility('adminMemberPin', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.5rem;">Simpan Data Anggota</button>
-                    </form>
+            <!-- DUA KARTU DI ATAS: TAMBAH ANGGOTA & IMPOR DATA ANGGOTA -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; align-items: stretch;">
+                <!-- KARTU 1: TAMBAH ANGGOTA SISWA BARU (COMPACT) -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 style="margin-top:0; margin-bottom: 0.35rem; color: #2563eb;">Tambah Anggota Siswa Baru</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Tabel Anggota digunakan untuk menambah anggota</p>
+                    </div>
+
+                    <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 1.25rem; text-align: center;">
+                        <button type="button" onclick="openTambahMemberModal()" class="btn-primary" style="width: 100%; padding: 0.75rem 1.25rem; font-size: 0.92rem; font-weight: 700;">
+                            + Tambah Siswa Baru
+                        </button>
+                    </div>
                 </div>
 
                 <!-- KARTU 2: IMPOR DATA ANGGOTA (CSV / EXCEL) -->
-                <div class="card">
-                    <h3 style="margin-top:0; margin-bottom: 0.5rem; color: #1e293b;">Impor Data Anggota</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">Unggah berkas untuk menambah anggota secara massal</p>
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 style="margin-top:0; margin-bottom: 0.85rem; color: #1e293b;">Impor Data Anggota</h3>
 
-                    <div style="margin-bottom: 1.15rem;">
-                        <label style="display: block; font-weight: 700; font-size: 0.82rem; margin-bottom: 0.45rem; color: #1e293b;">
-                            Unduh Template Format Database:
-                        </label>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <a href="{{ route('admin.members.template', ['format' => 'xlsx']) }}" class="btn-success" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 9px; text-decoration: none;">
-                                Template Excel (.xlsx)
-                            </a>
-                            <a href="{{ route('admin.members.template', ['format' => 'csv']) }}" class="btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 9px; background: #475569; text-decoration: none;">
-                                Template CSV
-                            </a>
+                        <div style="margin-bottom: 0.85rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.82rem; margin-bottom: 0.45rem; color: #1e293b;">
+                                Unduh Template Format Database:
+                            </label>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <a href="{{ route('admin.members.template', ['format' => 'xlsx']) }}" class="btn-success" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 9px; text-decoration: none;">
+                                    Template Excel (.xlsx)
+                                </a>
+                                <a href="{{ route('admin.members.template', ['format' => 'csv']) }}" class="btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 9px; background: #475569; text-decoration: none;">
+                                    Template CSV
+                                </a>
+                            </div>
                         </div>
-                        <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
-                            Format kolom template: <strong>nisn, nama, jurusan, tahun_keluar</strong>. Alamat Gmail dan PIN nasabah akan diinput oleh petugas saat aktivasi rekening di loket Teller.
-                        </small>
+
+                        <form action="{{ route('admin.members.import') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="form-group" style="margin-bottom: 0.75rem;">
+                                <label style="font-weight: 700; font-size: 0.82rem; margin-bottom: 0.35rem;">Pilih Berkas CSV / XLSX</label>
+                                <input type="file" name="file" class="form-control" accept=".csv, .xlsx, .xls" required style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
+                            </div>
+                            <button type="submit" class="btn-primary" style="width: 100%; padding: 0.65rem; font-size: 0.88rem;">
+                                Unggah &amp; Impor Anggota
+                            </button>
+                        </form>
                     </div>
-
-                    <form action="{{ route('admin.members.import') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="form-group" style="margin-bottom: 1rem;">
-                            <label>Pilih Berkas CSV / XLSX</label>
-                            <input type="file" name="file" class="form-control" accept=".csv, .xlsx, .xls" required style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
-                        </div>
-                        <button type="submit" class="btn-primary" style="width: 100%; padding: 0.7rem; font-size: 0.9rem;">
-                            Unggah &amp; Impor Anggota
-                        </button>
-                    </form>
                 </div>
             </div>
 
@@ -1054,7 +1017,10 @@
                         <div>
                             <h3 style="margin:0;">Daftar Anggota Siswa (Members)</h3>
                         </div>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" onclick="openTambahMemberModal()" class="btn-primary" style="padding: 0.38rem 0.85rem; font-size: 0.8rem; border-radius: 8px;">
+                                + Tambah Siswa
+                            </button>
                             <button type="button" id="btnFilterBelumAktif" onclick="setMemberStatusFilter('belum_aktif')" class="badge badge-role-teller" style="cursor: pointer; border: none; padding: 0.4rem 0.75rem; font-size: 0.78rem;">
                                 Belum Aktif ({{ $totalBelumAktif }})
                             </button>
@@ -1889,6 +1855,67 @@
         </div>
     </div>
 
+    <!-- MODAL TAMBAH ANGGOTA SISWA BARU -->
+    <div class="modal-overlay" id="modalTambahMember">
+        <div class="modal-card" style="max-width: 540px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <div>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin:0;">Tambah Anggota Siswa Baru</h3>
+                    <p style="margin: 3px 0 0; font-size: 0.82rem; color: var(--text-muted);">Tabel Anggota digunakan untuk menambah anggota</p>
+                </div>
+                <button type="button" onclick="closeTambahMemberModal()" style="background: none; border: none; font-size: 1.4rem; color: #64748b; cursor: pointer; font-weight: 700; line-height: 1;">&times;</button>
+            </div>
+
+            <form action="{{ route('admin.members.store') }}" method="POST">
+                @csrf
+                <div class="form-group">
+                    <label>Nama Siswa <span style="color: #dc2626;">*</span></label>
+                    <input type="text" name="student_name" class="form-control" required placeholder="Contoh: Budi Pratama">
+                </div>
+                <div class="form-group">
+                    <label>NIS (Nomor Induk Siswa) <span style="color: #dc2626;">*</span></label>
+                    <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
+                </div>
+                <div class="form-group">
+                    <label>Alamat Gmail Siswa <span style="color: #dc2626;">*</span></label>
+                    <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div class="form-group">
+                        <label>Jurusan <span style="color: #dc2626;">*</span></label>
+                        <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
+                    </div>
+                    <div class="form-group">
+                        <label>Tahun Kelulusan <span style="color: #dc2626;">*</span></label>
+                        <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password Akun Login Siswa <span style="color: #dc2626;">*</span></label>
+                    <div style="position: relative;">
+                        <input type="password" name="password" id="adminMemberModalPassword" class="form-control" required minlength="6" placeholder="Masukkan kata sandi (min. 6 karakter)" style="padding-right: 2.75rem;">
+                        <button type="button" onclick="togglePasswordVisibility('adminMemberModalPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>PIN Keamanan Transaksi Penarikan (Wajib 6-Digit) <span style="color: #dc2626;">*</span></label>
+                    <div style="position: relative;">
+                        <input type="password" name="pin" id="adminMemberModalPin" class="form-control" required maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="Wajib tepat 6 angka (contoh: 123456)" style="padding-right: 2.75rem;">
+                        <button type="button" onclick="togglePasswordVisibility('adminMemberModalPin', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat PIN">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeTambahMemberModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>
+                    <button type="submit" class="btn-primary" style="flex: 2;">Simpan Data Anggota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL EDIT MEMBER -->
     <div class="modal-overlay" id="editMemberModal">
         <div class="modal-card">
@@ -2129,6 +2156,16 @@
                 });
             });
         });
+
+        function openTambahMemberModal() {
+            const m = document.getElementById('modalTambahMember');
+            if (m) m.style.display = 'flex';
+        }
+
+        function closeTambahMemberModal() {
+            const m = document.getElementById('modalTambahMember');
+            if (m) m.style.display = 'none';
+        }
 
         function openEditMemberModal(userId, name, nis, email, grade, gradYear) {
             document.getElementById('editMemberForm').action = '/admin/members/' + userId + '/update';
