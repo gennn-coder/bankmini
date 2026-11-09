@@ -702,7 +702,7 @@
     <section class="hero-section">
         <div class="hero-container">
             <div class="hero-text">
-                <span class="hero-tag">APLIKASI ANDROID RESMI</span>
+                <span class="hero-tag">APLIKASI ANDROID RESMI &bull; VERSI 2.0.0</span>
                 <h1 class="hero-title">Tabungan Sekolah dalam Genggaman</h1>
                 <p class="hero-desc">
                     Layanan perbankan digital untuk siswa penabung E-Teller Bank Mini Sekolah. Cek saldo real-time, tampilkan kode QR kartu digital, dan pantau seluruh mutasi tabungan secara mandiri dari ponsel Android Anda.
@@ -716,7 +716,7 @@
                     </a>
                 </div>
                 <div class="hero-meta-note">
-                    Versi 1.1.0 &bull; Android 8.0 ke atas &bull; Bebas Iklan &amp; Aman
+                    Versi 2.0.0 (Terbaru) &bull; Android 8.0 ke atas &bull; Bebas Iklan &amp; Aman
                 </div>
             </div>
 

@@ -60,6 +60,79 @@
             top: 67px;
             z-index: 900;
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90px;
+            opacity: 1;
+            overflow: visible;
+        }
+        .nav-tabs-bar.collapsed {
+            max-height: 0 !important;
+            opacity: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-bottom-width: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-toggle-nav {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 0.42rem 0.85rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            user-select: none;
+            font-family: inherit;
+        }
+        .btn-toggle-nav:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .btn-toggle-nav.nav-is-collapsed {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #93c5fd;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18);
+        }
+        .btn-toggle-nav.nav-is-collapsed:hover {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .btn-quick-collapse {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0.4rem 0.75rem;
+            border-radius: 10px;
+            margin-left: auto;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        .btn-quick-collapse:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fca5a5;
         }
         .nav-tabs {
             display: flex;
@@ -456,7 +529,11 @@
                 <p style="margin:0; font-size: 0.8rem; color: var(--text-muted);">E-Teller Bank Mini Sekolah</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+            <button type="button" id="btnToggleNav" onclick="toggleNavTabs()" class="btn-toggle-nav" title="Kecilkan / Sembunyikan Navigasi Menu">
+                <span id="btnToggleNavIcon">▲</span>
+                <span id="btnToggleNavText">Kecilkan Menu</span>
+            </button>
             <div class="status-toggle-wrapper">
                 <button type="button" onclick="ubahStatusLayanan('buka')" id="btn-status-buka" class="btn-status-option {{ $statusLayanan === 'buka' ? 'active-buka' : '' }}">Buka</button>
                 <button type="button" onclick="ubahStatusLayanan('istirahat')" id="btn-status-istirahat" class="btn-status-option {{ $statusLayanan === 'istirahat' ? 'active-istirahat' : '' }}">Istirahat</button>
@@ -471,7 +548,7 @@
     </nav>
 
     <!-- HORIZONTAL NAV TABS (STICKY FULL-WIDTH SUB-BAR) -->
-    <div class="nav-tabs-bar">
+    <div class="nav-tabs-bar" id="navTabsBar">
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
@@ -492,6 +569,9 @@
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
+            <button type="button" onclick="toggleNavTabs()" class="btn-quick-collapse" title="Sembunyikan Navigasi Menu">
+                <span>▲</span> Sembunyikan
+            </button>
         </div>
     </div>
 
@@ -1847,6 +1927,50 @@
         });
 
         let selectedSaverData = null;
+
+        function applyNavCollapseState(isCollapsed) {
+            const navBar = document.getElementById('navTabsBar');
+            const btn = document.getElementById('btnToggleNav');
+            const icon = document.getElementById('btnToggleNavIcon');
+            const text = document.getElementById('btnToggleNavText');
+            if (!navBar) return;
+
+            if (isCollapsed) {
+                navBar.classList.add('collapsed');
+                if (icon) icon.textContent = '▼';
+                if (text) text.textContent = 'Besarkan Menu';
+                if (btn) {
+                    btn.classList.add('nav-is-collapsed');
+                    btn.title = 'Besarkan / Tampilkan Navigasi Menu';
+                }
+            } else {
+                navBar.classList.remove('collapsed');
+                if (icon) icon.textContent = '▲';
+                if (text) text.textContent = 'Kecilkan Menu';
+                if (btn) {
+                    btn.classList.remove('nav-is-collapsed');
+                    btn.title = 'Kecilkan / Sembunyikan Navigasi Menu';
+                }
+            }
+        }
+
+        function toggleNavTabs() {
+            const navBar = document.getElementById('navTabsBar');
+            if (!navBar) return;
+            const willCollapse = !navBar.classList.contains('collapsed');
+            applyNavCollapseState(willCollapse);
+            try {
+                localStorage.setItem('teller_nav_collapsed', willCollapse ? 'true' : 'false');
+            } catch(e) {}
+        }
+
+        function restoreNavCollapseState() {
+            try {
+                if (localStorage.getItem('teller_nav_collapsed') === 'true') {
+                    applyNavCollapseState(true);
+                }
+            } catch(e) {}
+        }
 
         function switchTab(tabId, shouldScroll = false) {
             if (!tabId) return;
@@ -3393,10 +3517,12 @@
 
         // Jalankan segera saat skrip dieksekusi agar bebas flicker
         restoreTellerActiveTab();
+        restoreNavCollapseState();
 
         // Restore tab saat refresh / navigasi & daftarkan listener form submit
         window.addEventListener('DOMContentLoaded', () => {
             restoreTellerActiveTab();
+            restoreNavCollapseState();
             filterAktivasiTable(true);
 
             // Pastikan setiap form teller (setoran, penarikan, aktivasi, reset pin, laporan)
