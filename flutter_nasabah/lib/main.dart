@@ -431,7 +431,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _currentIndex = 0; // 0: Dashboard, 1: Laporan & Target, 2: Profil & Pengaduan
+  int _currentIndex = 0; // 0: Dashboard, 1: Perjanjian, 2: Laporan & Target, 3: Profil & Pengaduan
   late Map<String, dynamic> _nasabahData;
   List<dynamic> _mutasiList = [];
   bool _isLoading = true;
@@ -442,6 +442,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _filterMutasi = 'all'; // 'all', 'setoran', 'penarikan'
   final TextEditingController _searchMutasiController = TextEditingController();
   String _mutasiSearchQuery = '';
+
+  // Perjanjian Penarikan H-1 (Tab 1)
+  List<dynamic> _perjanjianList = [];
+  final TextEditingController _pjNominalCtrl = TextEditingController();
+  final TextEditingController _pjAlasanCtrl = TextEditingController();
+  DateTime _pjTanggalRencana = DateTime.now().add(const Duration(days: 1));
+  bool _isSubmittingPerjanjian = false;
 
   // Antrean Loket
   bool _isTakingAntrean = false;
@@ -500,6 +507,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _nasabahData = widget.nasabah;
+    _perjanjianList = _nasabahData['perjanjian_list'] ?? [];
     _fetchDashboardData();
 
     // Auto sync status teller & antrean real-time setiap 4 detik (sama dengan web)
@@ -517,6 +525,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _sandiLamaCtrl.dispose();
     _sandiBaruCtrl.dispose();
     _sandiKonfCtrl.dispose();
+    _pjNominalCtrl.dispose();
+    _pjAlasanCtrl.dispose();
     super.dispose();
   }
 
@@ -535,6 +545,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _laporanBulananData = dataDash['data']['laporan_bulanan'];
             _profilData = dataDash['data']['profil'];
             _pengaduanList = dataDash['data']['pengaduan_list'] ?? [];
+            _perjanjianList = dataDash['data']['perjanjian_list'] ?? [];
           });
         }
       }
@@ -569,6 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _laporanBulananData = dataDash['data']['laporan_bulanan'];
             _profilData = dataDash['data']['profil'];
             _pengaduanList = dataDash['data']['pengaduan_list'] ?? [];
+            _perjanjianList = dataDash['data']['perjanjian_list'] ?? [];
           });
         }
       }
@@ -671,6 +683,136 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } finally {
       if (mounted) {
         setState(() => _isTakingAntrean = false);
+      }
+    }
+  }
+
+  // ACTION: AJUKAN PERJANJIAN PENARIKAN (> 1 JUTA)
+  Future<void> _handleAjukanPerjanjian() async {
+    final rawSaldo = _nasabahData['saldo'] ?? 0;
+    final saldo = (rawSaldo is num) ? rawSaldo.toInt() : (int.tryParse(rawSaldo.toString()) ?? 0);
+    final maxTarik = saldo > 10000 ? saldo - 10000 : 0;
+    final nominalStr = _pjNominalCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final nominal = int.tryParse(nominalStr) ?? 0;
+    final alasan = _pjAlasanCtrl.text.trim();
+
+    if (nominal <= 1000000) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFDC2626),
+          content: Text('Nominal penarikan wajib di atas Rp 1.000.000 (minimal Rp 1.000.001).'),
+        ),
+      );
+      return;
+    }
+
+    if (nominal > maxTarik) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text('Saldo tidak mencukupi. Penarikan harus menyisakan minimal Rp 10.000. Maksimal tarik: ${_formatRupiah(maxTarik)}'),
+        ),
+      );
+      return;
+    }
+
+    if (alasan.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFFDC2626),
+          content: Text('Harap masukkan keperluan / alasan penarikan dana.'),
+        ),
+      );
+      return;
+    }
+
+    final tglStr = '${_pjTanggalRencana.year}-${_pjTanggalRencana.month.toString().padLeft(2, '0')}-${_pjTanggalRencana.day.toString().padLeft(2, '0')}';
+    final tglDisplay = '${_pjTanggalRencana.day.toString().padLeft(2, '0')} ${_namaBulanList[_pjTanggalRencana.month - 1]} ${_pjTanggalRencana.year}';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Konfirmasi Pengajuan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Text(
+          'Ajukan permohonan perjanjian penarikan saldo sebesar ${_formatRupiah(nominal)} untuk rencana tanggal $tglDisplay ke pihak Teller Bank Mini?',
+          style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w700)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Ajukan', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isSubmittingPerjanjian = true);
+
+    try {
+      final res = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/perjanjian'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'user_id': _userId,
+          'nominal': nominal,
+          'tanggal_rencana': tglStr,
+          'alasan': alasan,
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      final data = jsonDecode(res.body);
+
+      if (res.statusCode == 200 && data['success'] == true) {
+        _pjNominalCtrl.clear();
+        _pjAlasanCtrl.clear();
+        _pjTanggalRencana = DateTime.now().add(const Duration(days: 1));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF16A34A),
+              content: Text(data['message'] ?? 'Permohonan perjanjian penarikan berhasil diajukan ke Teller.'),
+            ),
+          );
+        }
+        await _fetchDashboardData();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFFDC2626),
+              content: Text(data['message'] ?? 'Gagal mengajukan permohonan perjanjian.'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFDC2626),
+            content: Text('Terjadi kesalahan koneksi: $e'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingPerjanjian = false);
       }
     }
   }
@@ -1439,6 +1581,106 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
 
+          // BANNER INFO KETENTUAN PENARIKAN & JANJI TARIK (> 1 JT) (Persis seperti di Web)
+          Card(
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFBFDBFE)),
+            ),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF8FAFC), Color(0xFFEFF6FF)],
+                ),
+                border: Border(left: BorderSide(color: Color(0xFF2563EB), width: 5)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'INFO PENARIKAN',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Aturan Kas Teller',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tarik s/d Rp 1.000.000 Langsung di Loket • Di atas Rp 1 Juta Wajib Perjanjian H-1',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Penarikan ≤ Rp 1.000.000 tidak butuh izin admin/perjanjian. Sisa saldo tabungan wajib mengendap minimal Rp 10.000.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF475569),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _currentIndex = 1; // Pindah ke Tab Perjanjian
+                      });
+                    },
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Ajukan Perjanjian',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_rounded, size: 14),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // CARD 4: SISTEM ANTREAN LOKET BANK MINI (Border kiri biru 5px, persis seperti di web)
           Card(
             clipBehavior: Clip.antiAlias,
@@ -1715,7 +1957,395 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // BUILD TAB 1: LAPORAN BULANAN & TARGET (Persis seperti di Web)
+  // BUILD TAB 1: PERJANJIAN PENARIKAN (> 1 JUTA) (Persis seperti di Web)
+  // -------------------------------------------------------------------------
+  Widget _buildPerjanjianTab() {
+    final rawSaldo = _nasabahData['saldo'] ?? 0;
+    final saldo = (rawSaldo is num) ? rawSaldo.toInt() : (int.tryParse(rawSaldo.toString()) ?? 0);
+    final maxTarik = saldo > 10000 ? saldo - 10000 : 0;
+    final isAktif = _nasabahData['is_aktif'] == true || _nasabahData['status_rekening'] == 'aktif';
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. CARD FORM PENGAJUAN PERJANJIAN
+          Card(
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Form Pengajuan Perjanjian',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Isi formulir ini jika Anda berencana menarik saldo lebih dari Rp 1.000.000 di loket Teller.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                  ),
+                  const SizedBox(height: 14),
+
+                  if (!isAktif)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Rekening Anda belum aktif. Lakukan aktivasi terlebih dahulu di loket Teller untuk dapat mengajukan penarikan.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFFB91C1C), height: 1.4),
+                      ),
+                    )
+                  else ...[
+                    // INFO BOX SALDO ANDA
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'INFORMASI SALDO ANDA',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF166534), letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Saldo Saat Ini', style: TextStyle(fontSize: 11, color: Color(0xFF166534))),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _formatRupiah(saldo),
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15803D)),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text('Maksimal Bisa Ditarik', style: TextStyle(fontSize: 11, color: Color(0xFF166534))),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _formatRupiah(maxTarik),
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            '* Sudah memperhitungkan sisa saldo wajib mengendap Rp 10.000.',
+                            style: TextStyle(fontSize: 10, color: Color(0xFF166534), fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // INPUT 1: NOMINAL PENARIKAN
+                    const Text(
+                      'Nominal Penarikan (Rp) *',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _pjNominalCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Contoh: 1500000 (Min. Rp 1.000.001)',
+                        prefixText: 'Rp ',
+                        prefixStyle: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Wajib di atas Rp 1.000.000 (minimal Rp 1.000.001).',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // INPUT 2: TANGGAL RENCANA PENGAMBILAN
+                    const Text(
+                      'Tanggal Rencana Pengambilan di Loket *',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                    ),
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () async {
+                        final minDate = DateTime.now().add(const Duration(days: 1));
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _pjTanggalRencana.isBefore(minDate) ? minDate : _pjTanggalRencana,
+                          firstDate: minDate,
+                          lastDate: DateTime.now().add(const Duration(days: 180)),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _pjTanggalRencana = picked;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF2563EB)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${_pjTanggalRencana.day.toString().padLeft(2, '0')} ${_namaBulanList[_pjTanggalRencana.month - 1]} ${_pjTanggalRencana.year}',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              ),
+                            ),
+                            const Text('Ubah', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF2563EB))),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Terkunci otomatis minimal besok (H-1) sesuai kebijakan ketersediaan kas fisik.',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // INPUT 3: KEPERLUAN / ALASAN PENARIKAN
+                    const Text(
+                      'Keperluan / Alasan Penarikan *',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _pjAlasanCtrl,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Contoh: Biaya sertifikasi kompetensi, pembelian laptop praktik, keperluan sekolah...',
+                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                        contentPadding: const EdgeInsets.all(12),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // SUBMIT BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: _isSubmittingPerjanjian ? null : _handleAjukanPerjanjian,
+                        child: _isSubmittingPerjanjian
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Ajukan Perjanjian ke Teller', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 2. CARD DAFTAR PERJANJIAN PENARIKAN
+          Card(
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Daftar Perjanjian Penarikan',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Status permohonan penarikan dana di atas 1 juta rupiah.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 14),
+
+                  if (_perjanjianList.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Column(
+                        children: [
+                          Icon(Icons.assignment_outlined, size: 36, color: Color(0xFF94A3B8)),
+                          SizedBox(height: 8),
+                          Text(
+                            'Belum ada pengajuan perjanjian penarikan dana.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _perjanjianList.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final pj = _perjanjianList[index];
+                        final nominal = pj['nominal'] is num ? pj['nominal'] : (int.tryParse(pj['nominal'].toString()) ?? 0);
+                        final status = (pj['status'] ?? 'menunggu').toString().toLowerCase();
+                        final alasan = pj['alasan'] ?? '-';
+                        final tglRencana = pj['tanggal_rencana'] ?? '-';
+                        final tglDiajukan = pj['created_at'] ?? '-';
+                        final catatanTeller = pj['catatan_teller'];
+
+                        Color badgeBg = const Color(0xFFFEF3C7);
+                        Color badgeColor = const Color(0xFFB45309);
+                        String statusLabel = 'Menunggu Konfirmasi';
+
+                        if (status == 'disetujui' || status == 'approved') {
+                          badgeBg = const Color(0xFFDCFCE7);
+                          badgeColor = const Color(0xFF15803D);
+                          statusLabel = 'Disetujui - Siap Diambil';
+                        } else if (status == 'ditolak' || status == 'rejected') {
+                          badgeBg = const Color(0xFFFEE2E2);
+                          badgeColor = const Color(0xFFDC2626);
+                          statusLabel = 'Ditolak';
+                        } else if (status == 'selesai' || status == 'completed') {
+                          badgeBg = const Color(0xFFEFF6FF);
+                          badgeColor = const Color(0xFF2563EB);
+                          statusLabel = 'Selesai Ditarik';
+                        }
+
+                        return Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.event_outlined, size: 14, color: Color(0xFF64748B)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Rencana: $tglRencana',
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: badgeBg,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      statusLabel,
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: badgeColor),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _formatRupiah(nominal),
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFFDC2626)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Keperluan: $alasan',
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF334155), height: 1.3),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Diajukan: $tglDiajukan',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                              ),
+                              if (catatanTeller != null && catatanTeller.toString().trim().isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFFBEB),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFFDE68A)),
+                                  ),
+                                  child: Text(
+                                    'Catatan Teller: $catatanTeller',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF92400E)),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // BUILD TAB 2: LAPORAN BULANAN & TARGET (Persis seperti di Web)
   // -------------------------------------------------------------------------
   Widget _buildLaporanTargetTab() {
     final saldo = _nasabahData['saldo'] ?? 0;
@@ -2585,6 +3215,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 index: _currentIndex,
                 children: [
                   _buildDashboardTab(),
+                  _buildPerjanjianTab(),
                   _buildLaporanTargetTab(),
                   _buildProfilPengaduanTab(),
                 ],
@@ -2615,6 +3246,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icon(Icons.dashboard_outlined),
               activeIcon: Icon(Icons.dashboard_rounded),
               label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.handshake_outlined),
+              activeIcon: Icon(Icons.handshake_rounded),
+              label: 'Perjanjian',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.bar_chart_outlined),
