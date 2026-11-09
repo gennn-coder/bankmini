@@ -78,7 +78,7 @@
         .nav-tabs-bar {
             background: #ffffff;
             border-bottom: 2px solid var(--border-light, #e2e8f0);
-            padding: 0.65rem 2rem;
+            padding: 0.55rem 1.25rem;
             width: 100%;
             position: sticky;
             top: 67px;
@@ -164,16 +164,10 @@
         .user-name-wrapper {
             display: inline-flex;
             align-items: center;
-            max-width: 240px;
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
         }
         .user-greeting-name {
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 170px;
         }
         .btn-user-profile-trigger .chevron-user-icon {
             transition: transform 0.2s ease;
@@ -278,14 +272,14 @@
             font-size: 0.78rem;
             font-weight: 700;
             cursor: pointer;
-            padding: 0.4rem 0.75rem;
+            padding: 0.38rem 0.65rem;
             border-radius: 10px;
             margin-left: auto;
             transition: all 0.2s ease;
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.3rem;
             font-family: inherit;
             flex-shrink: 0;
         }
@@ -298,22 +292,26 @@
             display: flex;
             align-items: center;
             flex-wrap: nowrap;
-            gap: 0.4rem;
+            gap: 0.35rem;
             width: 100%;
             max-width: 1540px;
             margin: 0 auto;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
         }
-        .nav-tabs::-webkit-scrollbar { height: 4px; }
-        .nav-tabs::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .nav-tabs::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
 
         .tab-btn {
             background: transparent;
             border: none;
-            padding: 0.6rem 1.15rem;
-            font-size: 0.88rem;
+            padding: 0.52rem 0.8rem;
+            font-size: 0.83rem;
             font-weight: 700;
             color: var(--text-slate, #475569);
             cursor: pointer;
@@ -322,9 +320,10 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.35rem;
             text-decoration: none;
             font-family: inherit;
+            flex-shrink: 0;
         }
         .tab-btn:hover {
             color: var(--primary-blue, #2563eb);
@@ -1407,8 +1406,15 @@
                 gap: 0.65rem;
                 flex-wrap: wrap;
             }
+            .user-name-wrapper {
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
             .user-greeting-name {
                 max-width: 130px;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .nav-tabs-bar {
                 padding: 0.5rem 1rem;
@@ -1560,10 +1566,10 @@
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-users')">Manajemen User</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-members')">Data Anggota Siswa</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-members')">Data Anggota</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-savers')">Data Penabung</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-supervisor')">
-                Approval Kas & Tutup Kas
+                Approval & Tutup Kas
                 @php $pendingKasCount = $pengajuanKasList->where('status', 'pending')->count(); @endphp
                 @if($pendingKasCount > 0)
                     <span class="tab-badge tab-badge-danger">{{ $pendingKasCount }}</span>
@@ -1573,7 +1579,7 @@
             <button type="button" class="tab-btn" onclick="switchTab('tab-jurnal')">Jurnal Akuntansi</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-audit')">Audit Logs</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-pengaduan')">
-                Pengaduan Nasabah
+                Pengaduan
                 @php $pendingPengaduanCount = isset($pengaduanList) ? $pengaduanList->where('status', 'menunggu')->count() : 0; @endphp
                 @if($pendingPengaduanCount > 0)
                     <span class="tab-badge tab-badge-warning">{{ $pendingPengaduanCount }}</span>
