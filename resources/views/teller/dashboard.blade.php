@@ -641,14 +641,52 @@
         .camera-mirrored canvas {
             transform: scaleX(-1) !important;
         }
+        @media (max-width: 1366px) {
+            .nav-tabs-bar {
+                padding: 0.45rem 1rem;
+            }
+            .nav-tabs {
+                gap: 0.25rem;
+            }
+            .tab-btn {
+                padding: 0.42rem 0.65rem;
+                font-size: 0.8rem;
+                gap: 0.25rem;
+            }
+            .btn-quick-collapse {
+                padding: 0.35rem 0.55rem;
+                font-size: 0.75rem;
+            }
+        }
+        @media (max-width: 1200px) {
+            .nav-tabs-bar {
+                padding: 0.4rem 0.75rem;
+            }
+            .nav-tabs {
+                gap: 0.2rem;
+            }
+            .tab-btn {
+                padding: 0.38rem 0.52rem;
+                font-size: 0.76rem;
+                gap: 0.2rem;
+            }
+            .btn-quick-collapse {
+                padding: 0.32rem 0.48rem;
+                font-size: 0.72rem;
+            }
+        }
         @media (max-width: 992px) {
             .navbar {
                 padding: 0.75rem 1.25rem;
                 gap: 0.75rem;
             }
             .nav-tabs-bar {
-                padding: 0.5rem 1rem;
+                padding: 0.35rem 0.5rem;
                 top: 65px;
+            }
+            .tab-btn {
+                padding: 0.35rem 0.48rem;
+                font-size: 0.74rem;
             }
             .container {
                 padding: 0 1rem;
@@ -786,23 +824,23 @@
     <div class="nav-tabs-bar" id="navTabsBar">
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-setoran')">Setoran</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-perjanjian')">
                 Perjanjian
                 @if(isset($totalPerjanjianPending) && $totalPerjanjianPending > 0)
                     <span style="background: #f59e0b; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">{{ $totalPerjanjianPending }}</span>
                 @endif
             </button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-laporan')">
                 Penutup Kas
                 @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
                     <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
                 @endif
             </button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
             <button type="button" onclick="toggleNavTabs()" class="btn-quick-collapse" title="Sembunyikan Navigasi Menu">
                 <span>▲</span> Sembunyikan
