@@ -35,25 +35,81 @@
         .navbar {
             position: sticky;
             top: 0;
-            z-index: 900;
+            z-index: 950;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.15rem 2rem;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            padding: 0.95rem 2rem;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
+            box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
             width: 100%;
             flex-wrap: wrap;
             gap: 1rem;
         }
-        .container {
-            max-width: 1280px;
+
+        /* HORIZONTAL NAVIGATION TABS (STICKY SUB-BAR - 100% CONSISTENT WITH ADMIN & REFERENCE) */
+        .nav-tabs-bar {
+            background: #ffffff;
+            border-bottom: 2px solid var(--border-color);
+            padding: 0.65rem 2rem;
             width: 100%;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
+            position: sticky;
+            top: 67px;
+            z-index: 900;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+        }
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 0.4rem;
+            width: 100%;
+            max-width: 1540px;
+            margin: 0 auto;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .nav-tabs::-webkit-scrollbar { height: 4px; }
+        .nav-tabs::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.6rem 1.15rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            border-radius: 12px;
+            white-space: nowrap;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .tab-btn:hover {
+            color: var(--primary-600);
+            background: #eff6ff;
+        }
+        .tab-btn.active {
+            background: var(--primary-600) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28) !important;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1540px;
+            width: 100%;
+            margin: 1.75rem auto 3.5rem;
+            padding: 0 1.75rem;
+            box-sizing: border-box;
         }
         .grid {
             display: grid;
@@ -64,9 +120,9 @@
         .card {
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 18px;
+            border-radius: 20px;
             padding: 1.75rem;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.04);
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
             max-width: 100%;
             overflow: hidden;
         }
@@ -156,38 +212,6 @@
             background: #dc2626;
             color: #ffffff;
             box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
-        }
-        .nav-tabs {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 1.75rem;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 0.75rem;
-            width: 100%;
-        }
-        .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 0.55rem 0.85rem;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 10px;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-        .tab-btn:hover {
-            color: var(--primary-600);
-            background: rgba(59, 130, 246, 0.08);
-        }
-        .tab-btn.active {
-            background: var(--primary-600);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
         .tab-content { display: none; width: 100%; }
         .tab-content.active { display: block; }
@@ -409,6 +433,18 @@
         .camera-mirrored canvas {
             transform: scaleX(-1) !important;
         }
+        @media (max-width: 992px) {
+            .navbar {
+                padding: 0.85rem 1.25rem;
+            }
+            .nav-tabs-bar {
+                padding: 0.5rem 1rem;
+                top: 65px;
+            }
+            .container {
+                padding: 0 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -433,6 +469,31 @@
             </form>
         </div>
     </nav>
+
+    <!-- HORIZONTAL NAV TABS (STICKY FULL-WIDTH SUB-BAR) -->
+    <div class="nav-tabs-bar">
+        <div class="nav-tabs">
+            <button type="button" class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-perjanjian')">
+                Perjanjian
+                @if(isset($totalPerjanjianPending) && $totalPerjanjianPending > 0)
+                    <span style="background: #f59e0b; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">{{ $totalPerjanjianPending }}</span>
+                @endif
+            </button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-laporan')">
+                Penutup Kas
+                @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
+                    <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
+                @endif
+            </button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
+        </div>
+    </div>
 
     <div class="container">
         @if(session('transaksi_sukses'))
@@ -743,28 +804,7 @@
             </div>
         @endif
 
-        <!-- NAVIGATION TABS -->
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('tab-aktivasi')">Aktivasi Anggota</button>
-            <button class="tab-btn" onclick="switchTab('tab-setoran')">Setoran Tunai</button>
-            <button class="tab-btn" onclick="switchTab('tab-penarikan')">Penarikan Tunai</button>
-            <button class="tab-btn" onclick="switchTab('tab-perjanjian')">
-                Perjanjian
-                @if(isset($totalPerjanjianPending) && $totalPerjanjianPending > 0)
-                    <span style="background: #f59e0b; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">{{ $totalPerjanjianPending }}</span>
-                @endif
-            </button>
-            <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
-            <button class="tab-btn" onclick="switchTab('tab-laporan')">
-                Penutup Kas
-                @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
-                    <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
-                @endif
-            </button>
-            <button class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
-            <button class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
-        </div>
+
 
         <!-- TAB 0: DASHBOARD OPERASIONAL TELLER -->
         <div id="tab-dashboard" class="tab-content active">
