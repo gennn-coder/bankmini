@@ -757,7 +757,7 @@
             </button>
             <button class="tab-btn" onclick="switchTab('tab-reset-pin')">Reset PIN Nasabah</button>
             <button class="tab-btn" onclick="switchTab('tab-laporan')">
-                Penutupan Kas & Laporan
+                Penutup Kas
                 @if($laporanHariIni && $laporanHariIni->status_approval === 'rejected')
                     <span style="background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 999px; font-size: 0.72rem; margin-left: 5px; font-weight: 700;">Revisi</span>
                 @endif
