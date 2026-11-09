@@ -70,7 +70,8 @@
         .navbar-right {
             display: flex;
             align-items: center;
-            gap: 1.25rem;
+            gap: 0.85rem;
+            flex-wrap: wrap;
         }
 
         /* 2. HORIZONTAL NAVIGATION TABS (NO ICONS AS REQUESTED BY USER) */
@@ -91,13 +92,13 @@
         .nav-tabs-bar.collapsed {
             max-height: 0 !important;
             opacity: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            border-bottom-width: 0 !important;
+            padding: 0 !important;
+            border: none !important;
             margin: 0 !important;
             overflow: hidden !important;
             pointer-events: none !important;
             box-shadow: none !important;
+            display: none !important;
         }
 
         .btn-toggle-nav {
@@ -160,9 +161,24 @@
             border-color: #cbd5e1;
             color: #0f172a;
         }
+        .user-name-wrapper {
+            display: inline-flex;
+            align-items: center;
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-greeting-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 170px;
+        }
         .btn-user-profile-trigger .chevron-user-icon {
             transition: transform 0.2s ease;
             color: #64748b;
+            flex-shrink: 0;
         }
         .btn-user-profile-trigger.active .chevron-user-icon {
             transform: rotate(180deg);
@@ -173,6 +189,7 @@
             top: calc(100% + 8px);
             right: 0;
             width: 290px;
+            max-width: calc(100vw - 24px);
             background: #ffffff;
             border-radius: 16px;
             box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08);
@@ -1383,7 +1400,15 @@
         }
         @media (max-width: 992px) {
             .navbar {
-                padding: 0.85rem 1.25rem;
+                padding: 0.75rem 1.25rem;
+                gap: 0.75rem;
+            }
+            .navbar-right {
+                gap: 0.65rem;
+                flex-wrap: wrap;
+            }
+            .user-greeting-name {
+                max-width: 130px;
             }
             .nav-tabs-bar {
                 padding: 0.5rem 1rem;
@@ -1403,6 +1428,70 @@
             }
             .hero-illustration {
                 display: none;
+            }
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.65rem 1rem;
+            }
+            .navbar-brand h2 {
+                font-size: 1.1rem !important;
+            }
+            .navbar-brand p {
+                font-size: 0.72rem !important;
+            }
+            .navbar-right {
+                gap: 0.45rem;
+            }
+            .user-greeting-prefix {
+                display: none;
+            }
+            .user-greeting-name {
+                max-width: 110px;
+            }
+            .btn-toggle-nav {
+                padding: 0.35rem 0.65rem;
+                font-size: 0.78rem;
+            }
+            .btn-logout {
+                padding: 0.35rem 0.75rem !important;
+                font-size: 0.78rem !important;
+            }
+            .profile-tab-header {
+                flex-direction: column;
+                align-items: stretch !important;
+                text-align: left;
+                padding: 1rem !important;
+            }
+            .profile-tab-header button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 576px) {
+            .navbar {
+                padding: 0.55rem 0.75rem;
+            }
+            .navbar-brand img {
+                height: 36px !important;
+                width: 36px !important;
+            }
+            .navbar-brand p {
+                display: none;
+            }
+            #btnToggleNavText {
+                display: none;
+            }
+            .btn-toggle-nav {
+                padding: 0.35rem 0.55rem;
+            }
+            .user-greeting-name {
+                max-width: 85px;
+            }
+            .user-dropdown-popover {
+                width: calc(100vw - 20px);
+                max-width: 290px;
+                right: -6px;
             }
         }
     </style>
@@ -1426,7 +1515,10 @@
             <!-- USER PROFILE DROPDOWN MENU -->
             <div class="user-menu-container" id="userMenuContainer">
                 <button type="button" id="btnUserMenu" onclick="toggleUserMenu(event)" class="btn-user-profile-trigger" title="Klik untuk membuka menu profil & akun">
-                    <span>Halo, <strong>{{ $user->nama_petugas }}</strong></span>
+                    <span class="user-name-wrapper">
+                        <span class="user-greeting-prefix">Halo, </span>
+                        <strong class="user-greeting-name">{{ $user->nama_petugas }}</strong>
+                    </span>
                     <span class="badge" style="background:#dcfce7; color:#166534; font-weight:800; font-size:0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px;">ADMIN</span>
                     <svg class="chevron-user-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
@@ -2947,7 +3039,7 @@
         <!-- ========================================== -->
         <div id="tab-profil" class="tab-content">
             <!-- HEADER PROFIL & TOMBOL KEMBALI -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; background: #ffffff; padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-light); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);">
+            <div class="profile-tab-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; background: #ffffff; padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-light); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);">
                 <div>
                     <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">Pengaturan Profil & Akun</h2>
                     <p style="font-size: 0.85rem; color: #64748b; margin: 3px 0 0;">Perbarui data identitas diri, username akun login, dan kata sandi Anda</p>
@@ -3256,6 +3348,9 @@
                 closeUserMenu();
             }
         });
+
+        window.addEventListener('resize', closeUserMenu);
+        window.addEventListener('scroll', closeUserMenu, { passive: true });
 
         window.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
