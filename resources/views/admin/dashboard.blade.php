@@ -83,6 +83,79 @@
             top: 67px;
             z-index: 900;
             box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90px;
+            opacity: 1;
+            overflow: visible;
+        }
+        .nav-tabs-bar.collapsed {
+            max-height: 0 !important;
+            opacity: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-bottom-width: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-toggle-nav {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 0.42rem 0.85rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            user-select: none;
+            font-family: inherit;
+        }
+        .btn-toggle-nav:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .btn-toggle-nav.nav-is-collapsed {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #93c5fd;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18);
+        }
+        .btn-toggle-nav.nav-is-collapsed:hover {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .btn-quick-collapse {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0.4rem 0.75rem;
+            border-radius: 10px;
+            margin-left: auto;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        .btn-quick-collapse:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fca5a5;
         }
         .nav-tabs {
             display: flex;
@@ -1226,6 +1299,10 @@
         </div>
 
         <div class="navbar-right">
+            <button type="button" id="btnToggleNav" onclick="toggleNavTabs()" class="btn-toggle-nav" title="Kecilkan / Sembunyikan Navigasi Menu">
+                <span id="btnToggleNavIcon">▲</span>
+                <span id="btnToggleNavText">Kecilkan Menu</span>
+            </button>
             <div style="font-size: 0.92rem; color: #334155; white-space: nowrap;">
                 Halo, <strong>{{ $user->nama_petugas }}</strong> 
                 <span class="badge" style="background:#dcfce7; color:#166534; font-weight:800; font-size:0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px; margin-left: 4px;">ADMIN</span>
@@ -1238,7 +1315,7 @@
     </nav>
 
     <!-- HORIZONTAL NAV TABS (TEXT ONLY - STRICTLY NO ICONS) -->
-    <div class="nav-tabs-bar">
+    <div class="nav-tabs-bar" id="navTabsBar">
         <div class="nav-tabs">
             <button type="button" class="tab-btn active" onclick="switchTab('tab-dashboard')">Dashboard</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-users')">Manajemen User</button>
@@ -1260,6 +1337,9 @@
                 @if($pendingPengaduanCount > 0)
                     <span class="tab-badge tab-badge-warning">{{ $pendingPengaduanCount }}</span>
                 @endif
+            </button>
+            <button type="button" onclick="toggleNavTabs()" class="btn-quick-collapse" title="Sembunyikan Navigasi Menu">
+                <span>▲</span> Sembunyikan
             </button>
         </div>
     </div>
@@ -2951,6 +3031,50 @@
             } catch (e) {}
         }
 
+        function applyNavCollapseState(isCollapsed) {
+            const navBar = document.getElementById('navTabsBar');
+            const btn = document.getElementById('btnToggleNav');
+            const icon = document.getElementById('btnToggleNavIcon');
+            const text = document.getElementById('btnToggleNavText');
+            if (!navBar) return;
+
+            if (isCollapsed) {
+                navBar.classList.add('collapsed');
+                if (icon) icon.textContent = '▼';
+                if (text) text.textContent = 'Besarkan Menu';
+                if (btn) {
+                    btn.classList.add('nav-is-collapsed');
+                    btn.title = 'Besarkan / Tampilkan Navigasi Menu';
+                }
+            } else {
+                navBar.classList.remove('collapsed');
+                if (icon) icon.textContent = '▲';
+                if (text) text.textContent = 'Kecilkan Menu';
+                if (btn) {
+                    btn.classList.remove('nav-is-collapsed');
+                    btn.title = 'Kecilkan / Sembunyikan Navigasi Menu';
+                }
+            }
+        }
+
+        function toggleNavTabs() {
+            const navBar = document.getElementById('navTabsBar');
+            if (!navBar) return;
+            const willCollapse = !navBar.classList.contains('collapsed');
+            applyNavCollapseState(willCollapse);
+            try {
+                localStorage.setItem('admin_nav_collapsed', willCollapse ? 'true' : 'false');
+            } catch(e) {}
+        }
+
+        function restoreNavCollapseState() {
+            try {
+                if (localStorage.getItem('admin_nav_collapsed') === 'true') {
+                    applyNavCollapseState(true);
+                }
+            } catch(e) {}
+        }
+
         function togglePasswordVisibility(inputId, btn) {
             const input = document.getElementById(inputId);
             if (!input) return;
@@ -2965,12 +3089,14 @@
             btn.style.color = isPassword ? '#2563eb' : '#64748b';
         }
 
-        // Restore tab segera saat skrip dieksekusi agar bebas flicker
+        // Restore tab & nav collapse segera saat skrip dieksekusi agar bebas flicker
         restoreAdminActiveTab();
+        restoreNavCollapseState();
 
-        // Restore tab kembali saat DOM selesai dimuat dan pasang listener submit form
+        // Restore tab & nav collapse kembali saat DOM selesai dimuat dan pasang listener submit form
         document.addEventListener('DOMContentLoaded', () => {
             restoreAdminActiveTab();
+            restoreNavCollapseState();
             filterMemberTable();
 
             @if(session('success') || session('error'))
