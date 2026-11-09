@@ -377,6 +377,76 @@
             font-size: 0.75rem;
         }
 
+        .mock-banner-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 3.5px solid #2563eb;
+            border-radius: 12px;
+            padding: 0.6rem 0.75rem;
+            margin-bottom: 0.65rem;
+            text-align: left;
+        }
+        .mock-banner-tag {
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 0.58rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        .mock-banner-txt {
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            line-height: 1.3;
+            margin: 4px 0 6px;
+        }
+        .mock-banner-btn {
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .mock-antrean-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 3.5px solid #2563eb;
+            border-radius: 12px;
+            padding: 0.6rem 0.75rem;
+            margin-bottom: 0.65rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+        }
+        .mock-bottom-nav {
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            margin: 0.65rem -1rem -1rem;
+            padding: 0.5rem 0.25rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .mock-nav-item {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #64748b;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .mock-nav-item.active {
+            color: #2563eb;
+        }
+
         /* SECTION CONTAINER */
         .section-wrap {
             max-width: 1200px;
@@ -705,7 +775,7 @@
                 <span class="hero-tag">APLIKASI ANDROID RESMI &bull; VERSI 2.0.0</span>
                 <h1 class="hero-title">Tabungan Sekolah dalam Genggaman</h1>
                 <p class="hero-desc">
-                    Layanan perbankan digital untuk siswa penabung E-Teller Bank Mini Sekolah. Cek saldo real-time, tampilkan kode QR kartu digital, dan pantau seluruh mutasi tabungan secara mandiri dari ponsel Android Anda.
+                    Layanan perbankan digital untuk siswa penabung E-Teller Bank Mini Sekolah. Cek saldo real-time, antrean loket digital, pengajuan perjanjian penarikan H-1 (>1 Juta), target tabungan masa depan, dan tampilkan kode QR kartu digital dari ponsel Android Anda.
                 </p>
                 <div class="hero-btn-group">
                     <a href="{{ asset('downloads/eteller-nasabah.apk') }}" download="eteller-nasabah.apk" class="btn-hero-primary">
@@ -736,44 +806,71 @@
                             </div>
                         </div>
 
+                        <!-- Card Identitas & No Rekening -->
                         <div class="mock-card">
                             <div class="mock-card-label">
                                 <span>No. Rekening Nasabah</span>
                                 <span class="mock-status-pill">AKTIF</span>
                             </div>
                             <div class="mock-card-val">10001003</div>
-                            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Jurusan: RPL (NIS: 8888) &bull; Lulus: 2028</div>
+                            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">genta &bull; RPL (NIS: 8888)</div>
                         </div>
 
+                        <!-- Card Saldo Real-Time -->
                         <div class="mock-card">
                             <div class="mock-card-label">
                                 <span>Saldo Tabungan Real-Time</span>
                             </div>
-                            <div class="mock-card-val" style="color: #16a34a;">Rp 42.000</div>
+                            <div class="mock-card-val" style="color: #16a34a;">Rp 904.000</div>
                         </div>
 
-                        <div class="mock-btn-qr">
+                        <!-- Banner Info Aturan Penarikan -->
+                        <div class="mock-banner-info">
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span class="mock-banner-tag">INFO PENARIKAN</span>
+                                <span style="font-size: 0.6rem; color: #64748b; font-weight: 700;">Aturan Kas Teller</span>
+                            </div>
+                            <div class="mock-banner-txt">
+                                Tarik s/d Rp 1 Jt Langsung di Loket &bull; Di atas Rp 1 Jt Wajib Perjanjian H-1
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.58rem; color: #64748b;">Saldo min mengendap Rp 10.000</span>
+                                <span class="mock-banner-btn">Ajukan &rarr;</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Sistem Antrean Digital -->
+                        <div class="mock-antrean-card">
+                            <div>
+                                <div style="font-size: 0.58rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Antrean Loket</div>
+                                <div style="font-size: 0.72rem; font-weight: 800; color: #0f172a;">Sedang Dilayani: <span style="color: #2563eb;">A-004</span></div>
+                            </div>
+                            <span class="mock-banner-btn" style="background: #2563eb;">Ambil Nomor</span>
+                        </div>
+
+                        <!-- Tombol QR Code Kartu Digital -->
+                        <div class="mock-btn-qr" style="margin-bottom: 0.55rem;">
                             Tampilkan Kode QR Kartu Digital
                         </div>
 
-                        <div style="font-size: 0.75rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;">
-                            Riwayat Mutasi Terkini
-                        </div>
-
-                        <div class="mock-mutasi-item">
-                            <div>
-                                <div class="mock-mutasi-name" style="color: #16a34a;">SETORAN</div>
-                                <div class="mock-mutasi-date">Setoran Tunai Teller</div>
+                        <!-- Fixed Bottom Navigation Bar Mock (4 Tab) -->
+                        <div class="mock-bottom-nav">
+                            <div class="mock-nav-item active">
+                                <span style="font-size: 0.75rem;">📊</span>
+                                <span>Dashboard</span>
                             </div>
-                            <div class="mock-mutasi-val" style="color: #16a34a;">+ Rp 10.000</div>
-                        </div>
-
-                        <div class="mock-mutasi-item">
-                            <div>
-                                <div class="mock-mutasi-name" style="color: #dc2626;">PENARIKAN</div>
-                                <div class="mock-mutasi-date">Penarikan Tunai Teller</div>
+                            <div class="mock-nav-item">
+                                <span style="font-size: 0.75rem;">🤝</span>
+                                <span>Perjanjian</span>
                             </div>
-                            <div class="mock-mutasi-val" style="color: #dc2626;">- Rp 6.000</div>
+                            <div class="mock-nav-item">
+                                <span style="font-size: 0.75rem;">🎯</span>
+                                <span>Target</span>
+                            </div>
+                            <div class="mock-nav-item">
+                                <span style="font-size: 0.75rem;">👤</span>
+                                <span>Profil</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -811,10 +908,18 @@
                 </p>
                 <div class="qr-btn-row">
                     <a href="{{ asset('downloads/eteller-nasabah.apk') }}" download="eteller-nasabah.apk" class="btn-qr-download">
-                        Unduh Berkas APK Langsung
+                        Unduh Berkas APK Utama
                     </a>
                     <a href="{{ route('login') }}" class="btn-qr-secondary">
                         Masuk via Web Portal
+                    </a>
+                </div>
+                <div style="margin-top: 1.25rem; display: flex; gap: 0.65rem; flex-wrap: wrap;">
+                    <a href="{{ asset('downloads/eteller-nasabah-arm64.apk') }}" download="eteller-nasabah-arm64.apk" style="font-size: 0.78rem; color: #2563eb; background: #eff6ff; padding: 6px 14px; border-radius: 8px; text-decoration: none; font-weight: 700; border: 1px solid #bfdbfe; transition: all 0.2s ease;">
+                        Unduh Varian 64-bit (ARM64)
+                    </a>
+                    <a href="{{ asset('downloads/eteller-nasabah-arm32.apk') }}" download="eteller-nasabah-arm32.apk" style="font-size: 0.78rem; color: #475569; background: #f1f5f9; padding: 6px 14px; border-radius: 8px; text-decoration: none; font-weight: 700; border: 1px solid #e2e8f0; transition: all 0.2s ease;">
+                        Unduh Varian 32-bit (ARM32)
                     </a>
                 </div>
             </div>
@@ -827,40 +932,56 @@
             <span class="section-badge">KEMUDAHAN LAYANAN</span>
             <h2 class="section-title">Fitur Utama Aplikasi Nasabah</h2>
             <p class="section-desc">
-                Seluruh kebutuhan transaksi tabungan sekolah tersedia secara terintegrasi dengan loket teller.
+                Seluruh kebutuhan transaksi tabungan sekolah tersedia secara terintegrasi dengan loket teller bank mini.
             </p>
         </div>
 
         <div class="features-grid">
             <div class="feature-card">
                 <span class="feature-badge">REAL-TIME</span>
-                <h3 class="feature-title">Saldo Tabungan Real-Time</h3>
+                <h3 class="feature-title">Saldo Real-Time & Mutasi</h3>
                 <p class="feature-desc">
-                    Pantau saldo tabungan aktif Anda secara langsung. Setiap transaksi setoran atau penarikan di loket otomatis terbarui tanpa jeda.
+                    Pantau saldo tabungan aktif Anda secara langsung dengan pembaruan otomatis setiap 4 detik. Seluruh mutasi Setoran dan Penarikan tersusun rapi dengan filter dan pencarian transaksi instan.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-badge">PERJANJIAN H-1</span>
+                <h3 class="feature-title">Aturan Penarikan & Perjanjian</h3>
+                <p class="feature-desc">
+                    Penarikan tunai s/d Rp 1.000.000 dapat langsung dilayani di loket. Untuk penarikan saldo di atas Rp 1.000.000, siswa dapat mengajukan Perjanjian H-1 secara mandiri langsung dari aplikasi (saldo mengendap minimal Rp 10.000).
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-badge">ANTREAN DIGITAL</span>
+                <h3 class="feature-title">Sistem Antrean Loket Digital</h3>
+                <p class="feature-desc">
+                    Ambil nomor antrean teller secara online dari ponsel atau web. Pantau nomor antrean yang sedang dilayani kasir secara real-time tanpa perlu antre berdesakan di depan loket teller sekolah.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-badge">RENCANA MASA DEPAN</span>
+                <h3 class="feature-title">Target Tabungan & Impian</h3>
+                <p class="feature-desc">
+                    Tetapkan sasaran menabung Anda (seperti beli laptop, biaya UKK/PKL, atau studi tour) dengan target nominal dan tanggal capaian, dilengkapi persentase progress saldo tabungan.
                 </p>
             </div>
 
             <div class="feature-card">
                 <span class="feature-badge">KARTU DIGITAL</span>
-                <h3 class="feature-title">Kode QR Kartu Digital</h3>
+                <h3 class="feature-title">Kode QR Kartu Digital & Scan Cepat</h3>
                 <p class="feature-desc">
-                    Tunjukkan kode QR akun di layar ponsel untuk dipindai oleh teller loket saat ingin menabung atau menarik saldo tanpa kartu fisik.
+                    Tunjukkan barcode / QR Code kartu penabung digital di layar HP untuk dipindai oleh teller loket saat setoran atau penarikan tunai tanpa perlu repot membawa buku tabungan fisik.
                 </p>
             </div>
 
             <div class="feature-card">
-                <span class="feature-badge">RIWAYAT MUTASI</span>
-                <h3 class="feature-title">Filter Riwayat Transaksi</h3>
+                <span class="feature-badge">ASPIRASI & OTP</span>
+                <h3 class="feature-title">Layanan Pengaduan & Reset Mandiri</h3>
                 <p class="feature-desc">
-                    Kategori transaksi tersusun rapi antara Setoran (Nabung) dan Penarikan, lengkap dengan pencarian nomor transaksi dan tanggal.
-                </p>
-            </div>
-
-            <div class="feature-card">
-                <span class="feature-badge">KEAMANAN</span>
-                <h3 class="feature-title">Keamanan PIN 6-Digit</h3>
-                <p class="feature-desc">
-                    Setiap penarikan dana tabungan di loket wajib diverifikasi menggunakan PIN 6 angka rahasia pilihan Anda.
+                    Saluran pengaduan langsung ke admin sekolah dengan histori tanggapan resmi, serta pemulihan kata sandi akun & PIN transaksi secara mandiri melalui kode verifikasi OTP ke Gmail.
                 </p>
             </div>
         </div>
