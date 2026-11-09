@@ -16,7 +16,7 @@ class TargetAntreanPengaduanTest extends TestCase
 {
     private function createNasabahUser($nis = null, $name = 'Siswa Test')
     {
-        $nis = $nis ?: 'NIS_' . rand(10000, 99999);
+        $nis = $nis ?: 'NIS_' . uniqid() . rand(100, 999);
         $user = User::create([
             'username' => $nis,
             'nama_petugas' => $name,
@@ -35,7 +35,7 @@ class TargetAntreanPengaduanTest extends TestCase
         ]);
         $saver = Saver::create([
             'user_id' => $user->id,
-            'account_number' => '100' . rand(10000, 99999),
+            'account_number' => '100' . rand(100000, 999999) . rand(10, 99),
             'nis' => $nis,
             'student_name' => $name,
             'class_grade' => 'X RPL 1',

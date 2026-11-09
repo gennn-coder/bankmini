@@ -569,6 +569,7 @@
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
+            <button type="button" class="tab-btn" onclick="switchTab('tab-profil')">Profil</button>
             <button type="button" onclick="toggleNavTabs()" class="btn-quick-collapse" title="Sembunyikan Navigasi Menu">
                 <span>▲</span> Sembunyikan
             </button>
@@ -1833,6 +1834,124 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 10: PROFIL PETUGAS TELLER              -->
+        <!-- ========================================== -->
+        <div id="tab-profil" class="tab-content">
+            @if(session('success_profile'))
+                <div class="alert alert-success" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <strong>✓ Sukses:</strong> {{ session('success_profile') }}
+                </div>
+            @endif
+            @if(session('success_password'))
+                <div class="alert alert-success" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <strong>✓ Sukses:</strong> {{ session('success_password') }}
+                </div>
+            @endif
+            @if(session('error_password'))
+                <div class="alert alert-danger" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <strong>⚠️ Peringatan:</strong> {{ session('error_password') }}
+                </div>
+            @endif
+            @if($errors->has('nama_petugas') || $errors->has('email') || $errors->has('sandi_lama') || $errors->has('sandi_baru'))
+                <div class="alert alert-danger" style="margin-bottom: 1.25rem;">
+                    <ul style="margin: 0; padding-left: 1.25rem;">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+                <!-- KARTU DATA IDENTITAS TELLER -->
+                <div class="card" style="background: #ffffff; border-radius: 16px; padding: 1.75rem; border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="margin:0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Profil Petugas Teller</h3>
+                            <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Informasi akun dan identitas resmi petugas loket</p>
+                        </div>
+                        <span style="background: #eff6ff; color: #2563eb; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid #bfdbfe;">
+                            TELLER LOKET
+                        </span>
+                    </div>
+
+                    <form action="{{ route('profil.update') }}" method="POST" onsubmit="try{ sessionStorage.setItem('teller_active_tab', 'tab-profil'); }catch(e){} return confirm('Konfirmasi: Simpan perubahan data profil Anda?');">
+                        @csrf
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Nama Lengkap Teller <span style="color: #dc2626;">*</span></label>
+                            <input type="text" name="nama_petugas" class="form-control" required value="{{ old('nama_petugas', $user->nama_petugas) }}" placeholder="Masukkan nama lengkap">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Username Login</label>
+                            <input type="text" class="form-control" value="{{ $user->username }}" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;" title="Username akun bersifat permanen">
+                            <small style="color: #64748b; font-size: 0.75rem;">Username digunakan untuk login ke sistem.</small>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Alamat Email / Gmail Teller <span style="color: #dc2626;">*</span></label>
+                            <input type="email" name="email" class="form-control" required value="{{ old('email', $user->email) }}" placeholder="Contoh: teller@bankmini.sch.id">
+                            <small style="color: #2563eb; font-size: 0.75rem; font-weight: 600;">Penting: Email ini digunakan untuk verifikasi kode OTP saat lupa kata sandi di awal login.</small>
+                        </div>
+
+                        <div style="margin-top: 1.5rem;">
+                            <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem 1.25rem; font-weight: 700; border-radius: 12px; background: #2563eb; color: #fff; border: none; cursor: pointer;">
+                                Simpan Perubahan Profil
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- KARTU GANTI KATA SANDI MANDIRI -->
+                <div class="card" style="background: #ffffff; border-radius: 16px; padding: 1.75rem; border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);">
+                    <div style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <h3 style="margin:0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Ganti Kata Sandi</h3>
+                        <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">Perbarui kata sandi akun login Anda secara berkala</p>
+                    </div>
+
+                    <form action="{{ route('profil.ganti-password') }}" method="POST" onsubmit="try{ sessionStorage.setItem('teller_active_tab', 'tab-profil'); }catch(e){} return confirm('Konfirmasi: Apakah Anda yakin ingin memperbarui kata sandi akun ini?');">
+                        @csrf
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Kata Sandi Saat Ini <span style="color: #dc2626;">*</span></label>
+                            <div style="position: relative;">
+                                <input type="password" name="sandi_lama" id="tellerOldPassword" class="form-control" required placeholder="Masukkan kata sandi lama" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('tellerOldPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Kata Sandi Baru (Min. 6 Karakter) <span style="color: #dc2626;">*</span></label>
+                            <div style="position: relative;">
+                                <input type="password" name="sandi_baru" id="tellerNewPassword" class="form-control" required minlength="6" placeholder="Masukkan kata sandi baru" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('tellerNewPassword', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Konfirmasi Kata Sandi Baru <span style="color: #dc2626;">*</span></label>
+                            <div style="position: relative;">
+                                <input type="password" name="sandi_baru_confirmation" id="tellerNewPasswordConfirm" class="form-control" required minlength="6" placeholder="Ulangi kata sandi baru" style="padding-right: 2.75rem;">
+                                <button type="button" onclick="togglePasswordVisibility('tellerNewPasswordConfirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: color 0.2s;" title="Lihat Password">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1.5rem;">
+                            <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem 1.25rem; font-weight: 700; border-radius: 12px; background: #0f172a; color: #fff; border: none; cursor: pointer;">
+                                Perbarui Kata Sandi
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -3494,6 +3613,11 @@
 
         function restoreTellerActiveTab() {
             try {
+                if (@json(session('success_profile') || session('success_password') || session('error_password') || $errors->has('nama_petugas') || $errors->has('email') || $errors->has('sandi_lama') || $errors->has('sandi_baru'))) {
+                    switchTab('tab-profil');
+                    return;
+                }
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const hasMonth = urlParams.get('month');
                 const queryTab = urlParams.get('tab');

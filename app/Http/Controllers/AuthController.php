@@ -234,14 +234,15 @@ class AuthController extends Controller
     }
 
     /**
-     * Cari akun berdasarkan NISN, No Rekening, Username, atau Nama
+     * Cari akun berdasarkan NISN, No Rekening, Username, Email, atau Nama
      */
     protected function findAccountByIdentifier(string $identifier)
     {
         $identifier = trim($identifier);
 
-        // 1. Cek langsung User (username atau nama_petugas)
+        // 1. Cek langsung User (username, email, atau nama_petugas)
         $user = User::where('username', $identifier)
+            ->orWhere('email', $identifier)
             ->orWhere('nama_petugas', $identifier)
             ->first();
 
@@ -313,7 +314,7 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Akun dengan NISN atau Username "' . $request->identifier . '" tidak ditemukan di sistem.',
+                'message' => 'Akun dengan Username, Email, atau NISN "' . $request->identifier . '" tidak ditemukan di sistem.',
             ], 404);
         }
 
@@ -674,6 +675,81 @@ class AuthController extends Controller
 
         $msg = 'PIN 6-digit baru telah berhasil dikirimkan ke alamat Gmail: ' . $request->email . '. Silakan periksa kotak masuk (Inbox) atau folder Spam Gmail Anda untuk melihat PIN baru.';
         return back()->with('success_lupa', $msg);
+    }
+
+    /**
+     * Update Data Profil Mandiri Petugas (Admin & Teller)
+     */
+    public function updateProfil(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'nama_petugas' => 'required|string|max:100',
+            'email' => 'required|email|max:100|unique:users,email,' . $user->id,
+        ], [
+            'nama_petugas.required' => 'Nama lengkap petugas wajib diisi.',
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.email' => 'Format alamat email tidak valid.',
+            'email.unique' => 'Alamat email ini sudah terdaftar pada akun lain.',
+        ]);
+
+        $user->nama_petugas = trim($request->nama_petugas);
+        $user->email = strtolower(trim($request->email));
+        $user->save();
+
+        try {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'aktivitas' => 'Pembaruan Profil Petugas Mandiri',
+                'detail' => 'Petugas ' . $user->nama_petugas . ' (' . $user->role . ') memperbarui nama dan email profil.',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Throwable $e) {}
+
+        return back()->with('success_profile', 'Profil identitas berhasil diperbarui!');
+    }
+
+    /**
+     * Ganti Kata Sandi Mandiri Petugas (Admin & Teller)
+     */
+    public function gantiPasswordPetugas(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'sandi_lama' => 'required|string',
+            'sandi_baru' => 'required|string|min:6|confirmed',
+        ], [
+            'sandi_lama.required' => 'Kata sandi saat ini wajib diisi.',
+            'sandi_baru.required' => 'Kata sandi baru wajib diisi.',
+            'sandi_baru.min' => 'Kata sandi baru minimal 6 karakter.',
+            'sandi_baru.confirmed' => 'Konfirmasi kata sandi baru tidak cocok.',
+        ]);
+
+        if (!Hash::check($request->sandi_lama, $user->password)) {
+            return back()->with('error_password', 'Kata sandi saat ini yang Anda masukkan salah.')->withInput();
+        }
+
+        $user->password = Hash::make($request->sandi_baru);
+        $user->save();
+
+        try {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'aktivitas' => 'Ganti Kata Sandi Petugas Mandiri',
+                'detail' => 'Petugas ' . ($user->nama_petugas ?? $user->username) . ' (' . $user->role . ') berhasil mengubah kata sandi akun.',
+                'ip_address' => $request->ip(),
+            ]);
+        } catch (\Throwable $e) {}
+
+        return back()->with('success_password', 'Kata sandi akun petugas berhasil diperbarui!');
     }
 
     protected function redirectUserByRole($user)

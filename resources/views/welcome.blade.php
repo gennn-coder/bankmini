@@ -819,22 +819,22 @@
                 <button type="button" onclick="closeResetModal()" class="btn-text-close">Tutup</button>
             </div>
 
-            <!-- TAHAP 1: INPUT NISN/USERNAME & GMAIL -> KIRIM OTP -> MASUKKAN OTP -> SELANJUTNYA -->
+            <!-- TAHAP 1: INPUT IDENTIFIER (ADMIN/TELLER/SISWA) & GMAIL -> KIRIM OTP -> MASUKKAN OTP -> SELANJUTNYA -->
             <div id="resetStep1">
                 <p class="modal-instruction">
-                    Masukkan NISN atau Username akun Anda dan alamat Gmail. Sistem akan mengirimkan kode OTP untuk proses verifikasi kata sandi baru.
+                    Masukkan Username, Email, atau NISN akun Anda (Admin, Teller, atau Siswa) beserta alamat Gmail terdaftar. Sistem akan mengirimkan kode OTP 6-digit untuk verifikasi kata sandi baru.
                 </p>
 
                 <div id="step1Alert" class="alert-box" style="display: none;"></div>
 
                 <div class="form-group">
-                    <label class="form-label" for="resetIdentifier">NISN atau Username</label>
-                    <input type="text" id="resetIdentifier" class="form-control-custom" placeholder="Contoh: 1029384756 atau username" autocomplete="off">
+                    <label class="form-label" for="resetIdentifier">Username / Email / NISN</label>
+                    <input type="text" id="resetIdentifier" class="form-control-custom" placeholder="Contoh: admin, teller1, atau NISN siswa" autocomplete="off">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="resetEmail">Alamat Gmail Terdaftar</label>
-                    <input type="email" id="resetEmail" class="form-control-custom" placeholder="Contoh: ahmad.rizky@gmail.com" autocomplete="off">
+                    <input type="email" id="resetEmail" class="form-control-custom" placeholder="Contoh: nama@gmail.com" autocomplete="off">
                 </div>
 
                 <div style="margin-bottom: 1.25rem;">
@@ -969,13 +969,13 @@
             hideAlert('step1Alert');
 
             if (!identifier) {
-                showAlert('step1Alert', 'Silakan masukkan NISN atau Username terlebih dahulu.', 'error');
+                showAlert('step1Alert', 'Silakan masukkan Username, Email, atau NISN terlebih dahulu.', 'error');
                 document.getElementById('resetIdentifier').focus();
                 return;
             }
 
             if (!email) {
-                showAlert('step1Alert', 'Silakan masukkan alamat Gmail terlebih dahulu.', 'error');
+                showAlert('step1Alert', 'Silakan masukkan alamat Gmail terdaftar terlebih dahulu.', 'error');
                 document.getElementById('resetEmail').focus();
                 return;
             }
@@ -1037,7 +1037,7 @@
             hideAlert('step1Alert');
 
             if (!identifier || !email) {
-                showAlert('step1Alert', 'Mohon lengkapi NISN/Username dan Alamat Gmail.', 'error');
+                showAlert('step1Alert', 'Mohon lengkapi Username/Email dan Alamat Gmail.', 'error');
                 return;
             }
 

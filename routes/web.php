@@ -77,6 +77,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/nasabah/perjanjian-penarikan', [DashboardController::class, 'simpanPerjanjianPenarikan'])->name('nasabah.perjanjian-penarikan.store');
     Route::post('/nasabah/pengaduan', [DashboardController::class, 'kirimPengaduan'])->name('nasabah.pengaduan.store');
     Route::post('/nasabah/ganti-password', [DashboardController::class, 'gantiPassword'])->name('nasabah.ganti-password');
+
+    // Profil Petugas Mandiri (Admin & Teller)
+    Route::post('/profil/update', [AuthController::class, 'updateProfil'])->name('profil.update');
+    Route::post('/profil/ganti-password', [AuthController::class, 'gantiPasswordPetugas'])->name('profil.ganti-password');
 });
 
 // Endpoint Pembersihan Cache Otomatis (CI/CD Deployment & Maintenance)

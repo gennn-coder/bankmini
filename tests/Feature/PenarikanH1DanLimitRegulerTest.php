@@ -58,7 +58,7 @@ class PenarikanH1DanLimitRegulerTest extends TestCase
 
         $saver = Saver::create([
             'user_id' => $user->id,
-            'account_number' => '100' . rand(10000, 99999),
+            'account_number' => '100' . rand(100000, 999999) . rand(10, 99),
             'nis' => $nis,
             'student_name' => 'Nasabah Test',
             'class_grade' => 'XII RPL',
