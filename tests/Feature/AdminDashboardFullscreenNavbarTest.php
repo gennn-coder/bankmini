@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Member;
 use App\Models\Saver;
 use App\Models\Rekening;
+use App\Models\Transaksi;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class AdminDashboardFullscreenNavbarTest extends TestCase
@@ -47,6 +48,10 @@ class AdminDashboardFullscreenNavbarTest extends TestCase
         $response->assertSee('E-Teller Bank Mini Sekolah', false);
         $response->assertSee('ADMIN', false);
         $response->assertSee('Keluar', false);
+
+        // Pastikan kotak pencarian di sebelah kiri nama/Halo sudah dihapus
+        $response->assertDontSee('id="globalSearchInput"', false);
+        $response->assertDontSee('class="search-pill-box"', false);
 
         // Pastikan ada nav-tabs horizontal di atas
         $response->assertSee('class="nav-tabs-bar"', false);
@@ -99,5 +104,47 @@ class AdminDashboardFullscreenNavbarTest extends TestCase
         // 3. Box Daftar Anggota Siswa (Members) dengan tabel
         $response->assertSee('Daftar Anggota Siswa (Members)', false);
         $response->assertSee('tableMemberBody', false);
+    }
+
+    public function test_recent_transactions_displays_real_amount_and_not_zero()
+    {
+        $saver = Saver::first();
+        if (!$saver) {
+            $user = User::create([
+                'nama_petugas' => 'Siswa Penguji',
+                'username' => 'siswa_' . uniqid(),
+                'email' => 'siswa_' . uniqid() . '@example.com',
+                'password' => bcrypt('password123'),
+                'role' => 'saver',
+                'status' => 'aktif',
+            ]);
+            $saver = Saver::create([
+                'user_id' => $user->id,
+                'account_number' => '100' . rand(10000, 99999),
+                'nis' => (string)rand(10000, 99999),
+                'student_name' => 'Siswa Penguji Trx',
+                'class_grade' => 'XII RPL',
+            ]);
+        }
+
+        $uniqueAmount = 876543;
+        Transaksi::create([
+            'no_transaksi' => 'TEST-TRX-' . uniqid(),
+            'saver_id' => $saver->id,
+            'id_user' => $this->admin->id,
+            'saver_name' => $saver->student_name,
+            'account_number' => $saver->account_number,
+            'tanggal' => now(),
+            'jenis_trans' => 'setoran',
+            'nominal' => $uniqueAmount,
+            'keterangan' => 'Setoran Uji Coba Trx Terkini',
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+        $response->assertStatus(200);
+
+        // Pastikan nominal transaksi muncul dengan format rupiah dan bukan 0
+        $response->assertSee('+Rp ' . number_format($uniqueAmount, 0, ',', '.'), false);
+        $response->assertSee('Transaksi Terkini (Recent Transactions)', false);
     }
 }

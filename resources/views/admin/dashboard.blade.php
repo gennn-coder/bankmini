@@ -1226,10 +1226,6 @@
         </div>
 
         <div class="navbar-right">
-            <div class="search-pill-box" style="margin: 0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-                <input type="text" id="globalSearchInput" placeholder="Cari data / fitur..." oninput="handleGlobalSearch(this.value)">
-            </div>
             <div style="font-size: 0.92rem; color: #334155; white-space: nowrap;">
                 Halo, <strong>{{ $user->nama_petugas }}</strong> 
                 <span class="badge" style="background:#dcfce7; color:#166534; font-weight:800; font-size:0.75rem; padding: 0.25rem 0.65rem; border-radius: 999px; margin-left: 4px;">ADMIN</span>
@@ -1441,11 +1437,17 @@
                             <button type="button" onclick="switchTab('tab-jurnal')" style="background: none; border: none; color: #2563eb; font-weight: 700; font-size: 0.8rem; cursor: pointer;">Lihat Semua &rarr;</button>
                         </div>
                         <div class="trans-list">
-                            @forelse($jurnals->take(5) as $trxJurnal)
+                            @php
+                                $displayTransactions = $recentTransactions ?? \App\Models\Transaksi::with(['saver' => fn($q) => $q->withTrashed()])->orderBy('id', 'desc')->take(5)->get();
+                            @endphp
+                            @forelse($displayTransactions as $trx)
                                 @php
-                                    $isKredit = ($trxJurnal->kredit > 0);
-                                    $trxNominal = $isKredit ? $trxJurnal->kredit : $trxJurnal->debet;
-                                    $isSetoran = str_contains(strtolower($trxJurnal->keterangan), 'setoran') || (!$isKredit && str_contains(strtolower($trxJurnal->akun->nama_akun ?? ''), 'kas'));
+                                    $isSetoran = ($trx->jenis_trans === 'setoran');
+                                    $trxNominal = (int)($trx->nominal ?? 0);
+                                    $namaNasabah = $trx->saver->student_name ?? $trx->saver_name ?? '';
+                                    $descTitle = $namaNasabah 
+                                        ? ($isSetoran ? 'Setoran Nasabah (' . $namaNasabah . ')' : 'Penarikan Nasabah (' . $namaNasabah . ')')
+                                        : ($trx->keterangan ?: ($isSetoran ? 'Setoran Nasabah' : 'Penarikan Nasabah'));
                                 @endphp
                                 <div class="trans-item">
                                     <div class="trans-icon {{ $isSetoran ? 't-icon-setoran' : 't-icon-penarikan' }}">
@@ -1456,15 +1458,15 @@
                                         @endif
                                     </div>
                                     <div class="trans-meta">
-                                        <div class="trans-desc">{{ $trxJurnal->keterangan ?: ($isSetoran ? 'Setoran Nasabah' : 'Penarikan Nasabah') }}</div>
-                                        <div class="trans-time">{{ date('d M Y, H:i', strtotime($trxJurnal->created_at)) }}</div>
+                                        <div class="trans-desc" title="{{ $descTitle }}">{{ $descTitle }}</div>
+                                        <div class="trans-time">{{ date('d M Y, H:i', strtotime($trx->tanggal ?? $trx->created_at)) }}</div>
                                     </div>
                                     <div class="trans-amount {{ $isSetoran ? 'amount-green' : 'amount-red' }}">
                                         {{ $isSetoran ? '+' : '-' }}Rp {{ number_format($trxNominal, 0, ',', '.') }}
                                     </div>
                                 </div>
                             @empty
-                                <div class="empty-trans-text">Belum ada transaksi hari ini</div>
+                                <div class="empty-trans-text">Belum ada transaksi</div>
                             @endforelse
                         </div>
                     </div>

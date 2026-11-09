@@ -108,6 +108,14 @@ class DashboardController extends Controller
             ->take(30)
             ->get();
 
+        $recentTransactions = Transaksi::with([
+            'saver' => fn($q) => $q->withTrashed(),
+            'teller' => fn($q) => $q->withTrashed()
+        ])
+        ->orderBy('id', 'desc')
+        ->take(10)
+        ->get();
+
         $pengajuanKasList = PengajuanKas::with(['teller' => fn($q) => $q->withTrashed()])
             ->orderBy('created_at', 'desc')
             ->take(30)
@@ -122,7 +130,7 @@ class DashboardController extends Controller
             'user', 'totalUsers', 'totalMembers', 'totalBelumAktif', 'filterMember', 'totalSavers', 'totalRekening', 'totalSaldo',
             'users', 'members', 'savers', 'laporanPending', 'laporanApproved',
             'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
-            'auditLogs', 'jurnals', 'pengajuanKasList', 'pengaduanList'
+            'auditLogs', 'jurnals', 'recentTransactions', 'pengajuanKasList', 'pengaduanList'
         ));
     }
 
