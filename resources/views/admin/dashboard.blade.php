@@ -1438,7 +1438,7 @@
                         </div>
                         <div class="trans-list">
                             @php
-                                $displayTransactions = $recentTransactions ?? \App\Models\Transaksi::with(['saver' => fn($q) => $q->withTrashed()])->orderBy('id', 'desc')->take(5)->get();
+                                $displayTransactions = collect($recentTransactions ?? \App\Models\Transaksi::with(['saver' => fn($q) => $q->withTrashed()])->orderBy('id', 'desc')->take(5)->get())->take(5);
                             @endphp
                             @forelse($displayTransactions as $trx)
                                 @php
@@ -1471,49 +1471,173 @@
                         </div>
                     </div>
 
-                    <!-- KARTU KAS & STATUS LOKET TELLER -->
-                    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                        <div class="my-cards-widget" style="margin: 0; background: #ffffff; border-radius: 20px; padding: 1.5rem 1.75rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
-                            <div class="widget-heading-row" style="margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
-                                <h4 class="widget-title" style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Kartu Kas &amp; Likuiditas Sekolah</h4>
-                                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 999px;">Real-Time</span>
+                    <!-- GRAFIK ARUS KAS (PEMASUKAN & PENGELUARAN) -->
+                    <div class="chart-flow-widget" style="margin: 0; background: #ffffff; border-radius: 20px; padding: 1.5rem 1.75rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03); display: flex; flex-direction: column; justify-content: space-between;">
+                        <!-- HEADER KARTU GRAFIK -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                            <div>
+                                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Grafik Pemasukan &amp; Pengeluaran</h4>
+                                <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; margin-top: 2px;">Arus kas setoran &amp; penarikan 7 hari terakhir</div>
                             </div>
-                            <div class="debit-card-blue">
-                                <div class="card-top-row">
-                                    <div class="card-balance-lbl">Balance (Kas Utama Bank Mini)</div>
-                                    <div class="card-chip-symbol">
-                                        <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-                                            <rect width="28" height="20" rx="4" fill="rgba(255,255,255,0.2)"/>
-                                            <circle cx="9" cy="10" r="5" fill="#facc15" opacity="0.9"/>
-                                            <circle cx="19" cy="10" r="5" fill="#ef4444" opacity="0.9"/>
-                                        </svg>
-                                    </div>
+                            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: #2563eb;">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #2563eb; display: inline-block;"></span> Pemasukan
                                 </div>
-                                <div class="card-balance-amount">Rp {{ number_format($totalSaldo, 0, ',', '.') }}</div>
-                                <div class="card-bottom-row">
-                                    <div>
-                                        <div class="card-sub-lbl">Monthly Volume</div>
-                                        <div class="card-sub-val">Rp {{ number_format($monthlySetoran + $monthlyPenarikan, 0, ',', '.') }}</div>
-                                    </div>
-                                    <div class="card-growth-pill">▲ Aktif</div>
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: #94a3b8;">
+                                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; display: inline-block;"></span> Pengeluaran
                                 </div>
-                            </div>
-                            <div class="card-actions-row" style="margin-top: 1rem; display: flex; gap: 0.75rem;">
-                                <button type="button" class="btn-card-action btn-card-request" onclick="switchTab('tab-supervisor')" title="Buka Approval Tambahan Kas" style="flex: 1; justify-content: center;">
-                                    <span>Request Tambahan Kas</span>
-                                </button>
-                                <button type="button" class="btn-card-action btn-card-transfer" onclick="switchTab('tab-supervisor')" title="Buka Approval Tutup Kas" style="flex: 1; justify-content: center;">
-                                    <span>Tutup Kas Teller</span>
-                                </button>
+                                <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 8px; border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 4px;">
+                                    Mingguan ▾
+                                </span>
                             </div>
                         </div>
 
-                        <div class="loket-quick-status" style="margin: 0; background: #ffffff; border-radius: 20px; padding: 1.25rem 1.5rem; border: 1px solid var(--border-light, #e2e8f0); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);">
-                            <div class="l-status-header">
-                                <span class="l-dot-online"></span>
-                                <span class="l-status-title">Loket Teller Online</span>
+                        <!-- BODY GRAFIK DENGAN SVG DUAL-CURVE PERSIS SEPERTI GAMBAR CONTOH -->
+                        @php
+                            $chartData = $chartFlow ?? collect([
+                                ['day' => 'Sun', 'pemasukan' => 0, 'pengeluaran' => 0],
+                                ['day' => 'Mon', 'pemasukan' => 0, 'pengeluaran' => 0],
+                                ['day' => 'Tue', 'pemasukan' => 0, 'pengeluaran' => 0],
+                                ['day' => 'Wed', 'pemasukan' => 0, 'pengeluaran' => 0],
+                                ['day' => 'Thu', 'pemasukan' => 0, 'pengeluaran' => 0],
+                                ['day' => 'Fri', 'pemasukan' => 0, 'pengeluaran' => 0],
+                                ['day' => 'Sat', 'pemasukan' => 0, 'pengeluaran' => 0],
+                            ]);
+
+                            $rawMax = max(500000, (float)$chartData->max('pemasukan'), (float)$chartData->max('pengeluaran'));
+                            $magnitude = pow(10, max(1, floor(log10($rawMax))));
+                            $chartMax = ceil($rawMax / $magnitude) * $magnitude;
+                            if ($chartMax <= 0) $chartMax = 500000;
+
+                            $formatYAxis = function($val) {
+                                if ($val >= 1000000) {
+                                    return round($val / 1000000, 1) . 'M';
+                                } elseif ($val >= 1000) {
+                                    return round($val / 1000) . 'k';
+                                }
+                                return (string)$val;
+                            };
+
+                            $svgW = 460;
+                            $svgH = 190;
+                            $chartLeft = 45;
+                            $chartRight = 440;
+                            $chartTop = 20;
+                            $chartBottom = 160;
+                            $plotW = $chartRight - $chartLeft;
+                            $plotH = $chartBottom - $chartTop;
+
+                            $countPts = count($chartData);
+                            $stepX = $countPts > 1 ? $plotW / ($countPts - 1) : $plotW;
+
+                            $ptsIn = [];
+                            $ptsOut = [];
+                            foreach ($chartData as $i => $row) {
+                                $x = $chartLeft + ($i * $stepX);
+                                $valIn = min($chartMax, (float)($row['pemasukan'] ?? 0));
+                                $valOut = min($chartMax, (float)($row['pengeluaran'] ?? 0));
+                                
+                                $yIn = $chartBottom - (($valIn / $chartMax) * $plotH);
+                                $yOut = $chartBottom - (($valOut / $chartMax) * $plotH);
+                                
+                                $ptsIn[] = ['x' => $x, 'y' => $yIn, 'val' => $row['pemasukan'] ?? 0, 'day' => $row['day'] ?? ''];
+                                $ptsOut[] = ['x' => $x, 'y' => $yOut, 'val' => $row['pengeluaran'] ?? 0, 'day' => $row['day'] ?? ''];
+                            }
+
+                            $makeSpline = function($pts) {
+                                if (count($pts) < 2) return '';
+                                $path = 'M ' . $pts[0]['x'] . ' ' . $pts[0]['y'];
+                                for ($i = 0; $i < count($pts) - 1; $i++) {
+                                    $p0 = $pts[$i];
+                                    $p1 = $pts[$i + 1];
+                                    $cpx = $p0['x'] + ($p1['x'] - $p0['x']) / 2;
+                                    $path .= ' C ' . $cpx . ' ' . $p0['y'] . ', ' . $cpx . ' ' . $p1['y'] . ', ' . $p1['x'] . ' ' . $p1['y'];
+                                }
+                                return $path;
+                            };
+
+                            $pathIn = $makeSpline($ptsIn);
+                            $pathOut = $makeSpline($ptsOut);
+
+                            $firstX = $ptsIn[0]['x'] ?? $chartLeft;
+                            $lastX = $ptsIn[count($ptsIn) - 1]['x'] ?? $chartRight;
+                            $areaIn = $pathIn . ' L ' . $lastX . ' ' . $chartBottom . ' L ' . $firstX . ' ' . $chartBottom . ' Z';
+
+                            $lastPt = end($ptsIn);
+                        @endphp
+
+                        <div style="width: 100%; position: relative;">
+                            <svg viewBox="0 0 {{ $svgW }} {{ $svgH }}" style="width: 100%; height: auto; overflow: visible; display: block;" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="flowBlueGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.22"/>
+                                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
+                                    </linearGradient>
+                                    <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#2563eb" flood-opacity="0.35"/>
+                                    </filter>
+                                </defs>
+
+                                <!-- HORIZONTAL GRID LINES & Y-AXIS LABELS -->
+                                @for($g = 0; $g <= 4; $g++)
+                                    @php
+                                        $gy = $chartBottom - ($g * ($plotH / 4));
+                                        $gVal = ($chartMax / 4) * $g;
+                                    @endphp
+                                    <line x1="{{ $chartLeft }}" y1="{{ $gy }}" x2="{{ $chartRight }}" y2="{{ $gy }}" stroke="#f1f5f9" stroke-width="1.2" stroke-dasharray="{{ $g === 0 ? 'none' : '3,3' }}"/>
+                                    <text x="{{ $chartLeft - 8 }}" y="{{ $gy + 4 }}" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="end" font-family="inherit">
+                                        {{ $formatYAxis($gVal) }}
+                                    </text>
+                                @endfor
+
+                                <!-- AREA GRADIENT PEMASUKAN -->
+                                <path d="{{ $areaIn }}" fill="url(#flowBlueGrad)"/>
+
+                                <!-- KURVA PENGELUARAN (GARIS ABU-ABU PERSIS SEPERTI CONTOH GAMBAR) -->
+                                <path d="{{ $pathOut }}" fill="none" stroke="#94a3b8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                <!-- KURVA PEMASUKAN (GARIS BIRU HALUS) -->
+                                <path d="{{ $pathIn }}" fill="none" stroke="#2563eb" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                <!-- TITIK-TITIK DATA INTERAKTIF & X-AXIS LABELS -->
+                                @foreach($ptsIn as $idx => $p)
+                                    <text x="{{ $p['x'] }}" y="{{ $chartBottom + 20 }}" font-size="11" font-weight="700" fill="#64748b" text-anchor="middle" font-family="inherit">
+                                        {{ $p['day'] }}
+                                    </text>
+                                    <g>
+                                        <circle cx="{{ $p['x'] }}" cy="{{ $p['y'] }}" r="12" fill="transparent" style="cursor: pointer;">
+                                            <title>{{ $p['day'] }}: Pemasukan Rp {{ number_format($p['val'], 0, ',', '.') }} | Pengeluaran Rp {{ number_format($ptsOut[$idx]['val'] ?? 0, 0, ',', '.') }}</title>
+                                        </circle>
+                                    </g>
+                                @endforeach
+
+                                <!-- ACTIVE HIGHLIGHTED NODE DI TITIK TERBARU -->
+                                @if(!empty($lastPt))
+                                    <circle cx="{{ $lastPt['x'] }}" cy="{{ $lastPt['y'] }}" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2.5" filter="url(#dotGlow)"/>
+                                @endif
+                            </svg>
+                        </div>
+
+                        <!-- STATISTIK FOOTER KARTU GRAFIK -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid #f1f5f9;">
+                            <div style="background: #eff6ff; padding: 0.5rem 0.65rem; border-radius: 10px; border: 1px solid #dbeafe;">
+                                <div style="font-size: 0.7rem; color: #1e40af; font-weight: 700;">Total Pemasukan</div>
+                                <div style="font-size: 0.88rem; font-weight: 800; color: #1d4ed8; margin-top: 2px;">
+                                    +Rp {{ number_format($totalChartPemasukan ?? $chartData->sum('pemasukan'), 0, ',', '.') }}
+                                </div>
                             </div>
-                            <div class="l-status-desc">Sistem terhubung ke database dan siap melayani transaksi keuangan seluruh siswa.</div>
+                            <div style="background: #f8fafc; padding: 0.5rem 0.65rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <div style="font-size: 0.7rem; color: #475569; font-weight: 700;">Total Pengeluaran</div>
+                                <div style="font-size: 0.88rem; font-weight: 800; color: #dc2626; margin-top: 2px;">
+                                    -Rp {{ number_format($totalChartPengeluaran ?? $chartData->sum('pengeluaran'), 0, ',', '.') }}
+                                </div>
+                            </div>
+                            <div style="background: #f0fdf4; padding: 0.5rem 0.65rem; border-radius: 10px; border: 1px solid #bbf7d0;">
+                                <div style="font-size: 0.7rem; color: #166534; font-weight: 700;">Kas Bank Mini</div>
+                                <div style="font-size: 0.88rem; font-weight: 800; color: #15803d; margin-top: 2px;">
+                                    Rp {{ number_format($totalSaldo, 0, ',', '.') }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

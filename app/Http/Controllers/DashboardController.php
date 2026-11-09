@@ -113,8 +113,38 @@ class DashboardController extends Controller
             'teller' => fn($q) => $q->withTrashed()
         ])
         ->orderBy('id', 'desc')
-        ->take(10)
+        ->take(5)
         ->get();
+
+        // Data Grafik Arus Kas 7 Hari Terakhir (Pemasukan vs Pengeluaran)
+        $chartDays = collect();
+        for ($i = 6; $i >= 0; $i--) {
+            $d = now()->subDays($i);
+            $key = $d->format('Y-m-d');
+            $chartDays->put($key, [
+                'day' => $d->format('D'), // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+                'date' => $d->format('d/m'),
+                'pemasukan' => 0,
+                'pengeluaran' => 0,
+            ]);
+        }
+
+        $recent7DaysTrx = Transaksi::where('tanggal', '>=', now()->subDays(6)->startOfDay())->get();
+        foreach ($recent7DaysTrx as $tx) {
+            $tgl = date('Y-m-d', strtotime($tx->tanggal ?? $tx->created_at));
+            if ($chartDays->has($tgl)) {
+                $item = $chartDays->get($tgl);
+                if ($tx->jenis_trans === 'setoran') {
+                    $item['pemasukan'] += (int) $tx->nominal;
+                } elseif ($tx->jenis_trans === 'penarikan') {
+                    $item['pengeluaran'] += (int) $tx->nominal;
+                }
+                $chartDays->put($tgl, $item);
+            }
+        }
+        $chartFlow = $chartDays->values();
+        $totalChartPemasukan = $chartFlow->sum('pemasukan');
+        $totalChartPengeluaran = $chartFlow->sum('pengeluaran');
 
         $pengajuanKasList = PengajuanKas::with(['teller' => fn($q) => $q->withTrashed()])
             ->orderBy('created_at', 'desc')
@@ -130,7 +160,8 @@ class DashboardController extends Controller
             'user', 'totalUsers', 'totalMembers', 'totalBelumAktif', 'filterMember', 'totalSavers', 'totalRekening', 'totalSaldo',
             'users', 'members', 'savers', 'laporanPending', 'laporanApproved',
             'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
-            'auditLogs', 'jurnals', 'recentTransactions', 'pengajuanKasList', 'pengaduanList'
+            'auditLogs', 'jurnals', 'recentTransactions', 'chartFlow', 'totalChartPemasukan', 'totalChartPengeluaran',
+            'pengajuanKasList', 'pengaduanList'
         ));
     }
 

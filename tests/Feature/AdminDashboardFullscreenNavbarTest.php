@@ -146,5 +146,57 @@ class AdminDashboardFullscreenNavbarTest extends TestCase
         // Pastikan nominal transaksi muncul dengan format rupiah dan bukan 0
         $response->assertSee('+Rp ' . number_format($uniqueAmount, 0, ',', '.'), false);
         $response->assertSee('Transaksi Terkini (Recent Transactions)', false);
+
+        // Pastikan widget Grafik Pemasukan & Pengeluaran tampil menggantikan Kartu Kas
+        $response->assertSee('Grafik Pemasukan &amp; Pengeluaran', false);
+        $response->assertSee('Pemasukan', false);
+        $response->assertSee('Pengeluaran', false);
+        $response->assertDontSee('Kartu Kas &amp; Likuiditas Sekolah', false);
+        $response->assertDontSee('class="debit-card-blue"', false);
+    }
+
+    public function test_recent_transactions_is_limited_to_maximum_five_items()
+    {
+        $saver = Saver::first();
+        if (!$saver) {
+            $user = User::create([
+                'nama_petugas' => 'Siswa Penguji',
+                'username' => 'siswa_' . uniqid(),
+                'email' => 'siswa_' . uniqid() . '@example.com',
+                'password' => bcrypt('password123'),
+                'role' => 'saver',
+                'status' => 'aktif',
+            ]);
+            $saver = Saver::create([
+                'user_id' => $user->id,
+                'account_number' => '100' . rand(10000, 99999),
+                'nis' => (string)rand(10000, 99999),
+                'student_name' => 'Siswa Penguji Trx 2',
+                'class_grade' => 'XII RPL',
+            ]);
+        }
+
+        // Buat 7 transaksi baru
+        for ($i = 1; $i <= 7; $i++) {
+            Transaksi::create([
+                'no_transaksi' => 'TEST-LIMIT-' . uniqid() . '-' . $i,
+                'saver_id' => $saver->id,
+                'id_user' => $this->admin->id,
+                'saver_name' => $saver->student_name,
+                'account_number' => $saver->account_number,
+                'tanggal' => now()->subMinutes($i),
+                'jenis_trans' => 'setoran',
+                'nominal' => 10000 * $i,
+                'keterangan' => 'Trx Test ' . $i,
+            ]);
+        }
+
+        $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
+        $response->assertStatus(200);
+
+        // Hitung jumlah item transaksi yang dirender
+        $content = $response->getContent();
+        $transItemCount = substr_count($content, 'class="trans-item"');
+        $this->assertLessThanOrEqual(5, $transItemCount, 'Recent transactions must be limited to at most 5 items.');
     }
 }
