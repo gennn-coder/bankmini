@@ -40,34 +40,55 @@ class ProfilDanLupaSandiPetugasTest extends TestCase
         $admin = $this->createAdmin();
         $teller = $this->createTeller();
 
-        // Cek Admin Dashboard render tab Profil
+        // Cek Admin Dashboard render tombol profil pada dropdown nama & konten tab profil
         $responseAdmin = $this->actingAs($admin)->get('/admin/dashboard');
         $responseAdmin->assertStatus(200);
-        $responseAdmin->assertSee('Profil');
+        $responseAdmin->assertSee('btn-user-profile-trigger');
+        $responseAdmin->assertSee('Masuk ke Profil / Edit Profil');
         $responseAdmin->assertSee('tab-profil');
+        $responseAdmin->assertSee('name="username"', false);
         $responseAdmin->assertSee($admin->email);
 
-        // Cek Teller Dashboard render tab Profil
+        // Cek Teller Dashboard render tombol profil pada dropdown nama & konten tab profil
         $responseTeller = $this->actingAs($teller)->get('/teller/dashboard');
         $responseTeller->assertStatus(200);
-        $responseTeller->assertSee('Profil');
+        $responseTeller->assertSee('btn-user-profile-trigger');
+        $responseTeller->assertSee('Masuk ke Profil / Edit Profil');
         $responseTeller->assertSee('tab-profil');
+        $responseTeller->assertSee('name="username"', false);
         $responseTeller->assertSee($teller->email);
     }
 
-    public function test_petugas_dapat_memperbarui_nama_dan_email_profil_mandiri()
+    public function test_petugas_dapat_memperbarui_nama_username_dan_email_profil_mandiri()
     {
         $admin = $this->createAdmin();
+        $newUsername = 'genta_new_' . uniqid();
 
         $response = $this->actingAs($admin)->post('/profil/update', [
             'nama_petugas' => 'Genta Nilam Prana Updated',
+            'username' => $newUsername,
             'email' => 'genta_updated_' . uniqid() . '@bankmini.sch.id',
         ]);
 
         $response->assertSessionHas('success_profile');
         $admin->refresh();
         $this->assertEquals('Genta Nilam Prana Updated', $admin->nama_petugas);
+        $this->assertEquals($newUsername, $admin->username);
         $this->assertStringContainsString('genta_updated_', $admin->email);
+    }
+
+    public function test_validasi_update_profil_menolak_username_duplikat()
+    {
+        $admin1 = $this->createAdmin();
+        $admin2 = $this->createAdmin();
+
+        $response = $this->actingAs($admin2)->post('/profil/update', [
+            'nama_petugas' => 'Admin Dua',
+            'username' => $admin1->username, // Duplikat
+            'email' => 'admindua_new@bankmini.sch.id',
+        ]);
+
+        $response->assertSessionHasErrors(['username']);
     }
 
     public function test_petugas_dapat_mengubah_kata_sandi_akun_secara_mandiri()

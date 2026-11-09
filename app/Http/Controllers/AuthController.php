@@ -689,15 +689,20 @@ class AuthController extends Controller
 
         $request->validate([
             'nama_petugas' => 'required|string|max:100',
+            'username' => 'required|string|min:3|max:50|unique:users,username,' . $user->id,
             'email' => 'required|email|max:100|unique:users,email,' . $user->id,
         ], [
             'nama_petugas.required' => 'Nama lengkap petugas wajib diisi.',
+            'username.required' => 'Username login wajib diisi.',
+            'username.min' => 'Username minimal 3 karakter.',
+            'username.unique' => 'Username ini sudah digunakan oleh akun lain.',
             'email.required' => 'Alamat email wajib diisi.',
             'email.email' => 'Format alamat email tidak valid.',
             'email.unique' => 'Alamat email ini sudah terdaftar pada akun lain.',
         ]);
 
         $user->nama_petugas = trim($request->nama_petugas);
+        $user->username = trim($request->username);
         $user->email = strtolower(trim($request->email));
         $user->save();
 

@@ -111,6 +111,126 @@
             color: #1d4ed8;
         }
 
+        /* USER PROFILE DROPDOWN MENU */
+        .user-menu-container {
+            position: relative;
+            display: inline-block;
+        }
+        .btn-user-profile-trigger {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 0.35rem 0.65rem;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: #334155;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .btn-user-profile-trigger:hover,
+        .btn-user-profile-trigger.active {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        .btn-user-profile-trigger .chevron-user-icon {
+            transition: transform 0.2s ease;
+            color: #64748b;
+        }
+        .btn-user-profile-trigger.active .chevron-user-icon {
+            transform: rotate(180deg);
+        }
+        .user-dropdown-popover {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 290px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08);
+            z-index: 1050;
+            overflow: hidden;
+            animation: dropdownFadeIn 0.15s ease-out;
+        }
+        .user-dropdown-popover.show {
+            display: block;
+        }
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.15rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .user-dropdown-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .user-dropdown-name {
+            font-weight: 800;
+            font-size: 0.92rem;
+            color: #0f172a;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-dropdown-role {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .user-dropdown-body {
+            padding: 0.5rem;
+        }
+        .btn-dropdown-action {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0.85rem;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-align: left;
+            font-family: inherit;
+        }
+        .btn-dropdown-action:hover {
+            background: #f1f5f9;
+        }
+        .btn-dropdown-action-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
         .btn-quick-collapse {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -539,7 +659,38 @@
                 <button type="button" onclick="ubahStatusLayanan('istirahat')" id="btn-status-istirahat" class="btn-status-option {{ $statusLayanan === 'istirahat' ? 'active-istirahat' : '' }}">Istirahat</button>
                 <button type="button" onclick="ubahStatusLayanan('tutup')" id="btn-status-tutup" class="btn-status-option {{ $statusLayanan === 'tutup' ? 'active-tutup' : '' }}">Tutup</button>
             </div>
-            <span>Halo, <strong>{{ $user->nama_petugas }}</strong></span>
+            <!-- USER PROFILE DROPDOWN MENU -->
+            <div class="user-menu-container" id="userMenuContainer">
+                <button type="button" id="btnUserMenu" onclick="toggleUserMenu(event)" class="btn-user-profile-trigger" title="Klik untuk membuka menu profil & akun">
+                    <span>Halo, <strong>{{ $user->nama_petugas }}</strong></span>
+                    <svg class="chevron-user-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <!-- DROPDOWN POPOVER -->
+                <div class="user-dropdown-popover" id="userDropdownPopover">
+                    <div class="user-dropdown-header">
+                        <div class="user-dropdown-avatar">
+                            {{ strtoupper(substr($user->nama_petugas, 0, 1)) }}
+                        </div>
+                        <div style="min-width: 0; flex: 1;">
+                            <div class="user-dropdown-name" title="{{ $user->nama_petugas }}">{{ $user->nama_petugas }}</div>
+                            <div class="user-dropdown-role">Petugas Teller &bull; {{ '@' . $user->username }}</div>
+                        </div>
+                    </div>
+                    <div class="user-dropdown-body">
+                        <button type="button" onclick="bukaHalamanProfil()" class="btn-dropdown-action">
+                            <span class="btn-dropdown-action-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </span>
+                            <div style="text-align: left; flex: 1;">
+                                <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;">Masuk ke Profil / Edit Profil</div>
+                                <div style="font-size: 0.74rem; color: #64748b;">Kelola identitas, username & sandi</div>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                 @csrf
                 <button type="submit" class="btn-logout" onclick="try{sessionStorage.removeItem('teller_active_tab');localStorage.removeItem('teller_active_tab');}catch(e){}">Keluar</button>
@@ -569,7 +720,6 @@
             </button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-riwayat')">Riwayat Transaksi Harian</button>
             <button type="button" class="tab-btn" onclick="switchTab('tab-bulanan')">Laporan Bulanan</button>
-            <button type="button" class="tab-btn" onclick="switchTab('tab-profil')">Profil</button>
             <button type="button" onclick="toggleNavTabs()" class="btn-quick-collapse" title="Sembunyikan Navigasi Menu">
                 <span>▲</span> Sembunyikan
             </button>
@@ -1842,6 +1992,17 @@
         <!-- TAB 10: PROFIL PETUGAS TELLER              -->
         <!-- ========================================== -->
         <div id="tab-profil" class="tab-content">
+            <!-- HEADER PROFIL & TOMBOL KEMBALI -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; background: #ffffff; padding: 1.25rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);">
+                <div>
+                    <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">Pengaturan Profil & Akun Teller</h2>
+                    <p style="font-size: 0.85rem; color: #64748b; margin: 3px 0 0;">Perbarui data identitas diri, username akun login, dan kata sandi Anda</p>
+                </div>
+                <button type="button" onclick="switchTab('tab-dashboard')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.15rem; font-size: 0.85rem; font-weight: 700; border-radius: 10px; background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                    <span>&larr;</span> Kembali ke Dashboard
+                </button>
+            </div>
+
             @if(session('success_profile'))
                 <div class="alert alert-success" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
                     <strong>✓ Sukses:</strong> {{ session('success_profile') }}
@@ -1857,7 +2018,7 @@
                     <strong>⚠️ Peringatan:</strong> {{ session('error_password') }}
                 </div>
             @endif
-            @if($errors->has('nama_petugas') || $errors->has('email') || $errors->has('sandi_lama') || $errors->has('sandi_baru'))
+            @if($errors->has('nama_petugas') || $errors->has('username') || $errors->has('email') || $errors->has('sandi_lama') || $errors->has('sandi_baru'))
                 <div class="alert alert-danger" style="margin-bottom: 1.25rem;">
                     <ul style="margin: 0; padding-left: 1.25rem;">
                         @foreach($errors->all() as $err)
@@ -1888,8 +2049,8 @@
                         </div>
 
                         <div class="form-group" style="margin-bottom: 1.25rem;">
-                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Username Login</label>
-                            <input type="text" class="form-control" value="{{ $user->username }}" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;" title="Username akun bersifat permanen">
+                            <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Username Login <span style="color: #dc2626;">*</span></label>
+                            <input type="text" name="username" class="form-control" required minlength="3" maxlength="50" value="{{ old('username', $user->username) }}" placeholder="Masukkan username login" autocomplete="username">
                             <small style="color: #64748b; font-size: 0.75rem;">Username digunakan untuk login ke sistem.</small>
                         </div>
 
@@ -2090,6 +2251,45 @@
                 }
             } catch(e) {}
         }
+
+        function toggleUserMenu(e) {
+            if (e) e.stopPropagation();
+            const popover = document.getElementById('userDropdownPopover');
+            const trigger = document.getElementById('btnUserMenu');
+            if (!popover) return;
+            const isShown = popover.classList.contains('show');
+            if (isShown) {
+                closeUserMenu();
+            } else {
+                popover.classList.add('show');
+                if (trigger) trigger.classList.add('active');
+            }
+        }
+
+        function closeUserMenu() {
+            const popover = document.getElementById('userDropdownPopover');
+            const trigger = document.getElementById('btnUserMenu');
+            if (popover) popover.classList.remove('show');
+            if (trigger) trigger.classList.remove('active');
+        }
+
+        function bukaHalamanProfil() {
+            closeUserMenu();
+            switchTab('tab-profil', true);
+        }
+
+        window.addEventListener('click', function(e) {
+            const container = document.getElementById('userMenuContainer');
+            if (container && !container.contains(e.target)) {
+                closeUserMenu();
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeUserMenu();
+            }
+        });
 
         function switchTab(tabId, shouldScroll = false) {
             if (!tabId) return;
@@ -3613,7 +3813,7 @@
 
         function restoreTellerActiveTab() {
             try {
-                if (@json(session('success_profile') || session('success_password') || session('error_password') || $errors->has('nama_petugas') || $errors->has('email') || $errors->has('sandi_lama') || $errors->has('sandi_baru'))) {
+                if (@json(session('success_profile') || session('success_password') || session('error_password') || $errors->has('nama_petugas') || $errors->has('username') || $errors->has('email') || $errors->has('sandi_lama') || $errors->has('sandi_baru'))) {
                     switchTab('tab-profil');
                     return;
                 }
