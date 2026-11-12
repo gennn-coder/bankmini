@@ -46,7 +46,7 @@ class BankMiniRevisionTest extends TestCase
             'student_name' => 'Siswa Uji Coba',
             'nis' => $nis,
             'email' => 'siswa.uji@gmail.com',
-            'class_grade' => 'X PPLG 1',
+            'class_grade' => 'PPLG',
             'graduation_year' => '2028',
             'password' => '123456',
             'pin' => '123456',
@@ -63,7 +63,7 @@ class BankMiniRevisionTest extends TestCase
             'student_name' => 'Siswa Uji Coba Update',
             'nis' => $nis,
             'email' => 'siswa.uji.update@gmail.com',
-            'class_grade' => 'X PPLG 2',
+            'class_grade' => 'RPL',
             'graduation_year' => '2028',
             'status' => 'rekening tidak aktif',
         ]);
@@ -263,6 +263,41 @@ class BankMiniRevisionTest extends TestCase
         $response->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_monthly_report_filter_by_jenis_trans()
+    {
+        $admin = User::where('role', 'administrator')->first();
+        $this->actingAs($admin);
+
+        // Filter Setoran
+        $response = $this->get(route('admin.dashboard', [
+            'tab' => 'tab-laporan-bulanan',
+            'month' => date('n'),
+            'year' => date('Y'),
+            'jenis_trans' => 'setoran',
+        ]));
+        $response->assertStatus(200);
+        $response->assertViewHas('selectedJenis', 'setoran');
+
+        // Filter Penarikan
+        $responsePenarikan = $this->get(route('admin.dashboard', [
+            'tab' => 'tab-laporan-bulanan',
+            'month' => date('n'),
+            'year' => date('Y'),
+            'jenis_trans' => 'penarikan',
+        ]));
+        $responsePenarikan->assertStatus(200);
+        $responsePenarikan->assertViewHas('selectedJenis', 'penarikan');
+
+        // PDF dengan filter jenis_trans
+        $responsePdf = $this->get(route('admin.laporan-bulanan.pdf', [
+            'month' => date('n'),
+            'year' => date('Y'),
+            'jenis_trans' => 'setoran',
+        ]));
+        $responsePdf->assertStatus(200);
+        $responsePdf->assertHeader('content-type', 'application/pdf');
+    }
+
     /**
      * Test 6: Fitur Lupa PIN (Admin & Teller bisa reset PIN)
      */
@@ -324,7 +359,7 @@ class BankMiniRevisionTest extends TestCase
         $this->assertNull(User::where('username', 'admin2')->first());
 
         // 2. Menambah Teller -> Berhasil
-        $tellerUsername = 'teller_test_' . rand(100, 999);
+        $tellerUsername = 't_' . rand(1000, 9999);
         $responseTeller = $this->post(route('admin.users.store'), [
             'nama_petugas' => 'Teller Uji Coba',
             'username' => $tellerUsername,
@@ -353,12 +388,12 @@ class BankMiniRevisionTest extends TestCase
         $this->actingAs($admin);
 
         // 1. Buat data siswa baru di Admin -> status awal 'rekening tidak aktif'
-        $nis = 'TEST_' . rand(100000, 999999);
+        $nis = 'T' . rand(100000, 999999);
         $this->post(route('admin.members.store'), [
             'student_name' => 'Siswa Baru Belum Aktif',
             'nis' => $nis,
-            'email' => 'siswa.' . $nis . '@gmail.com',
-            'class_grade' => 'X PPLG 1',
+            'email' => 's.' . $nis . '@gmail.com',
+            'class_grade' => 'PPLG',
             'graduation_year' => '2028',
             'password' => '123456',
             'pin' => '123456',
@@ -387,7 +422,7 @@ class BankMiniRevisionTest extends TestCase
         $this->post(route('admin.members.update', $member->user_id), [
             'student_name' => 'Siswa Baru Belum Aktif',
             'nis' => $nis,
-            'class_grade' => 'X PPLG 1',
+            'class_grade' => 'PPLG',
             'graduation_year' => '2028',
             'status' => 'rekening aktif',
         ]);
@@ -415,7 +450,7 @@ class BankMiniRevisionTest extends TestCase
         $this->post(route('admin.members.update', $member->user_id), [
             'student_name' => 'Siswa Baru Belum Aktif',
             'nis' => $nis,
-            'class_grade' => 'X PPLG 1',
+            'class_grade' => 'PPLG',
             'graduation_year' => '2028',
             'status' => 'rekening tidak aktif',
         ]);
@@ -551,7 +586,7 @@ class BankMiniRevisionTest extends TestCase
         $resTellerErr->assertSessionHasErrors('email');
 
         // 2. Tambah Teller dengan email -> Sukses
-        $tellerUsername = 'teller_email_' . rand(100, 999);
+        $tellerUsername = 'tel_' . rand(1000, 9999);
         $tellerEmail = $tellerUsername . '@gmail.com';
         $resTellerOk = $this->post(route('admin.users.store'), [
             'username' => $tellerUsername,
@@ -568,20 +603,20 @@ class BankMiniRevisionTest extends TestCase
         // 3. Tambah Anggota tanpa email -> Gagal validasi
         $resMemberErr = $this->post(route('admin.members.store'), [
             'student_name' => 'Siswa No Email',
-            'nis' => 'NO_EMAIL_' . rand(1000, 9999),
-            'class_grade' => 'X RPL 1',
+            'nis' => 'NO_' . rand(1000, 9999),
+            'class_grade' => 'RPL',
             'graduation_year' => '2028',
         ]);
         $resMemberErr->assertSessionHasErrors('email');
 
         // 4. Tambah Anggota dengan email -> Sukses
-        $nis = 'EMAIL_OK_' . rand(1000, 9999);
-        $memberEmail = 'siswa.' . $nis . '@gmail.com';
+        $nis = 'OK_' . rand(1000, 9999);
+        $memberEmail = 's_' . $nis . '@gmail.com';
         $resMemberOk = $this->post(route('admin.members.store'), [
             'student_name' => 'Siswa Sukses Email',
             'nis' => $nis,
             'email' => $memberEmail,
-            'class_grade' => 'X RPL 1',
+            'class_grade' => 'RPL',
             'graduation_year' => '2028',
             'password' => '123456',
             'pin' => '123456',

@@ -20,19 +20,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class TellerController extends Controller
 {
-    /**
-     * Cari data Penabung (Saver) untuk Transaksi Setoran / Penarikan / Reset PIN
-     */
     public function cariNasabah(Request $request)
     {
         $keyword = trim($request->query('q'));
 
+        // cari penabung berdasarkan nomor rekening, nis, atau nama
         $saver = Saver::with('rekening')
             ->where('account_number', $keyword)
             ->orWhere('nis', $keyword)
             ->orWhere('student_name', 'LIKE', "%{$keyword}%")
             ->first();
 
+        // cek apakah siswa masih di data anggota dan belum aktivasi
         if (!$saver) {
             $unactivatedMember = Member::where('nis', $keyword)
                 ->orWhere('student_name', 'LIKE', "%{$keyword}%")
@@ -51,6 +50,7 @@ class TellerController extends Controller
             ]);
         }
 
+        // sinkronisasi otomatis jika data profil siswa diubah oleh admin
         if ($saver->member) {
             if ($saver->student_name !== $saver->member->student_name || $saver->class_grade !== $saver->member->class_grade || $saver->nis !== $saver->member->nis) {
                 $saver->update([
@@ -61,7 +61,6 @@ class TellerController extends Controller
                 ]);
             }
 
-            // Self-healing: jika status member aktif tetapi status rekening terpengaruh nonaktif, pulihkan otomatis ke aktif
             if ($saver->member->status === 'rekening aktif') {
                 if ($saver->rekening) {
                     if ($saver->rekening->status === 'nonaktif') {
@@ -83,6 +82,7 @@ class TellerController extends Controller
             }
         }
 
+        // cek status rekening aktif
         if (($saver->member && $saver->member->status === 'rekening tidak aktif') || ($saver->rekening && $saver->rekening->status === 'nonaktif')) {
             return response()->json([
                 'success' => false,
@@ -90,6 +90,7 @@ class TellerController extends Controller
             ]);
         }
 
+        // hitung total penarikan hari ini untuk cek sisa limit reguler 1 juta
         $totalTarikHariIni = (int) Transaksi::where(function($q) use ($saver) {
                 $q->where('saver_id', $saver->id)->orWhere('id_nasabah', $saver->id);
             })
@@ -120,13 +121,11 @@ class TellerController extends Controller
         ]);
     }
 
-    /**
-     * Cari data Anggota (Member) yang belum memiliki rekening / belum pernah menabung
-     */
     public function cariAnggota(Request $request)
     {
         $keyword = trim($request->query('q'));
 
+        // cari data siswa yang belum aktivasi rekening
         $member = Member::where(function ($q) use ($keyword) {
             $q->where('nis', $keyword)
               ->orWhere('student_name', 'LIKE', "%{$keyword}%");
@@ -154,17 +153,14 @@ class TellerController extends Controller
         ]);
     }
 
-    /**
-     * SISTEM OTOMATIS: Aktivasi Rekening Anggota Baru & Klon Data ke Penabung (Saver)
-     * Syarat: Menabung setoran awal minimal Rp 10.000
-     */
     public function aktivasiAnggota(Request $request)
     {
+        // validasi input aktivasi rekening baru
         $rules = [
             'user_id' => 'required|exists:members,user_id',
             'nominal' => 'required|integer|min:10000',
             'pin' => 'required|numeric|digits:6',
-            'email' => 'required|email',
+            'email' => 'required|email|max:30',
         ];
 
         if ($request->filled('pin_confirmation')) {
@@ -177,8 +173,10 @@ class TellerController extends Controller
             'pin.confirmed' => 'Konfirmasi PIN tidak cocok dengan PIN yang dibuat.',
             'email.required' => 'Alamat Gmail wajib diisi.',
             'email.email' => 'Format alamat Gmail tidak valid.',
+            'email.max' => 'Alamat Gmail siswa maksimal 30 karakter.',
         ]);
 
+        // proteksi double submit formulir
         $tokenTransaksi = $request->input('_token_transaksi');
         if ($tokenTransaksi) {
             $cacheKey = 'trx_token_' . $tokenTransaksi;
@@ -200,7 +198,7 @@ class TellerController extends Controller
 
             $emailToUse = $request->email ?: $member->email;
 
-            // 1. Periksa apakah data Saver sudah ada sebelumnya atau buat baru
+            // buat atau pulihkan data penabung dengan nomor rekening baru
             $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
 
             if ($saver) {
@@ -229,7 +227,7 @@ class TellerController extends Controller
                 ]);
             }
 
-            // 2. Update status anggota menjadi "rekening aktif" dan simpan email & pin
+            // ubah status anggota siswa menjadi rekening aktif
             $member->status = 'rekening aktif';
             $member->email = $emailToUse;
             $member->pin = Hash::make($request->pin);
@@ -241,7 +239,7 @@ class TellerController extends Controller
                 $member->user->save();
             }
 
-            // 3. Buat atau update Rekening (Saldo awal akan ditambahkan otomatis oleh Trigger Transaksi)
+            // buat buku rekening tabungan baru
             $rekening = Rekening::withTrashed()->where('saver_id', $saver->id)->first();
             if ($rekening) {
                 if ($rekening->trashed()) {
@@ -257,14 +255,14 @@ class TellerController extends Controller
                     'id_nasabah' => $saver->id,
                     'account_number' => $accountNumber,
                     'no_rekening' => $accountNumber,
-                    'saldo' => 0, // Saldo awal dimulai 0, akan ditambah oleh Trigger MySQL saat transaksi dibuat
+                    'saldo' => 0,
                     'status' => 'aktif',
                 ]);
             }
 
             $saldoSebelumAktivasi = $rekening->saldo;
 
-            // 5. Buat Catatan Transaksi Setoran Awal (Trigger Database MySQL otomatis meng-update saldo rekening)
+            // catat setoran awal aktivasi rekening
             $noTrans = 'STR-AKT-' . date('YmdHis') . '-' . rand(100, 999);
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTrans,
@@ -279,16 +277,15 @@ class TellerController extends Controller
                 'keterangan' => 'Setoran Awal Aktivasi Rekening Anggota',
             ]);
 
-            // Ambil nilai saldo terbaru hasil eksekusi trigger database
             $rekening->refresh();
 
-            // Fallback pengaman jika trigger database belum dipasang/dimigrasi di server MySQL
+            // fallback saldo jika trigger database belum terpasang
             if ($rekening->saldo === $saldoSebelumAktivasi) {
                 $rekening->saldo += $request->nominal;
                 $rekening->save();
             }
 
-            // 6. Jurnal Akuntansi Double-Entry: Debit Kas 101, Kredit Simpanan 201
+            // catat jurnal debit kas dan kredit simpanan
             JurnalAkuntansi::create([
                 'id_transaksi' => $transaksi->id,
                 'kode_akun' => '101',
@@ -335,17 +332,17 @@ class TellerController extends Controller
         }
     }
 
-    /**
-     * Transaksi Setoran Tunai Penabung
-     */
     public function setoran(Request $request)
     {
         $request->validate([
             'id_nasabah' => 'required|exists:savers,id',
             'nominal' => 'required|integer|min:1000',
-            'keterangan' => 'nullable|string',
+            'keterangan' => 'nullable|string|max:50',
+        ], [
+            'keterangan.max' => 'Keterangan slip maksimal 50 huruf.',
         ]);
 
+        // proteksi double submit transaksi setoran
         $tokenTransaksi = $request->input('_token_transaksi');
         if ($tokenTransaksi) {
             $cacheKey = 'trx_token_' . $tokenTransaksi;
@@ -354,7 +351,7 @@ class TellerController extends Controller
             }
         }
 
-        // Cek pengaman ganda: transaksi setoran identik untuk penabung yang sama dalam 3 detik terakhir
+        // cek transaksi setoran identik dalam 3 detik terakhir
         $recentDuplicate = Transaksi::where(function($q) use ($request) {
                 $q->where('saver_id', $request->id_nasabah)
                   ->orWhere('id_nasabah', $request->id_nasabah);
@@ -383,7 +380,7 @@ class TellerController extends Controller
 
             $saldoSebelum = $rekening->saldo;
 
-            // Create Transaksi (Trigger Database MySQL otomatis meng-update penambahan saldo)
+            // catat transaksi setoran tunai
             $noTrans = 'STR-' . date('YmdHis') . '-' . rand(100, 999);
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTrans,
@@ -398,16 +395,15 @@ class TellerController extends Controller
                 'keterangan' => $request->keterangan ?? 'Setoran Tunai Teller',
             ]);
 
-            // Ambil saldo terbaru hasil eksekusi trigger database
             $rekening->refresh();
 
-            // Fallback pengaman jika trigger database belum terpasang
+            // fallback saldo jika trigger database belum terpasang
             if ($rekening->saldo === $saldoSebelum) {
                 $rekening->saldo += $request->nominal;
                 $rekening->save();
             }
 
-            // Jurnal Double-Entry: Debit Kas 101, Kredit Tabungan 201
+            // catat jurnal debit kas dan kredit tabungan
             JurnalAkuntansi::create([
                 'id_transaksi' => $transaksi->id,
                 'kode_akun' => '101',
@@ -453,16 +449,14 @@ class TellerController extends Controller
         }
     }
 
-    /**
-     * Transaksi Penarikan Tunai Penabung (Wajib Verifikasi PIN 6-Digit, Min Penarikan 10.000, & Saldo Sisa Min 10.000)
-     */
     public function penarikan(Request $request)
     {
+        // validasi penarikan minimal 10 ribu dan pin 6 digit
         $request->validate([
             'id_nasabah' => 'required|exists:savers,id',
             'nominal' => 'required|integer|min:10000',
             'pin' => 'required|numeric|digits:6',
-            'keterangan' => 'nullable|string',
+            'keterangan' => 'nullable|string|max:50',
         ], [
             'id_nasabah.required' => 'Pilih penabung terlebih dahulu.',
             'nominal.required' => 'Nominal penarikan wajib diisi.',
@@ -470,12 +464,14 @@ class TellerController extends Controller
             'pin.required' => 'PIN 6-digit keamanan penabung wajib diisi.',
             'pin.numeric' => 'PIN penabung harus berupa angka.',
             'pin.digits' => 'PIN penabung harus tepat 6 digit angka.',
+            'keterangan.max' => 'Keterangan slip maksimal 50 huruf.',
         ]);
 
         if ($request->nominal < 10000) {
             return back()->withInput($request->except('pin'))->with('error', 'Transaksi Ditolak: Nominal penarikan tunai minimal adalah Rp 10.000.');
         }
 
+        // proteksi double submit penarikan
         $tokenTransaksi = $request->input('_token_transaksi');
         if ($tokenTransaksi) {
             $cacheKey = 'trx_token_' . $tokenTransaksi;
@@ -484,7 +480,7 @@ class TellerController extends Controller
             }
         }
 
-        // Cek pengaman ganda: transaksi penarikan identik untuk penabung yang sama dalam 3 detik terakhir
+        // cek transaksi penarikan identik dalam 3 detik terakhir
         $recentDuplicate = Transaksi::where(function($q) use ($request) {
                 $q->where('saver_id', $request->id_nasabah)
                   ->orWhere('id_nasabah', $request->id_nasabah);
@@ -498,7 +494,7 @@ class TellerController extends Controller
             return back()->withInput($request->except('pin'))->with('error', 'Transaksi ganda terdeteksi! Penarikan untuk penabung ini baru saja diproses (No: ' . $recentDuplicate->no_transaksi . ').');
         }
 
-        // Cek kecukupan uang kas fisik di laci teller
+        // cek kecukupan fisik uang kas di laci teller hari ini
         $laporanHariIni = LaporanHarian::where('user_id', auth()->id())
             ->where('tanggal', date('Y-m-d'))
             ->first();
@@ -546,7 +542,7 @@ class TellerController extends Controller
                 return back()->withInput($request->except('pin'))->with('error', 'Rekening penabung sedang nonaktif.');
             }
 
-            // Verifikasi PIN 6 Digit
+            // verifikasi pin keamanan penabung
             if (!Hash::check($request->pin, $saver->security_pin)) {
                 DB::rollBack();
                 if ($tokenTransaksi) {
@@ -558,7 +554,7 @@ class TellerController extends Controller
                     ->with('error_pin_salah', true);
             }
 
-            // Validasi Saldo Minimum Mengendap Rp 10.000
+            // saldo mengendap setelah penarikan wajib minimal 10 ribu
             $saldoSetelahPenarikan = $rekening->saldo - $request->nominal;
             if ($saldoSetelahPenarikan < 10000) {
                 DB::rollBack();
@@ -568,9 +564,7 @@ class TellerController extends Controller
                 return back()->withInput($request->except('pin'))->with('error', 'Transaksi Ditolak: Saldo sisa/mengendap setelah penarikan tidak boleh kurang dari batas minimum Rp 10.000 (Saldo saat ini: Rp ' . number_format($rekening->saldo) . ').');
             }
 
-            // Validasi Batas Penarikan Harian:
-            // 1. Maksimal penarikan reguler harian per nasabah = Rp 1.000.000 (tidak butuh izin admin & tanpa perjanjian).
-            // 2. Penarikan di atas Rp 1.000.000 (atau akumulasi hari ini > Rp 1.000.000) WAJIB perjanjian minimal H-1.
+            // validasi batas reguler 1 juta atau wajib perjanjian h-1 jika di atas 1 juta
             $totalPenarikanNasabahHariIni = (int) Transaksi::where(function($q) use ($saver) {
                     $q->where('saver_id', $saver->id)
                       ->orWhere('id_nasabah', $saver->id);
@@ -583,7 +577,6 @@ class TellerController extends Controller
             $perjanjianValid = null;
 
             if ($isOverDailyRegularLimit) {
-                // Cari perjanjian yang dipilih dari form
                 if ($request->filled('id_perjanjian')) {
                     $perjanjianValid = PerjanjianPenarikan::where('id', $request->id_perjanjian)
                         ->where('saver_id', $saver->id)
@@ -591,7 +584,6 @@ class TellerController extends Controller
                         ->first();
                 }
 
-                // Jika tidak dipilih manual, cari otomatis reservasi H-1 nasabah ini untuk hari ini yang diajukan minimal H-1
                 if (!$perjanjianValid) {
                     $perjanjianValid = PerjanjianPenarikan::where('saver_id', $saver->id)
                         ->whereDate('tanggal_rencana', date('Y-m-d'))
@@ -600,7 +592,6 @@ class TellerController extends Controller
                         ->first();
                 }
 
-                // Cek verifikasi manual teller jika perjanjian dilakukan lisan/WA H-1
                 $isManualVerified = $request->boolean('konfirmasi_perjanjian_h1');
 
                 if (!$perjanjianValid && !$isManualVerified) {
@@ -615,7 +606,7 @@ class TellerController extends Controller
 
             $saldoSebelum = $rekening->saldo;
 
-            // Create Transaksi (Trigger Database MySQL otomatis meng-update pengurangan saldo)
+            // catat transaksi penarikan tunai
             $noTrans = 'TRK-' . date('YmdHis') . '-' . rand(100, 999);
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTrans,
@@ -630,16 +621,15 @@ class TellerController extends Controller
                 'keterangan' => $request->keterangan ?? 'Penarikan Tunai Teller',
             ]);
 
-            // Ambil saldo terbaru hasil eksekusi trigger database
             $rekening->refresh();
 
-            // Fallback pengaman jika trigger database belum terpasang
+            // fallback saldo jika trigger database belum terpasang
             if ($rekening->saldo === $saldoSebelum) {
                 $rekening->saldo = $saldoSetelahPenarikan;
                 $rekening->save();
             }
 
-            // Jurnal Double-Entry: Debit Tabungan 201, Kredit Kas 101
+            // catat jurnal debit tabungan dan kredit kas
             JurnalAkuntansi::create([
                 'id_transaksi' => $transaksi->id,
                 'kode_akun' => '201',
@@ -694,9 +684,6 @@ class TellerController extends Controller
         }
     }
 
-    /**
-     * FITUR LUPA PIN: Teller Melakukan Reset PIN Baru untuk Siswa/Penabung
-     */
     public function resetPin(Request $request)
     {
         $request->validate([
@@ -704,6 +691,7 @@ class TellerController extends Controller
             'pin_baru' => 'required|numeric|digits:6',
         ]);
 
+        // simpan pin baru penabung
         $saver = Saver::findOrFail($request->id_nasabah);
         $saver->security_pin = Hash::make($request->pin_baru);
         $saver->save();
@@ -718,9 +706,6 @@ class TellerController extends Controller
         return back()->with('success', 'PIN Keamanan untuk ' . $saver->student_name . ' berhasil diperbarui menjadi PIN baru.');
     }
 
-    /**
-     * Submit Laporan Harian Penutupan Kas Teller ke Administrator (1x per hari)
-     */
     public function submitLaporanHarian(Request $request)
     {
         $request->validate([
@@ -742,12 +727,10 @@ class TellerController extends Controller
             ]);
         }
 
-        // Cek jika sudah disetujui Admin
         if ($laporanExisting->exists && $laporanExisting->status_approval === 'approved') {
             return back()->with('error', 'Laporan kas hari ini sudah disetujui Admin.');
         }
 
-        // Cek jika sudah dikirim dan sedang menunggu ACC (1x per hari)
         if ($laporanExisting->exists && $laporanExisting->submitted_at !== null && $laporanExisting->status_approval === 'pending') {
             return back()->with('error', 'Laporan kas harian hari ini sudah dikirim. Hanya bisa 1 kali per hari.');
         }
@@ -765,6 +748,7 @@ class TellerController extends Controller
             ->where('status', 'approved')
             ->sum('nominal');
 
+        // hitung saldo akhir sistem dan selisih fisik uang kas
         $saldoAkhirSistem = $saldoAwal + $tambahanApproved + $totalSetoran - $totalPenarikan;
         $selisih = $request->uang_fisik - $saldoAkhirSistem;
 
@@ -792,9 +776,6 @@ class TellerController extends Controller
         return back()->with('success', 'Laporan kas harian berhasil dikirim ke Admin.');
     }
 
-    /**
-     * Input Modal Awal Kas Teller (Hanya 1x per hari)
-     */
     public function inputModalAwal(Request $request)
     {
         $request->validate([
@@ -809,12 +790,13 @@ class TellerController extends Controller
             'tanggal' => $tanggal,
         ]);
 
+        // batas input modal awal hanya 1 kali sehari
         if ($laporan->exists && $laporan->saldo_awal > 0) {
             return back()->with('error', 'Modal awal hari ini sudah diinput (Rp ' . number_format($laporan->saldo_awal) . '). Hanya bisa 1 kali per hari.');
         }
 
         $laporan->saldo_awal = $request->modal_awal;
-        $laporan->submitted_at = null; // Belum submit laporan kas harian
+        $laporan->submitted_at = null;
         $laporan->save();
 
         AuditLog::create([
@@ -827,9 +809,6 @@ class TellerController extends Controller
         return back()->with('success', 'Modal awal kas Rp ' . number_format($request->modal_awal) . ' disimpan.');
     }
 
-    /**
-     * Pengajuan Tambahan Modal Kas ke Admin
-     */
     public function ajukanTambahanKas(Request $request)
     {
         $request->validate([
@@ -840,6 +819,7 @@ class TellerController extends Controller
         $user = auth()->user();
         $tanggal = date('Y-m-d');
 
+        // simpan pengajuan tambahan kas teller ke admin
         PengajuanKas::create([
             'user_id' => $user->id,
             'tanggal' => $tanggal,
@@ -858,9 +838,6 @@ class TellerController extends Controller
         return back()->with('success', 'Pengajuan tambahan kas Rp ' . number_format($request->nominal) . ' terkirim ke Admin.');
     }
 
-    /**
-     * Update status operasional layanan loket teller (buka, istirahat, tutup)
-     */
     public function updateStatusLayanan(Request $request)
     {
         $status = strtolower(trim($request->input('status')));
@@ -871,6 +848,7 @@ class TellerController extends Controller
             ], 422);
         }
 
+        // simpan status operasional loket teller
         Pengaturan::setStatusLayanan($status);
 
         AuditLog::create([
@@ -892,7 +870,7 @@ class TellerController extends Controller
     {
         $today = date('Y-m-d');
 
-        // Selesaikan antrean yang sedang dilayani saat ini (jika ada)
+        // selesaikan antrean yang sedang dilayani sebelumnya
         \App\Models\Antrean::where('tanggal', $today)
             ->where('status', 'dilayani')
             ->update([
@@ -900,7 +878,7 @@ class TellerController extends Controller
                 'selesai_pada' => now(),
             ]);
 
-        // Cari antrean menunggu berikutnya
+        // ambil antrean berikutnya yang berstatus menunggu
         $next = \App\Models\Antrean::where('tanggal', $today)
             ->where('status', 'menunggu')
             ->orderBy('angka_antrean', 'asc')
@@ -973,6 +951,7 @@ class TellerController extends Controller
 
     public function approvePerjanjian($id)
     {
+        // setujui permohonan penarikan dana di atas 1 juta
         $perjanjian = PerjanjianPenarikan::with('saver')->findOrFail($id);
         $perjanjian->update([
             'status' => 'disetujui',

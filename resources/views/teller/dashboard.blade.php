@@ -1502,7 +1502,7 @@
                     </div>
                     <div class="form-group">
                         <label>Keterangan Slip</label>
-                        <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Setoran tabungan mingguan" value="{{ old('keterangan') }}">
+                        <input type="text" name="keterangan" maxlength="50" class="form-control" placeholder="Contoh: Setoran tabungan mingguan" value="{{ old('keterangan') }}">
                     </div>
                     <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #22c55e); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
                         Proses Setoran & Simpan Jurnal
@@ -1651,7 +1651,7 @@
                     </div>
                     <div class="form-group">
                         <label>Keterangan Slip</label>
-                        <input type="text" name="keterangan" class="form-control" placeholder="Contoh: Penarikan kebutuhan praktek" value="{{ old('keterangan') }}">
+                        <input type="text" name="keterangan" maxlength="50" class="form-control" placeholder="Contoh: Penarikan kebutuhan praktek" value="{{ old('keterangan') }}">
                     </div>
                     <button type="submit" id="penarikanSubmitBtn" class="btn-primary" style="background: linear-gradient(135deg, #dc2626, #ef4444); width: 100%; margin-top: 0.5rem; padding: 0.85rem;">
                         Proses Penarikan & Simpan Jurnal
@@ -1672,6 +1672,20 @@
                             Reservasi penarikan khusus dana besar oleh nasabah siswa untuk dipersiapkan fisik kasnya oleh Teller.
                         </p>
                     </div>
+
+                    <!-- filter status perjanjian penarikan -->
+                    <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #64748b; margin-right: 0.2rem;">Filter Status:</span>
+                        <button type="button" class="btn-filter-pj" id="btnFilterPjAll" onclick="filterPerjanjianStatus('all')" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 999px; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                            Semua ({{ count($perjanjianList) }})
+                        </button>
+                        <button type="button" class="btn-filter-pj" id="btnFilterPjMenunggu" onclick="filterPerjanjianStatus('menunggu')" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 999px; border: 1px solid #fde68a; background: #fffbeb; color: #b45309; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                            Menunggu ({{ $perjanjianList->where('status', 'menunggu')->count() }})
+                        </button>
+                        <button type="button" class="btn-filter-pj" id="btnFilterPjSelesai" onclick="filterPerjanjianStatus('selesai')" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 999px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1d4ed8; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                            Udah Selesai ({{ $perjanjianList->where('status', 'selesai')->count() }})
+                        </button>
+                    </div>
                 </div>
 
                 <div class="table-responsive">
@@ -1681,16 +1695,16 @@
                                 <th style="width: 5%;">No</th>
                                 <th>Tgl Pengajuan</th>
                                 <th>Rencana Ambil</th>
-                                <th>Nasabah & Rekening</th>
+                                <th>Nasabah &amp; Rekening</th>
                                 <th>Nominal</th>
                                 <th>Alasan / Keperluan</th>
                                 <th>Status</th>
                                 <th style="text-align: center;">Aksi Teller</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbodyPerjanjianList">
                             @forelse($perjanjianList as $idx => $pj)
-                                <tr>
+                                <tr class="row-perjanjian" data-status="{{ $pj->status }}">
                                     <td style="text-align: center;">{{ $idx + 1 }}</td>
                                     <td>{{ date('d/m/Y H:i', strtotime($pj->diajukan_pada ?? $pj->created_at)) }}</td>
                                     <td>
@@ -1749,6 +1763,11 @@
                                     </td>
                                 </tr>
                             @endforelse
+                            <tr id="rowPerjanjianEmptyFilter" style="display: none;">
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    Tidak ada data perjanjian dengan status tersebut.
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1767,6 +1786,12 @@
                 <!-- TAHAP 1: PILIH NASABAH & VERIFIKASI OTP -->
                 <div id="tabResetPinStep1">
                     <div id="tabResetPinAlert1" style="display: none; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.88rem; font-weight: 600;"></div>
+
+                    <!-- status kunci data setelah scan qr kartu -->
+                    <div id="tabResetPinLockedNotice" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 0.82rem; padding: 0.55rem 0.85rem; border-radius: 8px; margin-bottom: 1.15rem; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                        <span>Data identitas &amp; Gmail terkunci otomatis dari hasil scan kartu nasabah.</span>
+                        <button type="button" onclick="unlockResetPinFields()" style="background: none; border: none; color: #d97706; font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.8rem; white-space: nowrap;">Buka Kunci / Pilih Manual</button>
+                    </div>
 
                     <div class="form-group">
                         <label>Pilih Penabung (Saver)</label>
@@ -2167,18 +2192,18 @@
                         @csrf
                         <div class="form-group" style="margin-bottom: 1.25rem;">
                             <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Nama Lengkap Teller <span style="color: #dc2626;">*</span></label>
-                            <input type="text" name="nama_petugas" class="form-control" required value="{{ old('nama_petugas', $user->nama_petugas) }}" placeholder="Masukkan nama lengkap">
+                            <input type="text" name="nama_petugas" maxlength="50" class="form-control" required value="{{ old('nama_petugas', $user->nama_petugas) }}" placeholder="Masukkan nama lengkap">
                         </div>
 
                         <div class="form-group" style="margin-bottom: 1.25rem;">
                             <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Username Login <span style="color: #dc2626;">*</span></label>
-                            <input type="text" name="username" class="form-control" required minlength="3" maxlength="50" value="{{ old('username', $user->username) }}" placeholder="Masukkan username login" autocomplete="username">
+                            <input type="text" name="username" class="form-control" required minlength="3" maxlength="10" value="{{ old('username', $user->username) }}" placeholder="Masukkan username login" autocomplete="username">
                             <small style="color: #64748b; font-size: 0.75rem;">Username digunakan untuk login ke sistem.</small>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 1.25rem;">
                             <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">Alamat Email / Gmail Teller <span style="color: #dc2626;">*</span></label>
-                            <input type="email" name="email" class="form-control" required value="{{ old('email', $user->email) }}" placeholder="Contoh: teller@bankmini.sch.id">
+                            <input type="email" name="email" maxlength="30" class="form-control" required value="{{ old('email', $user->email) }}" placeholder="Contoh: teller@bankmini.sch.id">
                             <small style="color: #2563eb; font-size: 0.75rem; font-weight: 600;">Penting: Email ini digunakan untuk verifikasi kode OTP saat lupa kata sandi di awal login.</small>
                         </div>
 
@@ -2930,6 +2955,49 @@
             document.getElementById('rejectPerjanjianModal').style.display = 'none';
         }
 
+        // filter data status perjanjian penarikan teller
+        function filterPerjanjianStatus(status) {
+            document.querySelectorAll('.btn-filter-pj').forEach(btn => {
+                btn.style.background = '#f8fafc';
+                btn.style.color = '#475569';
+                btn.style.borderColor = '#cbd5e1';
+            });
+
+            const activeBtn = document.getElementById('btnFilterPj' + (status.charAt(0).toUpperCase() + status.slice(1)));
+            if (activeBtn) {
+                if (status === 'all') {
+                    activeBtn.style.background = '#2563eb';
+                    activeBtn.style.color = '#ffffff';
+                    activeBtn.style.borderColor = '#2563eb';
+                } else if (status === 'menunggu') {
+                    activeBtn.style.background = '#d97706';
+                    activeBtn.style.color = '#ffffff';
+                    activeBtn.style.borderColor = '#d97706';
+                } else if (status === 'selesai') {
+                    activeBtn.style.background = '#2563eb';
+                    activeBtn.style.color = '#ffffff';
+                    activeBtn.style.borderColor = '#2563eb';
+                }
+            }
+
+            const rows = document.querySelectorAll('.row-perjanjian');
+            let visibleCount = 0;
+            rows.forEach(r => {
+                const s = r.getAttribute('data-status');
+                if (status === 'all' || s === status) {
+                    r.style.display = '';
+                    visibleCount++;
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+
+            const emptyRow = document.getElementById('rowPerjanjianEmptyFilter');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+            }
+        }
+
         function selectForPenarikan() {
             if (!selectedSaverData) return;
             switchTab('tab-penarikan', true);
@@ -2963,6 +3031,8 @@
             if (emailInput && selectedSaverData.email) {
                 emailInput.value = selectedSaverData.email;
             }
+            // kunci identitas dan email otomatis dari hasil scan
+            lockResetPinFields();
             goToTabResetPinStep1();
             setTimeout(() => {
                 const target = document.getElementById('tab-reset-pin');
@@ -2970,6 +3040,60 @@
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, 100);
+        }
+
+        // kunci input identitas dan gmail agar tidak dapat diedit setelah scan qr
+        function lockResetPinFields() {
+            const sel = document.getElementById('resetPinSelect');
+            const idInput = document.getElementById('tabResetPinIdentifier');
+            const emailInput = document.getElementById('tabResetPinEmail');
+            const notice = document.getElementById('tabResetPinLockedNotice');
+
+            if (sel) {
+                sel.disabled = true;
+                sel.style.background = '#f1f5f9';
+                sel.style.cursor = 'not-allowed';
+            }
+            if (idInput) {
+                idInput.readOnly = true;
+                idInput.style.background = '#f1f5f9';
+                idInput.style.cursor = 'not-allowed';
+            }
+            if (emailInput) {
+                emailInput.readOnly = true;
+                emailInput.style.background = '#f1f5f9';
+                emailInput.style.cursor = 'not-allowed';
+            }
+            if (notice) {
+                notice.style.display = 'flex';
+            }
+        }
+
+        // buka kunci input jika ingin memilih penabung secara manual
+        function unlockResetPinFields() {
+            const sel = document.getElementById('resetPinSelect');
+            const idInput = document.getElementById('tabResetPinIdentifier');
+            const emailInput = document.getElementById('tabResetPinEmail');
+            const notice = document.getElementById('tabResetPinLockedNotice');
+
+            if (sel) {
+                sel.disabled = false;
+                sel.style.background = '#ffffff';
+                sel.style.cursor = 'default';
+            }
+            if (idInput) {
+                idInput.readOnly = false;
+                idInput.style.background = '#ffffff';
+                idInput.style.cursor = 'text';
+            }
+            if (emailInput) {
+                emailInput.readOnly = false;
+                emailInput.style.background = '#ffffff';
+                emailInput.style.cursor = 'text';
+            }
+            if (notice) {
+                notice.style.display = 'none';
+            }
         }
 
         // ====================================================
@@ -4104,7 +4228,7 @@
                     <label style="display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: #1e293b;">
                         Alamat Email Siswa / Nasabah <span style="color: #dc2626;">*</span>
                     </label>
-                    <input type="email" name="email" id="modalAktEmail" class="form-control" required placeholder="Contoh: siswa@gmail.com">
+                    <input type="email" name="email" id="modalAktEmail" maxlength="30" class="form-control" required placeholder="Contoh: siswa@gmail.com">
                     <small style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">Digunakan untuk pengiriman informasi dan pemulihan PIN nasabah.</small>
                 </div>
 

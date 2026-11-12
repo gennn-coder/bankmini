@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        @keyframes spinAnimPj { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         :root {
             --bg-primary: #f4f7fe;
             --bg-surface: #ffffff;
@@ -694,7 +695,7 @@
                             <div style="font-size: 0.75rem; color: #166534; margin-top: 0.35rem;">* Sudah memperhitungkan sisa saldo wajib mengendap Rp 10.000.</div>
                         </div>
 
-                        <form action="{{ route('nasabah.perjanjian-penarikan.store') }}" method="POST" onsubmit="try{ sessionStorage.setItem('nasabah_active_tab', 'tab-perjanjian'); }catch(e){} return confirm('Konfirmasi: Ajukan permohonan perjanjian penarikan saldo ini ke pihak Teller Bank Mini?');">
+                        <form id="formAjukanPerjanjian" action="{{ route('nasabah.perjanjian-penarikan.store') }}" method="POST" onsubmit="return handleFormPerjanjianSubmit(this);">
                             @csrf
                             <div class="form-group">
                                 <label>Nominal Penarikan (Rp) <span style="color: #dc2626;">*</span></label>
@@ -717,7 +718,7 @@
                                 <textarea name="alasan" id="inputPjAlasan" class="form-control" rows="3" required placeholder="Contoh: Biaya sertifikasi kompetensi, pembelian laptop praktik, keperluan sekolah...">{{ old('alasan') }}</textarea>
                             </div>
 
-                            <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.95rem; font-weight: 700;">
+                            <button type="submit" id="btnSubmitPerjanjian" class="btn-primary" style="width: 100%; padding: 0.75rem; font-size: 0.95rem; font-weight: 700;">
                                 Ajukan Perjanjian ke Teller
                             </button>
                         </form>
@@ -1249,6 +1250,28 @@
             btn.innerHTML = isPassword ? eyeOffSvg : eyeSvg;
             btn.title = isPassword ? 'Sembunyikan' : 'Lihat';
             btn.style.color = isPassword ? '#2563eb' : '#64748b';
+        }
+
+        // cegah dobel submit pengajuan perjanjian dengan status loading
+        function handleFormPerjanjianSubmit(form) {
+            if (!confirm('Konfirmasi: Ajukan permohonan perjanjian penarikan saldo ini ke pihak Teller Bank Mini?')) {
+                return false;
+            }
+            try { sessionStorage.setItem('nasabah_active_tab', 'tab-perjanjian'); } catch (e) {}
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.75';
+                btn.style.cursor = 'not-allowed';
+                btn.innerHTML = `<span style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg style="animation: spinAnimPj 0.8s linear infinite; width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                        <path d="M12 2a10 10 0 0 1 10 10"></path>
+                    </svg>
+                    Sedang Mengajukan...
+                </span>`;
+            }
+            return true;
         }
 
         function openQrModal() {

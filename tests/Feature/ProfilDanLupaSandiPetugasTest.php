@@ -62,19 +62,19 @@ class ProfilDanLupaSandiPetugasTest extends TestCase
     public function test_petugas_dapat_memperbarui_nama_username_dan_email_profil_mandiri()
     {
         $admin = $this->createAdmin();
-        $newUsername = 'genta_new_' . uniqid();
+        $newUsername = 'g_' . rand(1000, 9999);
 
         $response = $this->actingAs($admin)->post('/profil/update', [
             'nama_petugas' => 'Genta Nilam Prana Updated',
             'username' => $newUsername,
-            'email' => 'genta_updated_' . uniqid() . '@bankmini.sch.id',
+            'email' => $newUsername . '@sch.id',
         ]);
 
         $response->assertSessionHas('success_profile');
         $admin->refresh();
         $this->assertEquals('Genta Nilam Prana Updated', $admin->nama_petugas);
         $this->assertEquals($newUsername, $admin->username);
-        $this->assertStringContainsString('genta_updated_', $admin->email);
+        $this->assertEquals($newUsername . '@sch.id', $admin->email);
     }
 
     public function test_validasi_update_profil_menolak_username_duplikat()

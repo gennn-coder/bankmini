@@ -192,7 +192,7 @@ class ComprehensiveFeatureAuditTest extends TestCase
         $admin = $this->getOrCreateAdmin();
 
         $randomSuffix = rand(1000, 9999);
-        $username = 'teller_new_' . $randomSuffix;
+        $username = 't_' . $randomSuffix;
 
         // Tambah Petugas Teller Baru
         $resStore = $this->actingAs($admin)->post(route('admin.users.store'), [
@@ -200,7 +200,7 @@ class ComprehensiveFeatureAuditTest extends TestCase
             'username' => $username,
             'role' => 'teller',
             'password' => 'teller123456',
-            'email' => $username . '@example.com',
+            'email' => $username . '@ex.com',
         ]);
         $resStore->assertSessionHas('success');
         $this->assertDatabaseHas('users', [
@@ -228,14 +228,14 @@ class ComprehensiveFeatureAuditTest extends TestCase
     public function test_audit_04_admin_manajemen_anggota_dan_penabung()
     {
         $admin = $this->getOrCreateAdmin();
-        $nis = 'NIS_' . rand(10000, 99999);
+        $nis = 'N' . rand(10000, 99999);
 
         // 1. Admin Tambah Anggota Siswa Baru
         $resStoreMember = $this->actingAs($admin)->post(route('admin.members.store'), [
             'student_name' => 'Anggota Audit ' . $nis,
             'nis' => $nis,
-            'email' => $nis . '@sekolah.sch.id',
-            'class_grade' => 'X RPL 2',
+            'email' => $nis . '@sch.id',
+            'class_grade' => 'RPL',
             'graduation_year' => '2028',
             'password' => 'siswa123',
             'pin' => '654321',
@@ -252,8 +252,8 @@ class ComprehensiveFeatureAuditTest extends TestCase
         $resUpdate = $this->actingAs($admin)->post(route('admin.members.update', $member->user_id), [
             'student_name' => 'Anggota Audit Updated',
             'nis' => $nis,
-            'email' => $nis . '_updated@sekolah.sch.id',
-            'class_grade' => 'XI RPL 2',
+            'email' => $nis . '_u@sch.id',
+            'class_grade' => 'AKL',
             'graduation_year' => '2028',
         ]);
         $resUpdate->assertSessionHas('success');

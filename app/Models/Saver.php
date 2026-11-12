@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Class Saver (Penabung)
+ * 
+ * Model penabung aktif yang telah memiliki buku rekening tabungan:
+ * - Terhubung langsung dengan akun pengguna (User) dan data identitas siswa (Member)
+ * - Menyimpan nomor rekening, PIN 6-digit keamanan transaksi, dan profil siswa
+ * - Menangani relasi ke mutasi transaksi dan perjanjian penarikan H-1
+ * - Menyediakan generator nomor rekening berurutan yang unik
+ */
 class Saver extends Model
 {
     use HasFactory, SoftDeletes;
@@ -33,32 +42,49 @@ class Saver extends Model
         'pin_keamanan',
     ];
 
+    /**
+     * Relasi ke akun User
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Relasi ke buku Rekening tabungan
+     */
     public function rekening()
     {
         return $this->hasOne(Rekening::class, 'saver_id');
     }
 
+    /**
+     * Relasi ke data Anggota Siswa (Member)
+     */
     public function member()
     {
         return $this->belongsTo(Member::class, 'user_id', 'user_id');
     }
 
+    /**
+     * Relasi ke seluruh riwayat mutasi transaksi kas
+     */
     public function transaksi()
     {
         return $this->hasMany(Transaksi::class, 'saver_id');
     }
 
+    /**
+     * Relasi ke daftar permohonan perjanjian penarikan H-1 (> Rp 1.000.000)
+     */
     public function perjanjianPenarikan()
     {
         return $this->hasMany(PerjanjianPenarikan::class, 'saver_id');
     }
 
-    // Indonesian attribute backward compatibility
+    /**
+     * Aksesor tahun kelulusan siswa
+     */
     public function getGraduationYearAttribute()
     {
         if ($this->relationLoaded('member') && $this->member) {
@@ -117,6 +143,11 @@ class Saver extends Model
         $this->attributes['security_pin'] = $value;
     }
 
+    /**
+     * Generator Nomor Rekening Unik & Berurutan
+     * Format: Angka berurutan dimulai dari 10001001
+     * Menjamin tidak ada nomor rekening ganda bahkan jika ada data yang terhapus
+     */
     public static function generateNomorRekening()
     {
         $lastRek = self::withTrashed()

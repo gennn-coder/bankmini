@@ -24,14 +24,13 @@ class DashboardController extends Controller
 {
     public function admin(Request $request)
     {
+        // cek hak akses admin dan supervisor
         $user = Auth::user();
         if ($user->role !== 'administrator' && $user->role !== 'supervisor') {
             return redirect('/');
         }
 
-        // Tab Manajemen User (Daftar Pengguna Sistem):
-        // Hanya menampilkan Petugas (Admin, Teller, Supervisor) dan Nasabah yang SUDAH AKTIF (rekening aktif / sudah pernah menabung).
-        // Nasabah yang belum pernah ada transaksi menabung tetap berada di Data Anggota Siswa dengan status tidak aktif.
+        // data user sistem khusus petugas dan nasabah yang sudah aktif
         $users = User::with(['member', 'saver'])->where(function ($query) {
             $query->whereIn('role', ['administrator', 'teller', 'supervisor'])
                   ->orWhere(function ($q) {
@@ -54,6 +53,7 @@ class DashboardController extends Controller
         ->orderBy('id', 'asc')
         ->get();
 
+        // total data statistik untuk kartu ringkasan
         $totalUsers = $users->count();
         $totalMembers = Member::count();
         $totalBelumAktif = Member::where('status', '!=', 'rekening aktif')->count();
@@ -63,10 +63,9 @@ class DashboardController extends Controller
 
         $filterMember = $request->query('filter_member', 'belum_aktif');
         $members = Member::orderBy('created_at', 'desc')->get();
-
         $savers = Saver::with(['rekening', 'member'])->orderBy('created_at', 'desc')->get();
 
-        // Fitur Supervisor yang dipindah ke Admin
+        // laporan kas teller yang menunggu persetujuan dan yang sudah disetujui
         $laporanPending = LaporanHarian::whereNotNull('submitted_at')
             ->where('status_approval', 'pending')
             ->with(['teller' => fn($q) => $q->withTrashed()])
@@ -82,21 +81,27 @@ class DashboardController extends Controller
             ->take(30)
             ->get();
 
-        // Fitur Laporan Bulanan
+        // filter laporan transaksi kas bulanan
         $selectedMonth = (int) $request->query('month', date('n'));
         $selectedYear = (int) $request->query('year', date('Y'));
+        $selectedJenis = $request->query('jenis_trans');
 
-        $monthlyTransactions = Transaksi::with([
+        $monthlyTransactionsQuery = Transaksi::with([
             'saver' => fn($q) => $q->withTrashed(),
             'teller' => fn($q) => $q->withTrashed()
         ])
         ->whereYear('tanggal', $selectedYear)
-        ->whereMonth('tanggal', $selectedMonth)
-        ->orderBy('tanggal', 'desc')
-        ->get();
+        ->whereMonth('tanggal', $selectedMonth);
 
-        $monthlySetoran = $monthlyTransactions->where('jenis_trans', 'setoran')->sum('nominal');
-        $monthlyPenarikan = $monthlyTransactions->where('jenis_trans', 'penarikan')->sum('nominal');
+        $allMonthlySummary = (clone $monthlyTransactionsQuery)->get();
+        $monthlySetoran = $allMonthlySummary->where('jenis_trans', 'setoran')->sum('nominal');
+        $monthlyPenarikan = $allMonthlySummary->where('jenis_trans', 'penarikan')->sum('nominal');
+
+        if ($selectedJenis && in_array($selectedJenis, ['setoran', 'penarikan'])) {
+            $monthlyTransactionsQuery->where('jenis_trans', $selectedJenis);
+        }
+
+        $monthlyTransactions = $monthlyTransactionsQuery->orderBy('tanggal', 'desc')->get();
 
         $auditLogs = AuditLog::with(['user' => fn($q) => $q->withTrashed()])
             ->orderBy('created_at', 'desc')
@@ -116,13 +121,13 @@ class DashboardController extends Controller
         ->take(5)
         ->get();
 
-        // Data Grafik Arus Kas 7 Hari Terakhir (Pemasukan vs Pengeluaran)
+        // data grafik arus kas masuk dan keluar 7 hari terakhir
         $chartDays = collect();
         for ($i = 6; $i >= 0; $i--) {
             $d = now()->subDays($i);
             $key = $d->format('Y-m-d');
             $chartDays->put($key, [
-                'day' => $d->format('D'), // Sun, Mon, Tue, Wed, Thu, Fri, Sat
+                'day' => $d->format('D'),
                 'date' => $d->format('d/m'),
                 'pemasukan' => 0,
                 'pengeluaran' => 0,
@@ -159,7 +164,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact(
             'user', 'totalUsers', 'totalMembers', 'totalBelumAktif', 'filterMember', 'totalSavers', 'totalRekening', 'totalSaldo',
             'users', 'members', 'savers', 'laporanPending', 'laporanApproved',
-            'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
+            'selectedMonth', 'selectedYear', 'selectedJenis', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
             'auditLogs', 'jurnals', 'recentTransactions', 'chartFlow', 'totalChartPemasukan', 'totalChartPengeluaran',
             'pengajuanKasList', 'pengaduanList'
         ));
@@ -167,11 +172,13 @@ class DashboardController extends Controller
 
     public function teller(Request $request)
     {
+        // cek hak akses teller
         $user = Auth::user();
         if ($user->role !== 'teller') {
             return redirect('/');
         }
 
+        // rekap transaksi setoran dan penarikan hari ini
         $transaksiHariIni = Transaksi::with(['saver' => fn($q) => $q->withTrashed()])
             ->where('id_user', $user->id)
             ->whereDate('tanggal', date('Y-m-d'))
@@ -192,7 +199,7 @@ class DashboardController extends Controller
             ->where('tanggal', date('Y-m-d'))
             ->first();
 
-        // Data Modal Awal & Pengajuan Tambahan Kas Hari Ini
+        // data modal awal & pengajuan tambahan kas hari ini
         $modalAwal = $laporanHariIni ? (int)$laporanHariIni->saldo_awal : 0;
         $isModalAwalSet = $laporanHariIni && $laporanHariIni->saldo_awal > 0;
 
@@ -206,16 +213,17 @@ class DashboardController extends Controller
         $isLaporanSubmitted = $laporanHariIni && $laporanHariIni->submitted_at !== null;
         $isLaporanApproved = $laporanHariIni && $laporanHariIni->status_approval === 'approved';
 
+        // hitung sisa uang kas fisik di laci teller saat ini
         if ($isLaporanApproved) {
-            // Setelah laporan di-ACC admin, kas fisik laci telah diserahkan / dipindahkan ke Admin
             $sisaKasLaci = 0;
         } else {
             $sisaKasLaci = $modalAwal + $tambahanKasApproved + $totalSetoran - $totalPenarikan;
         }
 
-        // Laporan Bulanan untuk Teller
+        // rekap laporan bulanan teller
         $selectedMonth = (int) $request->query('month', date('n'));
         $selectedYear = (int) $request->query('year', date('Y'));
+        $selectedJenis = $request->query('jenis_trans');
 
         $monthlyTransactions = Transaksi::with(['saver' => fn($q) => $q->withTrashed()])
             ->where('id_user', $user->id)
@@ -229,15 +237,15 @@ class DashboardController extends Controller
 
         $statusLayanan = Pengaturan::getStatusLayanan();
 
-        // Antrean Live untuk Teller
+        // data antrean teller live hari ini
         $antreanHariIni = Antrean::where('tanggal', date('Y-m-d'))->orderBy('angka_antrean', 'asc')->get();
         $antreanSedangDilayani = $antreanHariIni->where('status', 'dilayani')->first();
         $totalAntreanMenunggu = $antreanHariIni->where('status', 'menunggu')->count();
 
-        // Perjanjian Penarikan H-1 (> 1 Juta) untuk Teller
+        // daftar perjanjian penarikan di atas 1 juta terbaru di atas
         $perjanjianList = PerjanjianPenarikan::with(['saver' => fn($q) => $q->withTrashed()])
-            ->orderBy('tanggal_rencana', 'asc')
             ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
         $totalPerjanjianPending = $perjanjianList->where('status', 'menunggu')->count();
 
@@ -246,7 +254,7 @@ class DashboardController extends Controller
             'savers', 'membersUnactivated', 'laporanHariIni',
             'modalAwal', 'isModalAwalSet', 'tambahanKasHariIni', 'tambahanKasApproved', 'sisaKasLaci',
             'isLaporanSubmitted', 'isLaporanApproved',
-            'selectedMonth', 'selectedYear', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
+            'selectedMonth', 'selectedYear', 'selectedJenis', 'monthlyTransactions', 'monthlySetoran', 'monthlyPenarikan',
             'statusLayanan', 'antreanHariIni', 'antreanSedangDilayani', 'totalAntreanMenunggu',
             'perjanjianList', 'totalPerjanjianPending'
         ));
@@ -254,12 +262,13 @@ class DashboardController extends Controller
 
     public function supervisor()
     {
-        // Fitur Supervisor sudah dijadikan satu dengan Administrator
+        // fitur supervisor sekarang sudah menyatu di dashboard admin
         return redirect()->route('admin.dashboard');
     }
 
     public function nasabah(Request $request)
     {
+        // cek hak akses nasabah
         $user = Auth::user();
         if ($user->role !== 'nasabah' && $user->role !== 'saver') {
             return redirect('/');
@@ -268,7 +277,7 @@ class DashboardController extends Controller
         $saver = Saver::where('user_id', $user->id)->with(['rekening', 'member'])->first();
         $member = Member::where('user_id', $user->id)->first();
 
-        // Auto-sinkronkan data Saver dari Member jika ada perbedaan nama, kelas, atau NIS (Self-Healing)
+        // sinkronisasi otomatis data siswa jika ada pembaruan dari admin
         if ($saver && $member) {
             $changed = false;
             if ($saver->student_name !== $member->student_name) {
@@ -296,15 +305,18 @@ class DashboardController extends Controller
         }
 
         $nasabah = $saver;
+        
+        // riwayat transaksi tabungan nasabah
         $transaksi = $saver
             ? Transaksi::where('saver_id', $saver->id)->orderBy('tanggal', 'desc')->get()
             : collect();
+            
         $statusLayanan = Pengaturan::getStatusLayanan();
 
-        // 1. Target Tabungan (Celengan Impian)
+        // target tabungan celengan impian
         $targetTabungan = TargetTabungan::where('user_id', $user->id)->first();
 
-        // 2. Antrean Bank Mini Live Hari Ini
+        // status antrean nasabah hari ini
         $today = date('Y-m-d');
         $antreanSaya = Antrean::where('tanggal', $today)
             ->where('user_id', $user->id)
@@ -316,7 +328,7 @@ class DashboardController extends Controller
             ? Antrean::where('tanggal', $today)->where('status', 'menunggu')->where('angka_antrean', '<', $antreanSaya->angka_antrean)->count()
             : 0;
 
-        // 3. Laporan Keuangan Bulanan (Ringkasan Akhir Bulan)
+        // ringkasan keuangan bulanan nasabah
         $selectedBulan = (int) $request->query('bulan', date('n'));
         $selectedTahun = (int) $request->query('tahun', date('Y'));
 
@@ -336,6 +348,7 @@ class DashboardController extends Controller
             $totalSetoranBulanIni = (int) $trxBulanIni->where('jenis_trans', 'setoran')->sum('nominal');
             $totalPenarikanBulanIni = (int) $trxBulanIni->where('jenis_trans', 'penarikan')->sum('nominal');
 
+            // hitung saldo awal dari akumulasi sebelum bulan berjalan
             $setoranSebelum = (int) Transaksi::where('saver_id', $saver->id)
                 ->where('tanggal', '<', $startOfMonth)
                 ->where('jenis_trans', 'setoran')
@@ -349,12 +362,11 @@ class DashboardController extends Controller
             $saldoAkhirBulan = $saldoAwalBulan + ($totalSetoranBulanIni - $totalPenarikanBulanIni);
         }
 
-        // 4. Riwayat Pengaduan Nasabah
+        // data riwayat pengaduan dan perjanjian penarikan H-1
         $pengaduanList = Pengaduan::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
 
-        // 5. Riwayat Perjanjian Penarikan H-1 (> 1 Juta) Nasabah
         $perjanjianSaya = $saver
-            ? PerjanjianPenarikan::where('saver_id', $saver->id)->orderBy('created_at', 'desc')->get()
+            ? PerjanjianPenarikan::where('saver_id', $saver->id)->orderBy('created_at', 'desc')->orderBy('id', 'desc')->get()
             : collect();
 
         return view('nasabah.dashboard', compact(
@@ -367,12 +379,14 @@ class DashboardController extends Controller
 
     public function simpanPerjanjianPenarikan(Request $request)
     {
+        // cek rekening aktif penabung
         $user = Auth::user();
         $saver = Saver::where('user_id', $user->id)->with('rekening')->first();
         if (!$saver || !$saver->rekening) {
             return back()->with('error', 'Rekening penabung Anda belum aktif atau tidak ditemukan.');
         }
 
+        // validasi nominal di atas 1 juta dan tanggal minimal besok
         $request->validate([
             'nominal' => 'required|integer|min:1000001',
             'tanggal_rencana' => 'required|date|after_or_equal:tomorrow',
@@ -385,11 +399,12 @@ class DashboardController extends Controller
             'alasan.required' => 'Keperluan atau alasan penarikan dana wajib diisi.',
         ]);
 
-        // Cek kecukupan saldo rekening (saldo - nominal >= 10000)
+        // cek sisa saldo wajib minimal Rp 10.000
         if (($saver->rekening->saldo - $request->nominal) < 10000) {
             return back()->withInput()->with('error', 'Saldo tabungan tidak mencukupi untuk rencana penarikan ini. Saldo saat ini: Rp ' . number_format($saver->rekening->saldo, 0, ',', '.') . ', wajib menyisakan saldo minimal Rp 10.000 (maksimal yang bisa ditarik: Rp ' . number_format(max(0, $saver->rekening->saldo - 10000), 0, ',', '.') . ').');
         }
 
+        // simpan pengajuan perjanjian penarikan
         PerjanjianPenarikan::create([
             'saver_id' => $saver->id,
             'nominal' => $request->nominal,
@@ -414,6 +429,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $saver = Saver::where('user_id', $user->id)->first();
 
+        // simpan atau perbarui target tabungan siswa
         TargetTabungan::updateOrCreate(
             ['user_id' => $user->id],
             [
@@ -443,6 +459,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $today = date('Y-m-d');
 
+        // batasi hanya 1 antrean aktif per hari
         $existing = Antrean::where('tanggal', $today)
             ->where('user_id', $user->id)
             ->whereIn('status', ['menunggu', 'dilayani'])
@@ -452,6 +469,7 @@ class DashboardController extends Controller
             return back()->with('error', 'Anda sudah memiliki nomor antrean aktif hari ini: ' . $existing->nomor_antrean);
         }
 
+        // generate nomor antrean otomatis
         $next = Antrean::generateNomorHariIni();
 
         Antrean::create([
@@ -472,6 +490,7 @@ class DashboardController extends Controller
         $today = date('Y-m-d');
         $user = Auth::user();
 
+        // ambil nomor yang sedang dilayani dan hitung sisa antrean
         $antreanSaya = $user ? Antrean::where('tanggal', $today)->where('user_id', $user->id)->whereIn('status', ['menunggu', 'dilayani'])->first() : null;
         $sedangDilayani = Antrean::where('tanggal', $today)->where('status', 'dilayani')->first();
         $totalMenunggu = Antrean::where('tanggal', $today)->where('status', 'menunggu')->count();
@@ -500,6 +519,7 @@ class DashboardController extends Controller
 
         $user = Auth::user();
 
+        // simpan pengaduan baru nasabah
         Pengaduan::create([
             'user_id' => $user->id,
             'nama_pengadu' => $user->member->student_name ?? ($user->saver->student_name ?? $user->nama_petugas),
@@ -527,10 +547,12 @@ class DashboardController extends Controller
 
         $user = \App\Models\User::findOrFail(Auth::id());
 
+        // cek kata sandi lama
         if (!Hash::check($request->sandi_lama, $user->password)) {
             return back()->with('error_password', 'Kata sandi saat ini yang Anda masukkan salah.')->withInput();
         }
 
+        // simpan kata sandi baru
         $user->password = Hash::make($request->sandi_baru);
         $user->save();
 

@@ -2017,15 +2017,15 @@
                         @csrf
                         <div class="form-group">
                             <label>Nama Petugas</label>
-                            <input type="text" name="nama_petugas" class="form-control" required placeholder="Contoh: Siti Rahmawati">
+                            <input type="text" name="nama_petugas" maxlength="50" class="form-control" required placeholder="Contoh: Siti Rahmawati">
                         </div>
                         <div class="form-group">
                             <label>Username</label>
-                            <input type="text" name="username" class="form-control" required placeholder="Contoh: teller2">
+                            <input type="text" name="username" maxlength="10" class="form-control" required placeholder="Contoh: teller2">
                         </div>
                         <div class="form-group">
                             <label>Alamat Gmail Petugas</label>
-                            <input type="email" name="email" class="form-control" required placeholder="Contoh: teller@gmail.com">
+                            <input type="email" name="email" maxlength="30" class="form-control" required placeholder="Contoh: teller@gmail.com">
                         </div>
                         <div class="form-group">
                             <label>Role Petugas</label>
@@ -2163,24 +2163,24 @@
                             @csrf
                             <div class="form-group">
                                 <label>Nama Siswa <span style="color: #dc2626;">*</span></label>
-                                <input type="text" name="student_name" class="form-control" required placeholder="Contoh: Budi Pratama">
+                                <input type="text" name="student_name" maxlength="50" class="form-control" required placeholder="Contoh: Budi Pratama">
                             </div>
                             <div class="form-group">
                                 <label>NIS (Nomor Induk Siswa) <span style="color: #dc2626;">*</span></label>
-                                <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
+                                <input type="text" name="nis" maxlength="10" class="form-control" required placeholder="Contoh: 202611005">
                             </div>
                             <div class="form-group">
                                 <label>Alamat Gmail Siswa <span style="color: #dc2626;">*</span></label>
-                                <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
+                                <input type="email" name="email" maxlength="30" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                                 <div class="form-group">
                                     <label>Jurusan <span style="color: #dc2626;">*</span></label>
-                                    <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
+                                    <input type="text" name="class_grade" maxlength="5" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
                                 </div>
                                 <div class="form-group">
                                     <label>Tahun Kelulusan <span style="color: #dc2626;">*</span></label>
-                                    <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
+                                    <input type="text" name="graduation_year" maxlength="4" class="form-control" required placeholder="Contoh: 2028">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -2726,22 +2726,30 @@
                         <p style="margin:0; font-size: 0.85rem; color: var(--text-muted);">Pilih periode bulan dan tahun untuk merekapitulasi mutasi kas dan mengunduh laporan PDF resmi.</p>
                     </div>
 
-                    <!-- Filter Bulan & Tahun Form -->
-                    <form method="GET" action="{{ route('admin.dashboard') }}" style="display: flex; gap: 0.5rem; align-items: center; margin:0;">
+                    <!-- Filter Bulan, Tahun & Jenis Transaksi Form -->
+                    <form method="GET" action="{{ route('admin.dashboard') }}" style="display: flex; gap: 0.5rem; align-items: center; margin: 0; flex-wrap: nowrap;">
                         <input type="hidden" name="tab" value="tab-laporan-bulanan">
-                        <select name="month" class="form-control" style="width: 140px;">
+                        <select name="month" class="form-control" style="width: 140px !important; max-width: 140px !important; height: 44px; padding: 0.6rem 0.85rem; border-radius: 12px; cursor: pointer; flex: 0 0 auto;">
                             @for($m = 1; $m <= 12; $m++)
                                 <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
                                     {{ DateTime::createFromFormat('!m', $m)->format('F') }}
                                 </option>
                             @endfor
                         </select>
-                        <select name="year" class="form-control" style="width: 110px;">
+
+                        <select name="year" class="form-control" style="width: 110px !important; max-width: 110px !important; height: 44px; padding: 0.6rem 0.85rem; border-radius: 12px; cursor: pointer; flex: 0 0 auto;">
                             @for($y = date('Y') - 2; $y <= date('Y') + 1; $y++)
                                 <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
                             @endfor
                         </select>
-                        <button type="submit" class="btn-primary" style="padding: 0.75rem 1rem;">Filter</button>
+
+                        <select name="jenis_trans" class="form-control" style="width: 130px !important; max-width: 130px !important; height: 44px; padding: 0.6rem 0.85rem; border-radius: 12px; cursor: pointer; flex: 0 0 auto;">
+                            <option value="">Semua</option>
+                            <option value="setoran" {{ ($selectedJenis ?? request('jenis_trans')) == 'setoran' ? 'selected' : '' }}>Setoran</option>
+                            <option value="penarikan" {{ ($selectedJenis ?? request('jenis_trans')) == 'penarikan' ? 'selected' : '' }}>Penarikan</option>
+                        </select>
+        
+                        <button type="submit" class="btn-primary" style="height: 44px; padding: 0 1.25rem; border-radius: 12px; flex: 0 0 auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-weight: 700;">Filter</button>
                     </form>
                 </div>
 
@@ -2767,7 +2775,7 @@
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                    <a href="{{ route('admin.laporan-bulanan.pdf', ['month' => $selectedMonth, 'year' => $selectedYear]) }}" class="btn-success" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">
+                    <a href="{{ route('admin.laporan-bulanan.pdf', ['month' => $selectedMonth, 'year' => $selectedYear, 'jenis_trans' => $selectedJenis ?? request('jenis_trans')]) }}" class="btn-success" style="padding: 0.75rem 1.5rem; font-size: 0.95rem;">
                         Download PDF Laporan Bulanan (Bulan {{ $selectedMonth }}/{{ $selectedYear }})
                     </a>
                 </div>
@@ -3135,18 +3143,18 @@
                         @csrf
                         <div class="form-group">
                             <label>Nama Lengkap Petugas <span style="color: #dc2626;">*</span></label>
-                            <input type="text" name="nama_petugas" class="form-control" required value="{{ old('nama_petugas', $user->nama_petugas) }}" placeholder="Masukkan nama lengkap">
+                            <input type="text" name="nama_petugas" maxlength="50" class="form-control" required value="{{ old('nama_petugas', $user->nama_petugas) }}" placeholder="Masukkan nama lengkap">
                         </div>
 
                         <div class="form-group">
                             <label>Username Login <span style="color: #dc2626;">*</span></label>
-                            <input type="text" name="username" class="form-control" required minlength="3" maxlength="50" value="{{ old('username', $user->username) }}" placeholder="Masukkan username login" autocomplete="username">
+                            <input type="text" name="username" class="form-control" required minlength="3" maxlength="10" value="{{ old('username', $user->username) }}" placeholder="Masukkan username login" autocomplete="username">
                             <small style="color: #64748b; font-size: 0.75rem;">Username digunakan untuk login ke sistem.</small>
                         </div>
 
                         <div class="form-group">
                             <label>Alamat Email / Gmail Petugas <span style="color: #dc2626;">*</span></label>
-                            <input type="email" name="email" class="form-control" required value="{{ old('email', $user->email) }}" placeholder="Contoh: admin@bankmini.sch.id">
+                            <input type="email" name="email" maxlength="30" class="form-control" required value="{{ old('email', $user->email) }}" placeholder="Contoh: admin@bankmini.sch.id">
                             <small style="color: #2563eb; font-size: 0.75rem; font-weight: 600;">Penting: Email ini digunakan untuk verifikasi kode OTP saat lupa kata sandi di halaman login.</small>
                         </div>
 
@@ -3223,24 +3231,24 @@
                 @csrf
                 <div class="form-group">
                     <label>Nama Siswa <span style="color: #dc2626;">*</span></label>
-                    <input type="text" name="student_name" class="form-control" required placeholder="Contoh: Budi Pratama">
+                    <input type="text" name="student_name" maxlength="50" class="form-control" required placeholder="Contoh: Budi Pratama">
                 </div>
                 <div class="form-group">
                     <label>NIS (Nomor Induk Siswa) <span style="color: #dc2626;">*</span></label>
-                    <input type="text" name="nis" class="form-control" required placeholder="Contoh: 202611005">
+                    <input type="text" name="nis" maxlength="10" class="form-control" required placeholder="Contoh: 202611005">
                 </div>
                 <div class="form-group">
                     <label>Alamat Gmail Siswa <span style="color: #dc2626;">*</span></label>
-                    <input type="email" name="email" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
+                    <input type="email" name="email" maxlength="30" class="form-control" required placeholder="Contoh: budi.pratama@gmail.com">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                     <div class="form-group">
                         <label>Jurusan <span style="color: #dc2626;">*</span></label>
-                        <input type="text" name="class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
+                        <input type="text" name="class_grade" maxlength="5" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
                     </div>
                     <div class="form-group">
                         <label>Tahun Kelulusan <span style="color: #dc2626;">*</span></label>
-                        <input type="text" name="graduation_year" class="form-control" required placeholder="Contoh: 2028">
+                        <input type="text" name="graduation_year" maxlength="4" class="form-control" required placeholder="Contoh: 2028">
                     </div>
                 </div>
                 <div class="form-group">
@@ -3281,23 +3289,23 @@
                 @csrf
                 <div class="form-group">
                     <label>Nama Siswa</label>
-                    <input type="text" name="student_name" id="edit_student_name" class="form-control" required>
+                    <input type="text" name="student_name" id="edit_student_name" maxlength="50" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label>NIS</label>
-                    <input type="text" name="nis" id="edit_nis" class="form-control" required>
+                    <input type="text" name="nis" id="edit_nis" maxlength="10" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label>Alamat Gmail Siswa</label>
-                    <input type="email" name="email" id="edit_email" class="form-control" required placeholder="Contoh: siswa@gmail.com">
+                    <input type="email" name="email" id="edit_email" maxlength="30" class="form-control" required placeholder="Contoh: siswa@gmail.com">
                 </div>
                 <div class="form-group">
                     <label>Jurusan</label>
-                    <input type="text" name="class_grade" id="edit_class_grade" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
+                    <input type="text" name="class_grade" id="edit_class_grade" maxlength="5" class="form-control" required placeholder="Contoh: RPL, AKL, dll">
                 </div>
                 <div class="form-group">
                     <label>Tahun Kelulusan</label>
-                    <input type="text" name="graduation_year" id="edit_graduation_year" class="form-control" required placeholder="Contoh: 2028">
+                    <input type="text" name="graduation_year" id="edit_graduation_year" maxlength="4" class="form-control" required placeholder="Contoh: 2028">
                 </div>
                 <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
                     <button type="button" onclick="closeEditMemberModal()" class="btn-logout" style="background: #94a3b8; flex: 1;">Batal</button>

@@ -14,30 +14,54 @@ use App\Models\Saver;
 use App\Models\Member;
 use App\Models\AuditLog;
 
+/**
+ * Class AuthController
+ * 
+ * Mengelola seluruh alur otentikasi, hak akses, dan keamanan akun Bank Mini:
+ * 1. Otentikasi Multi-Role & Multi-Identifier (Username, NISN, No Rekening, Email)
+ * 2. Pemulihan Kredensial via Kode Keamanan OTP 6-Digit ke Gmail
+ * 3. Pemulihan & Reset PIN Transaksi 6-Digit via OTP
+ * 4. Pengelolaan Profil Mandiri Petugas (Admin & Teller)
+ * 5. Distribusi Unduhan Berkas Mobile Application (APK)
+ */
 class AuthController extends Controller
 {
+    /**
+     * Halaman Utama / Login Portal
+     * Jika sudah terotentikasi, pengguna langsung dialihkan ke dashboard sesuai peran (role)
+     */
     public function index()
     {
+        // Parameter pembersih cache untuk deployment
         if (request()->has('fresh')) {
             $this->purgeStaleFrameworkCaches();
         }
 
+        // Jika sesi masih aktif, alihkan langsung ke dashboard masing-masing role
         if (Auth::check()) {
             return $this->redirectUserByRole(Auth::user());
         }
+
+        // Tampilkan halaman login utama
         return view('welcome');
     }
 
+    /**
+     * Halaman Landing Informasi Unduhan Mobile APK E-Teller
+     */
     public function landingApk()
     {
         $this->purgeStaleFrameworkCaches();
         return view('landing-apk');
     }
 
+    /**
+     * Pembersihan Cache Framework (Cache Invalidation Helper)
+     */
     private function purgeStaleFrameworkCaches()
     {
         try {
-            // Hapus cache routes dan config lama agar route baru langsung terbaca
+            // Hapus cache konfigurasi dan rute agar pembaruan terbaca langsung
             $bootstrapCache = base_path('bootstrap/cache');
             if (is_dir($bootstrapCache)) {
                 foreach (['routes-v7.php', 'config.php', 'services.php', 'packages.php'] as $file) {
@@ -48,7 +72,7 @@ class AuthController extends Controller
                 }
             }
 
-            // Hapus file view blade yang ter-compile agar perubahan template langsung live
+            // Hapus file view template blade terkompilasi
             $viewCache = storage_path('framework/views');
             if (is_dir($viewCache)) {
                 $files = glob($viewCache . '/*.php');
@@ -59,15 +83,17 @@ class AuthController extends Controller
                 }
             }
 
-            // Panggil artisan clear jika memungkinkan
             if (class_exists(\Illuminate\Support\Facades\Artisan::class)) {
                 @\Illuminate\Support\Facades\Artisan::call('view:clear');
             }
         } catch (\Throwable $e) {
-            // Abaikan kesalahan izin file jika ada
+            // Abaikan error perizinan file sistem jika ada
         }
     }
 
+    /**
+     * Endpoint Pengunduhan Berkas Aplikasi Mobile Android (APK)
+     */
     public function downloadApk()
     {
         $possiblePaths = [
@@ -89,12 +115,21 @@ class AuthController extends Controller
             }
         }
 
-        // Direct static download fallback yang dilayani langsung oleh web server
         return redirect('/downloads/eteller-nasabah.apk');
     }
 
+    /**
+     * PROSES MASUK / LOGIN MULTI-IDENTIFIER & MULTI-ROLE
+     * Fitur Keamanan:
+     * 1. Mendukung input fleksibel: Username, NISN, No Rekening, Email, atau Nama Lengkap
+     * 2. Pengecekan status blokir akun
+     * 3. Verifikasi kata sandi aman (Bcrypt)
+     * 4. Session Fixation Protection via $request->session()->regenerate()
+     * 5. Pengalihan cerdas berbasis role (Admin, Teller, Nasabah)
+     */
     public function login(Request $request)
     {
+        // 1. Validasi input username dan password
         $credentials = $request->validate([
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
@@ -103,7 +138,7 @@ class AuthController extends Controller
         $input = trim($credentials['username']);
         $password = $credentials['password'];
 
-        // Find user by username, email, nama_petugas, or via Saver / Member (nis, account_number, student_name, email)
+        // 2. Pencarian akun User secara berjenjang (Direct User -> Saver -> Member)
         $user = User::where('username', $input)
             ->orWhere('email', $input)
             ->orWhere('nama_petugas', $input)
@@ -138,6 +173,7 @@ class AuthController extends Controller
             }
         }
 
+        // 3. Verifikasi Password dan Pengecekan Status Blokir Akun
         if ($user && Hash::check($password, $user->password)) {
             if ($user->status === 'terblokir') {
                 return back()->withErrors(['username' => 'Akun Anda sedang terblokir. Silakan hubungi Administrator.']);
@@ -145,8 +181,11 @@ class AuthController extends Controller
 
             $remember = $request->boolean('remember');
             Auth::login($user, $remember);
+            
+            // Regenerasi ID sesi untuk mencegah serangan Session Hijacking
             $request->session()->regenerate();
 
+            // 4. Arahkan pengguna ke dashboard sesuai perannya
             return $this->redirectUserByRole($user);
         }
 
@@ -155,6 +194,10 @@ class AuthController extends Controller
         ])->onlyInput('username');
     }
 
+    /**
+     * PROSES KELUAR / LOGOUT
+     * Membersihkan seluruh data sesi dan token CSRF
+     */
     public function logout(Request $request)
     {
         Auth::logout();
@@ -163,13 +206,16 @@ class AuthController extends Controller
         return redirect('/');
     }
 
+    /**
+     * Pemulihan Kata Sandi Langsung via Email
+     */
     public function lupaSandi(Request $request)
     {
         $request->validate([
             'email' => ['required', 'email'],
         ]);
 
-        // 1. Cari User berdasarkan email (bisa Teller maupun Nasabah)
+        // 1. Cari User berdasarkan email
         $user = User::where('email', $request->email)->first();
         $saver = Saver::where('email', $request->email)->first();
         $member = Member::where('email', $request->email)->first();
@@ -181,7 +227,6 @@ class AuthController extends Controller
             $user = User::find($member->user_id);
         }
 
-        // Fallback untuk kemudahan pengujian jika email belum terpasang
         if (!$user) {
             $user = User::whereNull('email')->orWhere('email', '')->whereIn('role', ['nasabah', 'teller'])->first();
             if ($user) {
@@ -198,12 +243,12 @@ class AuthController extends Controller
         $noRekening = $saver ? $saver->account_number : ($user->role === 'teller' ? 'AKUN TELLER' : '-');
         $nis = $saver ? $saver->nis : $user->username;
 
-        // Generate Sandi Baru
+        // 2. Buat Kata Sandi Acak Baru
         $newPassword = ($user->role === 'teller' ? 'tl' : 'bm') . rand(100000, 999999);
         $user->password = Hash::make($newPassword);
         $user->save();
 
-        // Kirim email asli ke Gmail
+        // 3. Kirim kredensial baru ke Gmail pengguna
         $emailSent = false;
         try {
             Mail::send('emails.pemulihan_kredensial', [
@@ -234,13 +279,13 @@ class AuthController extends Controller
     }
 
     /**
-     * Cari akun berdasarkan NISN, No Rekening, Username, Email, atau Nama
+     * Resolver Identitas Pengguna (Lookup fleksibel lintas entitas User, Saver, dan Member)
      */
     protected function findAccountByIdentifier(string $identifier)
     {
         $identifier = trim($identifier);
 
-        // 1. Cek langsung User (username, email, atau nama_petugas)
+        // 1. Cek langsung User
         $user = User::where('username', $identifier)
             ->orWhere('email', $identifier)
             ->orWhere('nama_petugas', $identifier)
@@ -249,7 +294,7 @@ class AuthController extends Controller
         $saver = null;
         $member = null;
 
-        // 2. Cek Saver (nis, account_number, atau student_name)
+        // 2. Cek Penabung (Saver)
         if (!$user) {
             $saver = Saver::where('nis', $identifier)
                 ->orWhere('account_number', $identifier)
@@ -262,7 +307,7 @@ class AuthController extends Controller
             $saver = Saver::where('user_id', $user->id)->first();
         }
 
-        // 3. Cek Member (nis atau student_name)
+        // 3. Cek Anggota Siswa (Member)
         if (!$user) {
             $member = Member::where('nis', $identifier)
                 ->orWhere('student_name', $identifier)
@@ -296,7 +341,12 @@ class AuthController extends Controller
     }
 
     /**
-     * Kirim Kode OTP ke Gmail terdaftar untuk NISN / Username
+     * PEMBUATAN & PENGIRIMAN KODE OTP KE EMAIL GMAIL
+     * Alur:
+     * 1. Validasi kecocokan identifier dengan alamat Gmail terdaftar
+     * 2. Generate kode OTP 6-digit angka acak
+     * 3. Simpan OTP ke Cache (Masa berlaku 15 menit), Session, dan database
+     * 4. Kirim email OTP dengan template HTML profesional
      */
     public function kirimOtp(Request $request)
     {
@@ -320,7 +370,6 @@ class AuthController extends Controller
 
         $inputEmail = strtolower(trim($request->email));
 
-        // Cek email akun
         $userEmail = strtolower(trim($user->email ?? ''));
         $saverEmail = strtolower(trim($saver?->email ?? ''));
         $memberEmail = strtolower(trim($member?->email ?? ''));
@@ -340,7 +389,7 @@ class AuthController extends Controller
             $userEmail = $inputEmail;
         }
 
-        // Cek kecocokan email
+        // Cek kecocokan alamat Gmail dengan data terdaftar
         $registeredEmails = array_filter([$userEmail, $saverEmail, $memberEmail]);
         if (!in_array($inputEmail, $registeredEmails, true)) {
             return response()->json([
@@ -349,10 +398,10 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Generate OTP 6-Digit
+        // Generate Kode OTP 6-Digit Numerik
         $otp = str_pad((string) random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Simpan ke Cache (15 menit)
+        // Simpan Kode OTP ke Cache dengan masa kedaluwarsa 15 menit
         Cache::put('otp_reset_' . $user->id, [
             'otp' => $otp,
             'email' => $inputEmail,
@@ -360,7 +409,7 @@ class AuthController extends Controller
             'identifier' => $request->identifier,
         ], now()->addMinutes(15));
 
-        // Simpan ke Session jika request web
+        // Simpan ke Session untuk verifikasi form web
         if ($request->hasSession()) {
             $request->session()->put('otp_reset_user_id', $user->id);
             $request->session()->put('otp_reset_code', $otp);
@@ -368,13 +417,13 @@ class AuthController extends Controller
             $request->session()->put('otp_reset_expires', now()->addMinutes(15)->timestamp);
         }
 
-        // Simpan ke DB password_reset_tokens
+        // Simpan entri token ke tabel password_reset_tokens
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $inputEmail],
             ['token' => $otp, 'created_at' => now()]
         );
 
-        // Kirim email asli ke Gmail
+        // Kirim email kode OTP ke Gmail pengguna
         $emailSent = false;
         try {
             Mail::send('emails.otp_pemulihan', [
@@ -392,6 +441,7 @@ class AuthController extends Controller
         }
 
         if (!$emailSent) {
+            // Mode pengujian lokal: kembalikan kode OTP jika email offline
             if (app()->environment('local') || config('app.debug')) {
                 return response()->json([
                     'success' => true,
@@ -413,7 +463,8 @@ class AuthController extends Controller
     }
 
     /**
-     * Verifikasi Kode OTP yang dimasukkan pengguna
+     * VERIFIKASI KODE OTP DARI PENGGUNA
+     * Memeriksa kecocokan kode OTP dan menghasilkan token reset sekali pakai (Single-Use Token)
      */
     public function verifikasiOtp(Request $request)
     {
@@ -438,13 +489,13 @@ class AuthController extends Controller
         $inputEmail = strtolower(trim($request->email));
         $isValid = false;
 
-        // 1. Cek Cache
+        // 1. Verifikasi dari Cache Sistem
         $cached = Cache::get('otp_reset_' . $user->id);
         if ($cached && isset($cached['otp']) && $cached['otp'] === $inputOtp) {
             $isValid = true;
         }
 
-        // 2. Cek Session
+        // 2. Verifikasi dari Session Web
         if (!$isValid && $request->hasSession()) {
             $sessCode = $request->session()->get('otp_reset_code');
             $sessUserId = $request->session()->get('otp_reset_user_id');
@@ -454,7 +505,7 @@ class AuthController extends Controller
             }
         }
 
-        // 3. Cek DB
+        // 3. Verifikasi dari Tabel Database
         if (!$isValid) {
             $row = DB::table('password_reset_tokens')
                 ->where('email', $inputEmail)
@@ -472,7 +523,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // OTP Valid! Buat token reset sekali pakai
+        // Buat Single-Use Reset Token yang aman
         $resetToken = bin2hex(random_bytes(24));
         Cache::put('verified_reset_' . $resetToken, $user->id, now()->addMinutes(15));
         if ($request->hasSession()) {
@@ -490,7 +541,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Simpan Kata Sandi Baru setelah OTP terverifikasi
+     * SIMPAN KATA SANDI BARU SETELAH OTP TERVERIFIKASI
      */
     public function simpanSandiBaru(Request $request)
     {
@@ -522,10 +573,11 @@ class AuthController extends Controller
             ], 404);
         }
 
+        // Simpan kata sandi baru yang telah dienkripsi hash (Bcrypt)
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // Bersihkan cache dan sesi
+        // Bersihkan cache dan sesi pemulihan untuk mencegah penggunaan ulang token
         Cache::forget('otp_reset_' . $user->id);
         Cache::forget('verified_reset_' . $resetToken);
         if ($request->hasSession()) {
@@ -548,7 +600,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Simpan PIN 6-Digit Baru setelah verifikasi OTP berhasil
+     * SIMPAN PIN 6-DIGIT TRANSAKSI BARU SETELAH VERIFIKASI OTP
      */
     public function simpanPinBaruOtp(Request $request)
     {
@@ -588,9 +640,11 @@ class AuthController extends Controller
             ], 404);
         }
 
+        // Enkripsi dan simpan PIN keamanan 6 digit baru
         $saver->security_pin = Hash::make($request->pin);
         $saver->save();
 
+        // Bersihkan cache dan sesi pemulihan
         Cache::forget('otp_reset_' . $user->id);
         Cache::forget('verified_reset_' . $resetToken);
         $request->session()->forget([
@@ -622,6 +676,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Pemulihan PIN via Email Langsung
+     */
     public function lupaPin(Request $request)
     {
         $request->validate([
@@ -647,7 +704,7 @@ class AuthController extends Controller
         $saver->security_pin = Hash::make($newPin);
         $saver->save();
 
-        // Kirim email asli ke Gmail
+        // Kirim PIN baru ke Gmail nasabah
         $emailSent = false;
         try {
             Mail::send('emails.pemulihan_kredensial', [
@@ -678,7 +735,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Update Data Profil Mandiri Petugas (Admin & Teller)
+     * PEMBARUAN PROFIL MANDIRI PETUGAS (Admin & Teller)
      */
     public function updateProfil(Request $request)
     {
@@ -688,16 +745,19 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'nama_petugas' => 'required|string|max:100',
-            'username' => 'required|string|min:3|max:50|unique:users,username,' . $user->id,
-            'email' => 'required|email|max:100|unique:users,email,' . $user->id,
+            'nama_petugas' => 'required|string|max:50',
+            'username' => 'required|string|min:3|max:10|unique:users,username,' . $user->id,
+            'email' => 'required|email|max:30|unique:users,email,' . $user->id,
         ], [
             'nama_petugas.required' => 'Nama lengkap petugas wajib diisi.',
+            'nama_petugas.max' => 'Nama petugas maksimal 50 huruf.',
             'username.required' => 'Username login wajib diisi.',
             'username.min' => 'Username minimal 3 karakter.',
+            'username.max' => 'Username maksimal 10 karakter.',
             'username.unique' => 'Username ini sudah digunakan oleh akun lain.',
             'email.required' => 'Alamat email wajib diisi.',
             'email.email' => 'Format alamat email tidak valid.',
+            'email.max' => 'Alamat Gmail petugas maksimal 30 karakter.',
             'email.unique' => 'Alamat email ini sudah terdaftar pada akun lain.',
         ]);
 
@@ -719,7 +779,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Ganti Kata Sandi Mandiri Petugas (Admin & Teller)
+     * GANTI KATA SANDI MANDIRI PETUGAS (Admin & Teller)
      */
     public function gantiPasswordPetugas(Request $request)
     {
@@ -757,12 +817,14 @@ class AuthController extends Controller
         return back()->with('success_password', 'Kata sandi akun petugas berhasil diperbarui!');
     }
 
+    /**
+     * PENGALIHAN CERDAS BERBASIS PERAN (ROLE-BASED REDIRECTION)
+     */
     protected function redirectUserByRole($user)
     {
         switch ($user->role) {
             case 'administrator':
             case 'supervisor':
-                // Supervisor dan Admin dijadikan satu ke admin dashboard
                 return redirect()->route('admin.dashboard');
             case 'teller':
                 return redirect()->route('teller.dashboard');

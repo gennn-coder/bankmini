@@ -25,24 +25,26 @@ use PhpOffice\PhpSpreadsheet\Reader\Csv as CsvReader;
 
 class AdminController extends Controller
 {
-    // ==========================================
-    // 1. MANAJEMEN PENGGUNA (USERS)
-    // ==========================================
     public function storeUser(Request $request)
     {
-        // Admin sistem bersifat tunggal (1 akun utama), tidak dapat ditambah lagi
+        // admin sistem hanya boleh 1 akun utama
         if ($request->role === 'administrator') {
             return back()->with('error', 'Admin sistem hanya diperbolehkan 1 akun utama. Form ini khusus untuk menambah akun Teller.');
         }
 
         $request->validate([
-            'username' => 'required|string|unique:users,username',
-            'nama_petugas' => 'required|string',
-            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|max:10|unique:users,username',
+            'nama_petugas' => 'required|string|max:50',
+            'email' => 'required|email|max:30|unique:users,email',
             'role' => 'required|in:teller',
             'password' => 'required|string|min:6',
+        ], [
+            'username.max' => 'Username maksimal 10 karakter.',
+            'nama_petugas.max' => 'Nama petugas maksimal 50 huruf.',
+            'email.max' => 'Alamat Gmail petugas maksimal 30 karakter.',
         ]);
 
+        // simpan akun petugas teller baru
         $user = User::create([
             'username' => $request->username,
             'nama_petugas' => $request->nama_petugas,
@@ -65,10 +67,13 @@ class AdminController extends Controller
     public function toggleUserStatus($id)
     {
         $user = User::findOrFail($id);
+
+        // akun admin utama tidak boleh diblokir
         if ($user->id === auth()->id() || $user->role === 'administrator') {
             return back()->with('error', 'Tidak dapat memblokir akun Administrator utama.');
         }
 
+        // ganti status antara aktif dan terblokir
         $user->status = $user->status === 'aktif' ? 'terblokir' : 'aktif';
         $user->save();
 
@@ -82,28 +87,30 @@ class AdminController extends Controller
         return back()->with('success', 'Status user ' . $user->username . ' berhasil diubah menjadi ' . $user->status);
     }
 
-    // ==========================================
-    // 2. CRUD TABEL ANGGOTA / MEMBER
-    // ==========================================
     public function storeMember(Request $request)
     {
         $request->validate([
-            'student_name' => 'required|string',
-            'nis' => 'required|string|unique:members,nis|unique:users,username',
-            'class_grade' => 'required|string',
-            'email' => 'required|email',
-            'graduation_year' => 'required|string',
+            'student_name' => 'required|string|max:50',
+            'nis' => 'required|string|max:10|unique:members,nis|unique:users,username',
+            'class_grade' => 'required|string|max:5',
+            'email' => 'required|email|max:30',
+            'graduation_year' => 'required|string|max:4',
             'password' => 'required|string|min:6',
             'pin' => 'required|numeric|digits:6',
         ], [
-            'password.required' => '(minimal 6 karakter).',
-            'password.min' => 'minimal 6 karakter.',
-            'pin.required' => ' wajib diisi.',
-            'pin.digits' => 'harus tepat 6 digit .',
+            'student_name.max' => 'Nama siswa maksimal 50 huruf.',
+            'nis.max' => 'NIS/NISN maksimal 10 karakter.',
+            'class_grade.max' => 'Jurusan maksimal 5 huruf.',
+            'email.max' => 'Alamat Gmail siswa maksimal 30 karakter.',
+            'graduation_year.max' => 'Tahun kelulusan maksimal 4 karakter.',
+            'password.required' => 'Kata sandi wajib diisi (minimal 6 karakter).',
+            'password.min' => 'Kata sandi minimal 6 karakter.',
+            'pin.required' => 'PIN transaksi penarikan wajib diisi.',
+            'pin.digits' => 'PIN harus tepat 6 digit angka numerik.',
             'pin.numeric' => 'PIN transaksi penarikan harus berupa 6 angka digit.',
         ]);
 
-        // Buat Akun Login untuk Siswa / Anggota (status awal: 'tidak aktif' sampai transaksi pertama)
+        // buat akun login siswa
         $user = User::create([
             'username' => $request->nis,
             'nama_petugas' => $request->student_name,
@@ -113,7 +120,7 @@ class AdminController extends Controller
             'status' => 'aktif',
         ]);
 
-        // Buat Data Anggota (Status awal: rekening tidak aktif sampai aktivasi oleh teller)
+        // simpan data anggota siswa dengan status rekening belum aktif
         $member = Member::create([
             'user_id' => $user->id,
             'student_name' => $request->student_name,
@@ -135,18 +142,15 @@ class AdminController extends Controller
         return back()->with('success', 'Anggota ' . $member->student_name . ' (' . $member->email . ') berhasil didaftarkan dengan status Rekening Tidak Aktif. Akun dapat login dan akan otomatis aktif masuk ke Manajemen User setelah menabung pertama kali.');
     }
 
-    /**
-     * Unduh Template Excel / CSV untuk Impor Anggota
-     */
     public function downloadMemberTemplate(Request $request)
     {
         $format = strtolower($request->query('format', 'xlsx'));
 
+        // buat berkas template excel dan csv untuk impor siswa
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Anggota');
 
-        // Header Kolom Database (Format Baru: nisn, nama, jurusan, tahun_keluar)
         $headers = [
             'A1' => 'nisn',
             'B1' => 'nama',
@@ -159,13 +163,12 @@ class AdminController extends Controller
             $sheet->getStyle($cell)->getFont()->setBold(true);
         }
 
-        // Contoh Data 1
+        // data contoh pengisian template
         $sheet->setCellValueExplicit('A2', '1029384756', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('B2', 'Ahmad Fauzi', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('C2', 'RPL', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('D2', '2028', DataType::TYPE_STRING);
 
-        // Contoh Data 2
         $sheet->setCellValueExplicit('A3', '1029384757', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('B3', 'Siti Nurhaliza', DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('C3', 'AKL', DataType::TYPE_STRING);
@@ -198,9 +201,6 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Impor Data Anggota Massal dari File CSV / Excel
-     */
     public function importMembers(Request $request)
     {
         $request->validate([
@@ -214,6 +214,7 @@ class AdminController extends Controller
         $file = $request->file('file');
         $extension = strtolower($file->getClientOriginalExtension());
 
+        // baca berkas upload menggunakan phpspreadsheet
         try {
             if ($extension === 'csv' || $extension === 'txt') {
                 $reader = new CsvReader();
@@ -234,7 +235,7 @@ class AdminController extends Controller
             return back()->with('error', 'Berkas kosong atau tidak berisi baris data anggota.');
         }
 
-        // Ambil header baris 1
+        // deteksi otomatis nama kolom header
         $headerRow = array_shift($rows);
         $columnMap = [];
         foreach ($headerRow as $colLetter => $headerName) {
@@ -261,6 +262,7 @@ class AdminController extends Controller
         $importedCount = 0;
         $skippedCount = 0;
 
+        // tampung nis yang sudah ada untuk mencegah duplikat
         $existingMembers = array_fill_keys(Member::pluck('nis')->all(), true);
         $existingUsernames = array_fill_keys(User::pluck('username')->all(), true);
         $defaultPasswordHash = Hash::make('123456');
@@ -271,7 +273,6 @@ class AdminController extends Controller
                 $namaSiswa = trim((string)($row[$columnMap['nama_siswa']] ?? ''));
                 $nis = trim((string)($row[$columnMap['nis']] ?? ''));
 
-                // Lewati baris kosong
                 if ($namaSiswa === '' && $nis === '') {
                     continue;
                 }
@@ -281,7 +282,6 @@ class AdminController extends Controller
                     continue;
                 }
 
-                // Cek apakah NIS sudah terdaftar di Member atau User
                 if (isset($existingMembers[$nis]) || isset($existingUsernames[$nis])) {
                     $skippedCount++;
                     continue;
@@ -304,7 +304,7 @@ class AdminController extends Controller
                 $passwordRaw = isset($columnMap['password']) ? trim((string)($row[$columnMap['password']] ?? '')) : '123456';
                 $passwordHashed = ($passwordRaw === '123456' || strlen($passwordRaw) < 6) ? $defaultPasswordHash : Hash::make($passwordRaw);
 
-                // 1. Buat User Nasabah (Email akan diisi dan diverifikasi saat aktivasi di loket Teller)
+                // simpan user nasabah dan data anggota siswa
                 $user = User::create([
                     'username' => $nis,
                     'nama_petugas' => $namaSiswa,
@@ -314,7 +314,6 @@ class AdminController extends Controller
                     'status' => 'aktif',
                 ]);
 
-                // 2. Buat Member (Status rekening tidak aktif, PIN & Gmail akan diset saat aktivasi oleh teller)
                 Member::create([
                     'user_id' => $user->id,
                     'student_name' => $namaSiswa,
@@ -353,12 +352,18 @@ class AdminController extends Controller
     public function updateMember(Request $request, $userId)
     {
         $request->validate([
-            'student_name' => 'required|string',
-            'nis' => 'required|string|unique:members,nis,' . $userId . ',user_id',
-            'class_grade' => 'required|string',
-            'email' => 'nullable|email',
-            'graduation_year' => 'required|string',
+            'student_name' => 'required|string|max:50',
+            'nis' => 'required|string|max:10|unique:members,nis,' . $userId . ',user_id',
+            'class_grade' => 'required|string|max:5',
+            'email' => 'nullable|email|max:30',
+            'graduation_year' => 'required|string|max:4',
             'status' => 'nullable|in:rekening aktif,rekening tidak aktif',
+        ], [
+            'student_name.max' => 'Nama siswa maksimal 50 huruf.',
+            'nis.max' => 'NIS/NISN maksimal 10 karakter.',
+            'class_grade.max' => 'Jurusan maksimal 5 huruf.',
+            'email.max' => 'Alamat Gmail siswa maksimal 30 karakter.',
+            'graduation_year.max' => 'Tahun kelulusan maksimal 4 karakter.',
         ]);
 
         $member = Member::where('user_id', $userId)->firstOrFail();
@@ -374,7 +379,7 @@ class AdminController extends Controller
         }
         $member->update($memberData);
 
-        // Sinkronkan nama, email, dan status di akun user
+        // sinkronkan ke akun user
         if ($member->user) {
             $userData = [
                 'nama_petugas' => $request->student_name,
@@ -387,7 +392,7 @@ class AdminController extends Controller
             $member->user->update($userData);
         }
 
-        // Selalu sinkronkan data penabung (Saver) jika sudah ada agar data di Nasabah Dashboard & Mobile selalu terupdate
+        // sinkronkan ke data penabung saver jika ada
         $saver = Saver::withTrashed()->where('user_id', $member->user_id)->orWhere('nis', $member->nis)->first();
         if ($saver) {
             $saver->update([
@@ -398,7 +403,7 @@ class AdminController extends Controller
             ]);
         }
 
-        // Jika status diubah menjadi "rekening aktif" atau member sudah aktif, pastikan Saver dan Rekening otomatis dibuat/dipulihkan
+        // kelola status rekening penabung
         if ($request->status === 'rekening aktif' || $member->status === 'rekening aktif') {
             if (!$saver) {
                 $accountNumber = Saver::generateNomorRekening();
@@ -443,7 +448,6 @@ class AdminController extends Controller
                 }
             }
         } elseif ($request->filled('status') && $request->status === 'rekening tidak aktif') {
-            // Hanya nonaktifkan rekening jika admin secara eksplisit memilih status rekening tidak aktif
             if ($member->saver && $member->saver->rekening) {
                 $member->saver->rekening->update(['status' => 'nonaktif']);
             }
@@ -464,10 +468,9 @@ class AdminController extends Controller
         $member = Member::where('user_id', $userId)->firstOrFail();
         $nama = $member->student_name;
 
-        // Soft delete member
+        // hapus data member, saver, rekening, dan user (soft delete)
         $member->delete();
 
-        // Soft delete saver & rekening jika ada
         if ($member->saver) {
             if ($member->saver->rekening) {
                 $member->saver->rekening->delete();
@@ -475,7 +478,6 @@ class AdminController extends Controller
             $member->saver->delete();
         }
 
-        // Soft delete user jika ada
         if ($member->user) {
             $member->user->delete();
         }
@@ -490,15 +492,13 @@ class AdminController extends Controller
         return back()->with('success', 'Data anggota ' . $nama . ' berhasil dihapus.');
     }
 
-    // ==========================================
-    // 3. AKSI TABEL PENABUNG / SAVER
-    // ==========================================
     public function resetPinSaver(Request $request, $id)
     {
         $request->validate([
             'pin' => 'required|numeric|digits:6',
         ]);
 
+        // reset pin penabung oleh admin
         $saver = Saver::findOrFail($id);
         $saver->security_pin = Hash::make($request->pin);
         $saver->save();
@@ -518,17 +518,15 @@ class AdminController extends Controller
         $saver = Saver::findOrFail($id);
         $nama = $saver->student_name;
 
-        // Nonaktifkan rekening jika ada
+        // nonaktifkan rekening dan hapus akun penabung (histori transaksi tetap aman)
         if ($saver->rekening) {
             $saver->rekening->update(['status' => 'nonaktif']);
         }
 
-        // Update status di member jika ada
         if ($saver->member) {
             $saver->member->update(['status' => 'rekening tidak aktif']);
         }
 
-        // Soft delete saver (transaksi tetap aman dan tidak akan hilang!)
         $saver->delete();
 
         AuditLog::create([
@@ -541,17 +539,16 @@ class AdminController extends Controller
         return back()->with('success', 'Akun penabung ' . $nama . ' berhasil dinonaktifkan/dihapus. Data histori transaksi tetap aman tersimpan.');
     }
 
-    // ==========================================
-    // 4. FITUR SUPERVISOR (SEKARANG MENYATU DI ADMIN)
-    // ==========================================
     public function approveLaporan($id)
     {
         $laporan = LaporanHarian::findOrFail($id);
 
+        // selisih fisik wajib 0 rupiah sebelum disetujui
         if ($laporan->selisih != 0) {
             return back()->with('error', 'Peringatan: Terdapat selisih kas fisik sebesar Rp ' . number_format($laporan->selisih) . '. Laporan memerlukan penanganan fisik kas sebelum disetujui.');
         }
 
+        // setujui tutup kas teller dan pindahkan uang ke brankas utama
         $laporan->status_approval = 'approved';
         $laporan->supervisor_id = auth()->id();
         $laporan->save();
@@ -572,6 +569,7 @@ class AdminController extends Controller
             'catatan_penolakan' => 'required|string|max:500',
         ]);
 
+        // tolak laporan tutup kas dengan alasan tertulis
         $laporan = LaporanHarian::findOrFail($id);
         $laporan->status_approval = 'rejected';
         $laporan->catatan_penolakan = $request->catatan_penolakan;
@@ -588,9 +586,6 @@ class AdminController extends Controller
         return back()->with('success', 'Laporan harian ditolak dengan catatan: "' . $request->catatan_penolakan . '". Catatan penolakan otomatis masuk ke dashboard Teller.');
     }
 
-    // ==========================================
-    // 5. EXPORT LAPORAN KE PDF
-    // ==========================================
     public function downloadLaporanHarianPdf($id)
     {
         $laporan = LaporanHarian::with([
@@ -598,7 +593,7 @@ class AdminController extends Controller
             'supervisor' => fn($q) => $q->withTrashed(),
         ])->findOrFail($id);
 
-        // Ambil semua transaksi hari tersebut dengan saver yang soft-deleted
+        // ambil data transaksi teller pada tanggal tersebut untuk cetak pdf
         $transaksis = Transaksi::with(['saver' => function ($query) {
             $query->withTrashed();
         }])
@@ -615,6 +610,7 @@ class AdminController extends Controller
     {
         $month = $request->query('month', date('n'));
         $year = $request->query('year', date('Y'));
+        $jenisTrans = $request->query('jenis_trans');
 
         $namaBulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -623,17 +619,22 @@ class AdminController extends Controller
         ];
         $namaBulan = $namaBulanList[(int)$month] ?? 'Bulan ' . $month;
 
-        $transaksis = Transaksi::with([
+        // rekap mutasi buku kas bulanan untuk cetak pdf
+        $transaksisQuery = Transaksi::with([
             'saver' => fn($q) => $q->withTrashed(),
             'teller' => fn($q) => $q->withTrashed(),
         ])
         ->whereYear('tanggal', $year)
-        ->whereMonth('tanggal', $month)
-        ->orderBy('tanggal', 'asc')
-        ->get();
+        ->whereMonth('tanggal', $month);
 
-        $totalSetoran = $transaksis->where('jenis_trans', 'setoran')->sum('nominal');
-        $totalPenarikan = $transaksis->where('jenis_trans', 'penarikan')->sum('nominal');
+        $totalSetoran = (clone $transaksisQuery)->where('jenis_trans', 'setoran')->sum('nominal');
+        $totalPenarikan = (clone $transaksisQuery)->where('jenis_trans', 'penarikan')->sum('nominal');
+
+        if ($jenisTrans && in_array($jenisTrans, ['setoran', 'penarikan'])) {
+            $transaksisQuery->where('jenis_trans', $jenisTrans);
+        }
+
+        $transaksis = $transaksisQuery->orderBy('tanggal', 'asc')->get();
 
         $pdf = Pdf::loadView('reports.laporan_bulanan_pdf', compact(
             'transaksis', 'month', 'year', 'namaBulan', 'totalSetoran', 'totalPenarikan'
@@ -649,6 +650,7 @@ class AdminController extends Controller
             return back()->with('error', 'Pengajuan sudah diproses.');
         }
 
+        // setujui permohonan tambahan modal kas teller
         $pengajuan->update([
             'status' => 'approved',
             'admin_id' => auth()->id(),
@@ -678,6 +680,7 @@ class AdminController extends Controller
             'catatan_admin.required' => 'Alasan penolakan pengajuan tambahan kas wajib diisi.',
         ]);
 
+        // tolak permohonan tambahan kas teller
         $pengajuan->update([
             'status' => 'rejected',
             'admin_id' => auth()->id(),
@@ -701,6 +704,7 @@ class AdminController extends Controller
             'status' => 'required|in:diproses,selesai',
         ]);
 
+        // simpan tanggapan admin atas pengaduan nasabah
         $pengaduan = \App\Models\Pengaduan::findOrFail($id);
         $pengaduan->update([
             'tanggapan_admin' => $request->tanggapan_admin,

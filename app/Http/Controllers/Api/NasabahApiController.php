@@ -16,14 +16,24 @@ use App\Models\Pengaduan;
 use App\Models\Pengaturan;
 use App\Models\PerjanjianPenarikan;
 
+/**
+ * Class NasabahApiController
+ * 
+ * Menyediakan layanan RESTful API untuk aplikasi mobile nasabah (Flutter E-Teller):
+ * 1. Otentikasi & Profil Siswa (Login, Sinkronisasi data identitas)
+ * 2. Informasi Finansial Realtime (Saldo, Riwayat Mutasi, Ringkasan Bulanan)
+ * 3. Fitur Digital: Celengan Impian (Target Tabungan), Tiket Antrean Loket
+ * 4. Pengelolaan Perjanjian Penarikan H-1 (> Rp 1.000.000) & Pengaduan
+ */
 class NasabahApiController extends Controller
 {
     /**
-     * API Login Nasabah/Penabung via Mobile
-     * Menerima username / nama_siswa / nis / no_rekening dan password
+     * API Login Nasabah via Mobile
+     * Menerima username / nama_siswa / nis / no_rekening dan kata sandi
      */
     public function login(Request $request)
     {
+        // 1. Validasi input kredensial
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
@@ -32,7 +42,7 @@ class NasabahApiController extends Controller
         $input = trim($request->username);
         $password = $request->password;
 
-        // Cari user berdasarkan username, nama_petugas, atau tabel savers/members
+        // 2. Pencarian akun User secara fleksibel (Username, Nama, NIS, No Rekening)
         $user = User::where('username', $input)
             ->orWhere('nama_petugas', $input)
             ->first();
@@ -56,6 +66,7 @@ class NasabahApiController extends Controller
             }
         }
 
+        // 3. Verifikasi kata sandi (Hash::check)
         if (!$user || !Hash::check($password, $user->password)) {
             return response()->json([
                 'success' => false,
@@ -63,6 +74,7 @@ class NasabahApiController extends Controller
             ], 401);
         }
 
+        // 4. Verifikasi status blokir akun
         if ($user->status === 'terblokir') {
             return response()->json([
                 'success' => false,
@@ -80,7 +92,7 @@ class NasabahApiController extends Controller
             ], 404);
         }
 
-        // Auto-sinkronkan Saver dengan Member jika data profil diubah oleh admin
+        // 5. Sinkronisasi data otomatis jika terdapat perubahan identitas oleh admin
         if ($saverData && $memberData) {
             if ($saverData->student_name !== $memberData->student_name || $saverData->class_grade !== $memberData->class_grade || $saverData->nis !== $memberData->nis) {
                 $saverData->update([
@@ -100,6 +112,7 @@ class NasabahApiController extends Controller
         $saldo = $saverData ? (int) ($saverData->rekening->saldo ?? 0) : 0;
         $statusRekening = $saverData && $saverData->rekening ? $saverData->rekening->status : 'rekening tidak aktif';
 
+        // 6. Kembalikan payload JSON profil akun dan status rekening
         return response()->json([
             'success' => true,
             'message' => 'Login berhasil.',
@@ -125,7 +138,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * Helper resolve User & Saver
+     * Helper Penyelesaian Relasi Entitas Pengguna (User, Saver, Member)
      */
     private function resolveUserAndSaver($id)
     {
@@ -154,7 +167,8 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Dashboard Real-Time Nasabah/Penabung (Lengkap untuk 3 Tab Mobile)
+     * API Payload Lengkap Dashboard Mobile
+     * Menghimpun profil rekening, status antrean, celengan target impian, dan laporan bulanan
      */
     public function dashboard(Request $request, $id)
     {
@@ -167,7 +181,7 @@ class NasabahApiController extends Controller
             ], 404);
         }
 
-        // Auto-sinkronkan data Saver dari Member jika ada perubahan
+        // Sinkronisasi data otomatis jika ada pembaruan
         if ($saver && $member) {
             if ($saver->student_name !== $member->student_name || $saver->class_grade !== $member->class_grade || $saver->nis !== $member->nis) {
                 $saver->update([
@@ -188,7 +202,7 @@ class NasabahApiController extends Controller
         $statusRekening = $saver && $saver->rekening ? $saver->rekening->status : 'rekening tidak aktif';
         $userId = $user ? $user->id : ($saver ? $saver->user_id : null);
 
-        // 1. DATA SISTEM ANTREAN
+        // 1. DATA SISTEM ANTREAN REALTIME
         $today = date('Y-m-d');
         $antreanSaya = $userId ? Antrean::where('tanggal', $today)
             ->where('user_id', $userId)
@@ -200,7 +214,7 @@ class NasabahApiController extends Controller
             ? Antrean::where('tanggal', $today)->where('status', 'menunggu')->where('angka_antrean', '<', $antreanSaya->angka_antrean)->count()
             : 0;
 
-        // 2. DATA TARGET TABUNGAN
+        // 2. DATA TARGET TABUNGAN (CELENGAN IMPIAN)
         $targetTabungan = $userId ? TargetTabungan::where('user_id', $userId)->first() : null;
         $targetData = null;
         if ($targetTabungan) {
@@ -225,7 +239,7 @@ class NasabahApiController extends Controller
         $selectedTahun = (int) $request->query('tahun', date('Y'));
         $laporanBulanan = $this->hitungLaporanBulanan($saver, $selectedBulan, $selectedTahun);
 
-        // 4. DATA RIWAYAT PENGADUAN
+        // 4. DATA RIWAYAT PENGADUAN NASABAH
         $pengaduanList = $userId ? Pengaduan::where('user_id', $userId)->orderBy('created_at', 'desc')->get()->map(function ($p) {
             return [
                 'id' => $p->id,
@@ -238,7 +252,7 @@ class NasabahApiController extends Controller
             ];
         }) : [];
 
-        // Perjanjian Penarikan H-1 (> 1 Juta)
+        // 5. DATA RIWAYAT PERJANJIAN PENARIKAN H-1 (> Rp 1.000.000)
         $perjanjianList = $saver ? PerjanjianPenarikan::where('saver_id', $saver->id)->orderBy('created_at', 'desc')->get()->map(function ($p) {
             return [
                 'id' => $p->id,
@@ -251,6 +265,7 @@ class NasabahApiController extends Controller
             ];
         }) : [];
 
+        // 6. Kembalikan seluruh data dalam format JSON
         return response()->json([
             'success' => true,
             'data' => [
@@ -301,7 +316,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * Hitung Laporan Bulanan
+     * Helper Perhitungan Laporan Keuangan Bulanan Nasabah
      */
     private function hitungLaporanBulanan($saver, $bulan, $tahun)
     {
@@ -321,6 +336,7 @@ class NasabahApiController extends Controller
             $totalSetoran = (int) $trxBulanIni->where('jenis_trans', 'setoran')->sum('nominal');
             $totalPenarikan = (int) $trxBulanIni->where('jenis_trans', 'penarikan')->sum('nominal');
 
+            // Saldo awal = akumulasi mutasi sebelum awal bulan berjalan
             $setoranSebelum = (int) Transaksi::where('saver_id', $saver->id)
                 ->where('tanggal', '<', $startOfMonth)
                 ->where('jenis_trans', 'setoran')
@@ -346,7 +362,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Riwayat Mutasi Rekening Penabung
+     * API Riwayat Mutasi Rekening Tabungan
      */
     public function mutasi($id)
     {
@@ -383,7 +399,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Ambil Nomor Antrean Mobile
+     * API Ambil Nomor Antrean Loket via Mobile
      */
     public function ambilAntrean(Request $request)
     {
@@ -398,6 +414,7 @@ class NasabahApiController extends Controller
         }
 
         $today = date('Y-m-d');
+        // Validasi: 1 antrean aktif per hari
         $existing = Antrean::where('tanggal', $today)
             ->where('user_id', $user->id)
             ->whereIn('status', ['menunggu', 'dilayani'])
@@ -431,7 +448,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Simpan / Update Target Tabungan
+     * API Simpan / Pembaruan Target Tabungan (Celengan Impian)
      */
     public function simpanTargetTabungan(Request $request)
     {
@@ -497,7 +514,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Laporan Bulanan Mandiri
+     * API Data Laporan Keuangan Bulanan
      */
     public function laporanBulanan(Request $request, $id)
     {
@@ -514,7 +531,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Kirim Pengaduan Nasabah
+     * API Kirim Pesan Pengaduan Nasabah ke Administrator
      */
     public function kirimPengaduan(Request $request)
     {
@@ -551,7 +568,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Ganti Password Mandiri
+     * API Ganti Kata Sandi Akun Mandiri
      */
     public function gantiPassword(Request $request)
     {
@@ -587,7 +604,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Lupa Sandi Akun
+     * API Permintaan Lupa Kata Sandi
      */
     public function lupaSandi(Request $request)
     {
@@ -602,7 +619,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Lupa PIN Keamanan Penabung
+     * API Permintaan Lupa PIN Keamanan Transaksi
      */
     public function lupaPin(Request $request)
     {
@@ -626,7 +643,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Riwayat Perjanjian Penarikan H-1 Mobile
+     * API Riwayat Daftar Perjanjian Penarikan Dana H-1
      */
     public function listPerjanjian(Request $request, $id)
     {
@@ -654,7 +671,7 @@ class NasabahApiController extends Controller
     }
 
     /**
-     * API Simpan Perjanjian Penarikan H-1 (> 1 Juta) Mobile
+     * API Simpan Permohonan Perjanjian Penarikan Dana H-1 (> Rp 1.000.000)
      */
     public function simpanPerjanjian(Request $request)
     {
@@ -676,7 +693,7 @@ class NasabahApiController extends Controller
             ], 400);
         }
 
-        // Validasi saldo mengendap minimal Rp 10.000
+        // Validasi: Sisa saldo mengendap di rekening wajib minimal Rp 10.000
         if (($saver->rekening->saldo - $request->nominal) < 10000) {
             $maksimalTarik = max(0, $saver->rekening->saldo - 10000);
             return response()->json([
@@ -685,6 +702,7 @@ class NasabahApiController extends Controller
             ], 422);
         }
 
+        // Simpan permohonan perjanjian penarikan ke database
         $pj = PerjanjianPenarikan::create([
             'saver_id' => $saver->id,
             'nominal' => $request->nominal,
